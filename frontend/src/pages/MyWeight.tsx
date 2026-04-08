@@ -284,8 +284,6 @@ export default function MyWeight() {
     const week1Avg = getWeek1Avg();
     const diffPrev = avg != null && prevAvg != null ? +(avg - prevAvg).toFixed(1) : null;
     const diffW1   = avg != null && week1Avg != null && selectedWeek.week_number > 1 ? +(avg - week1Avg).toFixed(1) : null;
-    const allFilled = selectedWeek.day_logs.every(d => d.weight_kg != null);
-
     return (
       <div style={{ maxWidth: 700 }}>
         <button className="back-btn" onClick={() => setView('weeks')}>
@@ -297,11 +295,6 @@ export default function MyWeight() {
             <h1 className="page-title">Tydzień {selectedWeek.week_number}</h1>
             <p className="page-subtitle">Wpisz dzienne odczyty wagi</p>
           </div>
-          {allFilled && selectedWeek.status !== 'completed' && (
-            <button className="btn btn-success" onClick={() => setShowComplete(true)}>
-              <CheckCircle2 size={16} /> Zakończ tydzień
-            </button>
-          )}
         </div>
 
         {/* Statystyki */}
@@ -369,6 +362,14 @@ export default function MyWeight() {
               })}
           </div>
         </div>
+
+        {selectedWeek.status !== 'completed' && (
+          <div style={{ marginTop: 20 }}>
+            <button className="btn btn-success btn-full" onClick={() => setShowComplete(true)}>
+              <CheckCircle2 size={16} /> Zakończ tydzień
+            </button>
+          </div>
+        )}
 
         {showComplete && (
           <Confirm
