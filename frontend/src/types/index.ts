@@ -171,7 +171,7 @@ export interface DashboardData {
 
 export const MUSCLE_GROUPS = [
   'Klatka piersiowa', 'Plecy', 'Barki', 'Biceps', 'Triceps',
-  'Brzuch', 'Uda', 'Uda tylne', 'Pośladki', 'Łydki'
+  'Brzuch', 'Czworogłowy', 'Dwugłowy', 'Pośladki', 'Łydki'
 ];
 
 export const DAY_NAMES = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'];
