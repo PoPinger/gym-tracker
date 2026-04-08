@@ -196,7 +196,39 @@ def get_or_create_day_log(db: Session, week_id: int, plan_day_id: int, user_id: 
         TrainingDayLog.plan_day_id == plan_day_id,
         TrainingDayLog.user_id == user_id,
     ).first()
+
+    # Explicit query to avoid SQLAlchemy lazy-load / identity-map stale data
+    exercises = (
+        db.query(Exercise)
+        .filter(Exercise.plan_day_id == plan_day_id)
+        .order_by(Exercise.exercise_order)
+        .all()
+    )
+
     if log:
+        # Sync: add ExerciseLogs for any exercises added to the plan after this log was created
+        existing_exercise_ids = {el.exercise_id for el in log.exercise_logs}
+        added = False
+        for exercise in exercises:
+            if exercise.id not in existing_exercise_ids:
+                ex_log = ExerciseLog(
+                    training_day_log_id=log.id,
+                    exercise_id=exercise.id,
+                    user_id=user_id,
+                )
+                db.add(ex_log)
+                db.flush()
+                for s in range(1, exercise.sets + 1):
+                    db.add(SetLog(
+                        exercise_log_id=ex_log.id,
+                        set_number=s,
+                        reps=None,
+                        weight_kg=None,
+                    ))
+                added = True
+        if added:
+            db.commit()
+            db.refresh(log)
         return log
 
     log = TrainingDayLog(
@@ -208,23 +240,21 @@ def get_or_create_day_log(db: Session, week_id: int, plan_day_id: int, user_id: 
     db.add(log)
     db.flush()
 
-    plan_day = db.query(PlanDay).filter(PlanDay.id == plan_day_id).first()
-    if plan_day:
-        for exercise in plan_day.exercises:
-            ex_log = ExerciseLog(
-                training_day_log_id=log.id,
-                exercise_id=exercise.id,
-                user_id=user_id,
-            )
-            db.add(ex_log)
-            db.flush()
-            for s in range(1, exercise.sets + 1):
-                db.add(SetLog(
-                    exercise_log_id=ex_log.id,
-                    set_number=s,
-                    reps=None,
-                    weight_kg=None,
-                ))
+    for exercise in exercises:
+        ex_log = ExerciseLog(
+            training_day_log_id=log.id,
+            exercise_id=exercise.id,
+            user_id=user_id,
+        )
+        db.add(ex_log)
+        db.flush()
+        for s in range(1, exercise.sets + 1):
+            db.add(SetLog(
+                exercise_log_id=ex_log.id,
+                set_number=s,
+                reps=None,
+                weight_kg=None,
+            ))
 
     db.commit()
     db.refresh(log)
