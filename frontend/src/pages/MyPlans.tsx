@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { plansApi, logsApi } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
+import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
+import { useLanguage } from '../i18n/LanguageContext';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog } from '../types';
 import {
   ChevronRight, Copy, CheckCircle2, ArrowLeft,
@@ -11,11 +13,9 @@ import {
 
 type View = 'list' | 'weeks' | 'days' | 'workout' | 'edit-plan' | 'edit-exercises';
 
-/* ── edit draft types ── */
 interface EditExDraft { id?: number; name: string; muscle_group: string; sets: number; }
 interface EditDayDraft { id: number; day_name: string; exercises: EditExDraft[]; }
 
-/* ── helpers ── */
 const trend = (curr: number | null, prev: number | null) => {
   if (curr == null || prev == null) return null;
   return +(curr - prev).toFixed(1);
@@ -28,10 +28,9 @@ function Delta({ val }: { val: number | null }) {
   return <span className="delta delta-neu">—</span>;
 }
 
-/* ── modal potwierdzenia ── */
-function Confirm({ title, body, onOk, onCancel, okLabel = 'Potwierdź', okClass = 'btn-primary' }: {
+function ConfirmDialog({ title, body, onOk, onCancel, okLabel, cancelLabel, okClass = 'btn-primary' }: {
   title: string; body: string; onOk: () => void; onCancel: () => void;
-  okLabel?: string; okClass?: string;
+  okLabel: string; cancelLabel: string; okClass?: string;
 }) {
   return (
     <div className="modal-overlay">
@@ -39,7 +38,7 @@ function Confirm({ title, body, onOk, onCancel, okLabel = 'Potwierdź', okClass 
         <div className="modal-title">{title}</div>
         <p className="modal-body">{body}</p>
         <div className="modal-actions">
-          <button className="btn btn-outline btn-sm" onClick={onCancel}>Anuluj</button>
+          <button className="btn btn-outline btn-sm" onClick={onCancel}>{cancelLabel}</button>
           <button className={`btn ${okClass} btn-sm`} onClick={onOk}>{okLabel}</button>
         </div>
       </div>
@@ -49,6 +48,8 @@ function Confirm({ title, body, onOk, onCancel, okLabel = 'Potwierdź', okClass 
 
 export default function MyPlans() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+
   const [view, setView]             = useState<View>('list');
   const [plans, setPlans]           = useState<PlanSummary[]>([]);
   const [plan, setPlan]             = useState<Plan | null>(null);
@@ -58,13 +59,10 @@ export default function MyPlans() {
   const [loading, setLoading]       = useState(true);
   const [confirm, setConfirm]       = useState<null | 'day' | 'week' | 'plan'>(null);
 
-  /* workout – per-exercise save state */
   const [saving,  setSaving]  = useState<Record<number, boolean>>({});
   const [saved,   setSaved]   = useState<Record<number, boolean>>({});
-  /* workout – single weight per exercise */
   const [exerciseWeights, setExerciseWeights] = useState<Record<number, string>>({});
 
-  /* edit plan state */
   const [editPlan, setEditPlan]               = useState<Plan | null>(null);
   const [editName, setEditName]               = useState('');
   const [editDays, setEditDays]               = useState<EditDayDraft[]>([]);
@@ -72,7 +70,6 @@ export default function MyPlans() {
   const [editSaving, setEditSaving]           = useState(false);
   const [editError, setEditError]             = useState('');
 
-  /* delete state */
   const [planToDelete, setPlanToDelete] = useState<PlanSummary | null>(null);
 
   const loadPlans = useCallback(async () => {
@@ -83,7 +80,6 @@ export default function MyPlans() {
 
   useEffect(() => { loadPlans(); }, [loadPlans]);
 
-  /* ── navigation ── */
   const openPlan = async (p: PlanSummary) => {
     const [pr, wr] = await Promise.all([plansApi.get(p.id), plansApi.getWeeks(p.id)]);
     setPlan(pr.data); setWeeks(wr.data); setView('weeks');
@@ -103,7 +99,6 @@ export default function MyPlans() {
     const r = await logsApi.getDayLog(resolvedId!);
     const log: DayLog = r.data;
 
-    // initialise one weight per exercise from the first logged set
     const weights: Record<number, string> = {};
     for (const el of log.exercise_logs) {
       const w = el.set_logs.find(s => s.weight_kg != null)?.weight_kg ?? null;
@@ -114,7 +109,6 @@ export default function MyPlans() {
     setView('workout');
   };
 
-  /* ── workout editing ── */
   const editSet = (exLogId: number, setNum: number, raw: string) => {
     const val = raw === '' ? null : Number(raw);
     setDayLog(prev => {
@@ -177,7 +171,6 @@ export default function MyPlans() {
 
   const copyPlan = async (id: number) => { await plansApi.copy(id); await loadPlans(); };
 
-  /* ── plan editing ── */
   const openEdit = async (p: PlanSummary) => {
     const r = await plansApi.get(p.id);
     const full: Plan = r.data;
@@ -204,7 +197,7 @@ export default function MyPlans() {
     try {
       await plansApi.updateStructure(editPlan.id, {
         name: editName,
-        days: editDays.map((d, _di) => ({
+        days: editDays.map((d) => ({
           id: d.id,
           day_name: d.day_name,
           exercises: d.exercises
@@ -215,11 +208,10 @@ export default function MyPlans() {
       await loadPlans();
       setView('list');
     } catch (e: any) {
-      setEditError(e.response?.data?.detail || 'Nie udało się zapisać zmian');
+      setEditError(e.response?.data?.detail || t('save_changes_error'));
     } finally { setEditSaving(false); }
   };
 
-  /* edit exercise helpers */
   const addEditEx = () => {
     setEditDays(d => d.map((day, i) => i !== editActiveDayIdx ? day : {
       ...day, exercises: [...day.exercises, { name: '', muscle_group: MUSCLE_GROUPS[0], sets: 3 }]
@@ -239,17 +231,16 @@ export default function MyPlans() {
   };
 
   const moveEditEx = (ei: number, dir: -1 | 1) => {
-    const t = ei + dir;
+    const target = ei + dir;
     setEditDays(d => d.map((day, i) => {
       if (i !== editActiveDayIdx) return day;
       const exs = [...day.exercises];
-      if (t < 0 || t >= exs.length) return day;
-      [exs[ei], exs[t]] = [exs[t], exs[ei]];
+      if (target < 0 || target >= exs.length) return day;
+      [exs[ei], exs[target]] = [exs[target], exs[ei]];
       return { ...day, exercises: exs };
     }));
   };
 
-  /* ── plan deletion ── */
   const deletePlan = async () => {
     if (!planToDelete) return;
     await plansApi.delete(planToDelete.id);
@@ -257,7 +248,6 @@ export default function MyPlans() {
     await loadPlans();
   };
 
-  /* comparison helpers */
   const prevW = (exId: number, setNum: number) =>
     dayLog?.prev_week_data?.[exId]?.find(s => s.set_number === setNum)?.weight_kg ?? null;
   const w1W = (exId: number, setNum: number) =>
@@ -266,29 +256,29 @@ export default function MyPlans() {
   const allDaysComplete  = weekInfo?.days.every(d => d.status === 'completed') ?? false;
   const allWeeksComplete = weeks.length > 0 && weeks.every(w => w.status === 'completed');
 
-  if (loading) return <div className="loading-screen"><div className="spinner" /><span className="loading-text">Ładowanie planów…</span></div>;
+  if (loading) return <div className="loading-screen"><div className="spinner" /><span className="loading-text">{t('loading_plans')}</span></div>;
 
-  /* ═══════════════════════════════════════════
-     LISTA PLANÓW
-  ═══════════════════════════════════════════ */
+  /* ═══ PLAN LIST ═══ */
   if (view === 'list') return (
     <div style={{ maxWidth: 800 }}>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Moje plany</h1>
-          <p className="page-subtitle">{plans.length} {plans.length === 1 ? 'plan' : 'planów'} łącznie</p>
+          <h1 className="page-title">{t('my_plans_title')}</h1>
+          <p className="page-subtitle">
+            {plans.length} {plans.length === 1 ? t('plans_count_1') : t('plans_count_other')} {t('plans_total_suffix')}
+          </p>
         </div>
         <button className="btn btn-primary" onClick={() => navigate('/create-plan')}>
-          <Plus size={16} /> Nowy plan
+          <Plus size={16} /> {t('new_plan_btn')}
         </button>
       </div>
 
       {plans.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-emoji">📋</div>
-          <h3>Brak planów</h3>
-          <p>Utwórz pierwszy plan treningowy i zacznij śledzić treningi</p>
-          <button className="btn btn-primary" onClick={() => navigate('/create-plan')}>Utwórz plan</button>
+          <h3>{t('no_plans_title')}</h3>
+          <p>{t('no_plans_body')}</p>
+          <button className="btn btn-primary" onClick={() => navigate('/create-plan')}>{t('create_plan_btn')}</button>
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
@@ -298,26 +288,26 @@ export default function MyPlans() {
                 <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:5 }}>
                   <span className="plan-card-name">{p.name}</span>
                   <span className={`badge ${p.status === 'completed' ? 'badge-completed' : 'badge-active'}`}>
-                    {p.status === 'completed' ? <><CheckCircle2 size={10} /> Ukończony</> : 'Aktywny'}
+                    {p.status === 'completed' ? <><CheckCircle2 size={10} /> {t('badge_completed')}</> : t('badge_active')}
                   </span>
                 </div>
                 <div className="plan-card-meta">
-                  {p.days_per_week} dni/tydz. · {p.months} mies. · {p.months * 4} tyg.
+                  {p.days_per_week} {t('days_per_week_abbr')} · {p.months} {t('months_abbr')} · {p.months * 4} {t('weeks_abbr')}
                 </div>
               </div>
               <div className="plan-card-actions">
                 <button className="btn btn-outline btn-sm" onClick={() => copyPlan(p.id)}>
-                  <Copy size={13} /> Kopiuj
+                  <Copy size={13} /> {t('copy_btn')}
                 </button>
                 <button className="btn btn-outline btn-sm" onClick={() => openEdit(p)}>
-                  <Pencil size={13} /> Edytuj
+                  <Pencil size={13} /> {t('edit_btn')}
                 </button>
                 <button className="btn btn-outline btn-sm" onClick={() => setPlanToDelete(p)}
                   style={{ color:'var(--danger)', borderColor:'var(--danger)' }}>
-                  <Trash2 size={13} /> Usuń
+                  <Trash2 size={13} /> {t('delete_btn')}
                 </button>
                 <button className="btn btn-primary btn-sm" onClick={() => openPlan(p)}>
-                  Otwórz <ChevronRight size={14} />
+                  {t('open_btn')} <ChevronRight size={14} />
                 </button>
               </div>
             </div>
@@ -326,43 +316,42 @@ export default function MyPlans() {
       )}
 
       {planToDelete && (
-        <Confirm
-          title="Usunąć plan?"
-          body="Czy na pewno chcesz usunąć ten plan? Tej operacji nie można cofnąć."
-          okLabel="Usuń plan" okClass="btn-danger"
+        <ConfirmDialog
+          title={t('delete_plan_title')}
+          body={t('delete_plan_body')}
+          okLabel={t('delete_plan_confirm')} okClass="btn-danger"
+          cancelLabel={t('cancel_btn')}
           onOk={deletePlan} onCancel={() => setPlanToDelete(null)}
         />
       )}
     </div>
   );
 
-  /* ═══════════════════════════════════════════
-     EDYCJA PLANU – LISTA DNI
-  ═══════════════════════════════════════════ */
+  /* ═══ EDIT PLAN – DAY LIST ═══ */
   if (view === 'edit-plan' && editPlan) {
     const activeEditDay = editDays[editActiveDayIdx];
     return (
       <div style={{ maxWidth: 720 }}>
         <button className="back-btn" onClick={() => setView('list')}>
-          <ArrowLeft size={15} /> Moje plany
+          <ArrowLeft size={15} /> {t('back_to_my_plans')}
         </button>
         <div className="page-header">
           <div>
-            <h1 className="page-title">Edytuj plan</h1>
+            <h1 className="page-title">{t('edit_plan_title')}</h1>
             <p className="page-subtitle">
-              {editPlan.days_per_week} dni/tydz. · {editPlan.months} mies. · {editPlan.months * 4} tyg.
+              {editPlan.days_per_week} {t('days_per_week_abbr')} · {editPlan.months} {t('months_abbr')} · {editPlan.months * 4} {t('weeks_abbr')}
             </p>
           </div>
         </div>
 
         <div className="card">
           <div className="form-group" style={{ marginBottom:24 }}>
-            <label className="form-label">Nazwa planu</label>
+            <label className="form-label">{t('plan_name_label')}</label>
             <input className="form-input" value={editName}
               onChange={e => setEditName(e.target.value)} />
           </div>
 
-          <div className="section-title">Dni treningowe</div>
+          <div className="section-title">{t('training_days_section')}</div>
           <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:24 }}>
             {editDays.map((day, i) => (
               <div key={day.id} style={{
@@ -384,8 +373,8 @@ export default function MyPlans() {
                   style={{ flexShrink:0, display:'flex', alignItems:'center', gap:6 }}>
                   <Dumbbell size={14} />
                   {day.exercises.length > 0
-                    ? `${day.exercises.length} ${day.exercises.length === 1 ? 'ćwiczenie' : 'ćwiczeń'}`
-                    : 'Dodaj ćwiczenia'}
+                    ? `${day.exercises.length} ${day.exercises.length === 1 ? t('exercise_singular') : t('exercises_plural')}`
+                    : t('add_exercises_btn')}
                 </button>
               </div>
             ))}
@@ -393,44 +382,41 @@ export default function MyPlans() {
 
           {editError && <div className="alert alert-error" style={{ marginBottom:16 }}>{editError}</div>}
           <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-            <button className="btn btn-outline" onClick={() => setView('list')}>Anuluj</button>
+            <button className="btn btn-outline" onClick={() => setView('list')}>{t('cancel_btn')}</button>
             <button className="btn btn-primary" disabled={editSaving} onClick={saveEdit}>
-              {editSaving ? 'Zapisywanie…' : 'Zapisz zmiany'}
+              {editSaving ? t('saving') : t('save_changes_btn')}
             </button>
           </div>
         </div>
 
-        {/* preview of active day's exercises (if any selected) */}
         {activeEditDay && activeEditDay.exercises.length > 0 && (
           <div style={{ marginTop:12, padding:'12px 16px', background:'var(--bg-subtle)', borderRadius:'var(--radius)', fontSize:13, color:'var(--text-muted)' }}>
-            <strong style={{ color:'var(--text-body)' }}>{activeEditDay.day_name}</strong> · {activeEditDay.exercises.length} ćwiczeń
+            <strong style={{ color:'var(--text-body)' }}>{activeEditDay.day_name}</strong> · {activeEditDay.exercises.length} {t('exercises_plural')}
           </div>
         )}
       </div>
     );
   }
 
-  /* ═══════════════════════════════════════════
-     EDYCJA ĆWICZEŃ DNIA
-  ═══════════════════════════════════════════ */
+  /* ═══ EDIT EXERCISES ═══ */
   if (view === 'edit-exercises' && editPlan) {
     const activeEditDay = editDays[editActiveDayIdx];
     return (
       <div style={{ maxWidth: 720 }}>
         <button className="back-btn" onClick={() => setView('edit-plan')}>
-          <ArrowLeft size={15} /> Wróć do dni
+          <ArrowLeft size={15} /> {t('back_to_days')}
         </button>
         <div className="page-header">
           <div>
             <h1 className="page-title">{activeEditDay?.day_name}</h1>
-            <p className="page-subtitle">Edytuj ćwiczenia dnia treningowego</p>
+            <p className="page-subtitle">{t('edit_exercises_subtitle')}</p>
           </div>
         </div>
 
         <div className="card">
           {(!activeEditDay || activeEditDay.exercises.length === 0) && (
             <div style={{ textAlign:'center', padding:'32px 0', color:'var(--text-muted)', fontSize:14 }}>
-              Brak ćwiczeń — dodaj pierwsze poniżej
+              {t('no_exercises_empty')}
             </div>
           )}
 
@@ -444,18 +430,20 @@ export default function MyPlans() {
                     <span style={{ fontSize:11, fontWeight:800, color:'var(--text-subtle)' }}>{ei+1}</span>
                   </div>
                   <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr auto', gap:8 }}>
-                    <input className="form-input" placeholder="Nazwa ćwiczenia"
+                    <input className="form-input" placeholder={t('exercise_name_edit_placeholder')}
                       value={ex.name} onChange={e => setEditEx(ei, 'name', e.target.value)} />
                     <select className="form-select" style={{ width:'auto', minWidth:130 }}
                       value={ex.muscle_group} onChange={e => setEditEx(ei, 'muscle_group', e.target.value)}>
-                      {MUSCLE_GROUPS.map(g => <option key={g}>{g}</option>)}
+                      {MUSCLE_GROUPS.map(g => (
+                        <option key={g} value={g}>{t(MUSCLE_GROUP_TO_KEY[g] ?? 'muscle_chest')}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingLeft:36 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>Serie:</span>
+                    <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>{t('sets_label')}</span>
                     <div style={{ display:'flex', alignItems:'center', gap:6, background:'white',
                       border:'1.5px solid var(--border)', borderRadius:8, padding:'4px 8px' }}>
                       <button style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)',
@@ -483,33 +471,31 @@ export default function MyPlans() {
           </div>
 
           <button className="btn btn-outline btn-full" onClick={addEditEx} style={{ marginBottom:20 }}>
-            <Plus size={16} /> Dodaj ćwiczenie
+            <Plus size={16} /> {t('add_exercise_btn')}
           </button>
 
           <button className="btn btn-primary" onClick={() => setView('edit-plan')}>
-            <CheckCircle2 size={15} /> Gotowe
+            <CheckCircle2 size={15} /> {t('done_label')}
           </button>
         </div>
       </div>
     );
   }
 
-  /* ═══════════════════════════════════════════
-     TYGODNIE
-  ═══════════════════════════════════════════ */
+  /* ═══ WEEKS VIEW ═══ */
   if (view === 'weeks' && plan) return (
     <div style={{ maxWidth: 900 }}>
       <button className="back-btn" onClick={() => setView('list')}>
-        <ArrowLeft size={15} /> Moje plany
+        <ArrowLeft size={15} /> {t('back_to_my_plans')}
       </button>
       <div className="page-header">
         <div>
           <h1 className="page-title">{plan.name}</h1>
-          <p className="page-subtitle">{plan.months * 4} tyg. · {plan.days_per_week} dni/tydz.</p>
+          <p className="page-subtitle">{plan.months * 4} {t('weeks_abbr')} · {plan.days_per_week} {t('days_per_week_abbr')}</p>
         </div>
         {allWeeksComplete && plan.status !== 'completed' && (
           <button className="btn btn-success" onClick={() => setConfirm('plan')}>
-            <Trophy size={16} /> Zakończ plan
+            <Trophy size={16} /> {t('finish_plan_btn')}
           </button>
         )}
       </div>
@@ -520,37 +506,39 @@ export default function MyPlans() {
             onClick={() => openWeek(w)}>
             {w.status === 'completed'
               ? <CheckCircle2 size={24} color="var(--success)" />
-              : <span className="tile-num">T{w.week_number}</span>}
-            <span className="tile-label">Tydzień {w.week_number}</span>
-            {w.status === 'completed' && <span style={{ fontSize:11, color:'var(--success)', fontWeight:600 }}>Gotowe</span>}
+              : <span className="tile-num">{t('week_abbr')}{w.week_number}</span>}
+            <span className="tile-label">{t('week_tile_label')} {w.week_number}</span>
+            {w.status === 'completed' && <span style={{ fontSize:11, color:'var(--success)', fontWeight:600 }}>{t('done_label')}</span>}
           </div>
         ))}
       </div>
 
       {confirm === 'plan' && (
-        <Confirm title="Zakończyć plan?" body="Oznacz plan jako ukończony. Wszystkie dane pozostają zapisane i można je edytować."
-          okLabel="Zakończ plan" okClass="btn-success"
-          onOk={() => { finishPlan(); setConfirm(null); }} onCancel={() => setConfirm(null)} />
+        <ConfirmDialog
+          title={t('finish_plan_title')}
+          body={t('finish_plan_body')}
+          okLabel={t('finish_plan_btn')} okClass="btn-success"
+          cancelLabel={t('cancel_btn')}
+          onOk={() => { finishPlan(); setConfirm(null); }} onCancel={() => setConfirm(null)}
+        />
       )}
     </div>
   );
 
-  /* ═══════════════════════════════════════════
-     DNI
-  ═══════════════════════════════════════════ */
+  /* ═══ DAYS VIEW ═══ */
   if (view === 'days' && weekInfo && plan) return (
     <div style={{ maxWidth: 700 }}>
       <button className="back-btn" onClick={() => setView('weeks')}>
-        <ArrowLeft size={15} /> Wszystkie tygodnie
+        <ArrowLeft size={15} /> {t('all_weeks')}
       </button>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Tydzień {weekInfo.week_number}</h1>
+          <h1 className="page-title">{t('week_tile_label')} {weekInfo.week_number}</h1>
           <p className="page-subtitle">{weekInfo.plan_name}</p>
         </div>
         {allDaysComplete && weekInfo.status !== 'completed' && (
           <button className="btn btn-success" onClick={() => setConfirm('week')}>
-            <CheckCircle2 size={16} /> Zakończ tydzień
+            <CheckCircle2 size={16} /> {t('finish_week_btn')}
           </button>
         )}
       </div>
@@ -564,38 +552,39 @@ export default function MyPlans() {
               ? <CheckCircle2 size={24} color="var(--success)" />
               : <Dumbbell size={24} color="var(--text-subtle)" />}
             <span className="tile-num" style={{ fontSize:15 }}>{d.day_name}</span>
-            <span className="tile-label">{d.status === 'completed' ? 'Gotowe' : 'Dotknij, aby trenować'}</span>
+            <span className="tile-label">{d.status === 'completed' ? t('done_label') : t('tap_to_train')}</span>
           </div>
         ))}
       </div>
 
       {confirm === 'week' && (
-        <Confirm title={`Zakończyć tydzień ${weekInfo.week_number}?`}
-          body="Oznacz tydzień jako ukończony. Możesz edytować dane później."
-          okLabel="Zakończ tydzień" okClass="btn-success"
-          onOk={() => { finishWeek(); setConfirm(null); }} onCancel={() => setConfirm(null)} />
+        <ConfirmDialog
+          title={`${t('finish_week_question')} ${weekInfo.week_number}?`}
+          body={t('finish_week_body')}
+          okLabel={t('finish_week_btn')} okClass="btn-success"
+          cancelLabel={t('cancel_btn')}
+          onOk={() => { finishWeek(); setConfirm(null); }} onCancel={() => setConfirm(null)}
+        />
       )}
     </div>
   );
 
-  /* ═══════════════════════════════════════════
-     TRENING (logger)
-  ═══════════════════════════════════════════ */
+  /* ═══ WORKOUT LOGGER ═══ */
   if (view === 'workout' && dayLog && weekInfo) {
-    const dayName = weekInfo.days.find(d => d.plan_day_id === dayLog.plan_day_id)?.day_name ?? 'Trening';
+    const dayName = weekInfo.days.find(d => d.plan_day_id === dayLog.plan_day_id)?.day_name ?? t('training_fallback');
     return (
       <div style={{ maxWidth: 700 }}>
         <button className="back-btn" onClick={() => setView('days')}>
-          <ArrowLeft size={15} /> Tydzień {weekInfo.week_number}
+          <ArrowLeft size={15} /> {t('week_tile_label')} {weekInfo.week_number}
         </button>
         <div className="page-header">
           <div>
             <h1 className="page-title">{dayName}</h1>
             <p className="page-subtitle">
-              {dayLog.plan_name} · Tydzień {dayLog.week_number}
+              {dayLog.plan_name} · {t('week_tile_label')} {dayLog.week_number}
               {dayLog.status === 'completed' && (
                 <span style={{ marginLeft:8 }}>
-                  <span className="badge badge-completed"><CheckCircle2 size={10} /> Ukończony</span>
+                  <span className="badge badge-completed"><CheckCircle2 size={10} /> {t('badge_completed')}</span>
                 </span>
               )}
             </p>
@@ -611,13 +600,16 @@ export default function MyPlans() {
             const curW    = exerciseWeights[el.id] !== '' ? Number(exerciseWeights[el.id]) : null;
             const dPrev   = trend(curW, pw);
             const dW1     = trend(curW, w1);
+            const muscleKey = MUSCLE_GROUP_TO_KEY[el.muscle_group];
 
             return (
               <div key={el.id} className="exercise-card">
                 <div className="ex-header">
                   <div>
                     <div className="ex-name">{el.exercise_name}</div>
-                    <div className="ex-meta">{el.muscle_group} · {el.sets} serii</div>
+                    <div className="ex-meta">
+                      {muscleKey ? t(muscleKey) : el.muscle_group} · {el.sets} {t('sets_unit')}
+                    </div>
                   </div>
                   <button
                     className={`btn btn-sm ${saved[el.id] ? 'btn-success' : 'btn-outline'}`}
@@ -625,29 +617,27 @@ export default function MyPlans() {
                     onClick={() => saveSets(el.id)}
                     style={{ flexShrink:0 }}
                   >
-                    {saving[el.id] ? 'Zapisywanie…' : saved[el.id] ? <><CheckCircle2 size={14} /> Zapisano</> : 'Zapisz'}
+                    {saving[el.id] ? t('save_sets_saving') : saved[el.id] ? <><CheckCircle2 size={14} /> {t('save_sets_saved')}</> : t('save_sets_btn')}
                   </button>
                 </div>
 
-                {/* Sets – reps only */}
                 <div className="sets-header" style={{ gridTemplateColumns:'40px 1fr' }}>
-                  <span>Seria</span>
-                  <span>Powt.</span>
+                  <span>{t('sets_header')}</span>
+                  <span>{t('reps_header')}</span>
                 </div>
 
                 {el.set_logs.map(s => (
                   <div key={s.set_number} className="set-row" style={{ gridTemplateColumns:'40px 1fr' }}>
                     <span className="set-num">{s.set_number}</span>
-                    <input type="number" className="set-input" placeholder="powt." min={0}
+                    <input type="number" className="set-input" placeholder={t('reps_placeholder')} min={0}
                       value={s.reps ?? ''}
                       onChange={e => editSet(el.id, s.set_number, e.target.value)} />
                   </div>
                 ))}
 
-                {/* Single weight field for entire exercise */}
                 <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:10, flexWrap:'wrap',
                   paddingTop:10, borderTop:'1px solid var(--border)' }}>
-                  <span style={{ fontSize:13, fontWeight:600, color:'var(--text-muted)' }}>Ciężar:</span>
+                  <span style={{ fontSize:13, fontWeight:600, color:'var(--text-muted)' }}>{t('weight_field_label')}</span>
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                     <input type="number" className="set-input" placeholder="0" step={0.5} min={0}
                       style={{ width:80 }}
@@ -660,12 +650,12 @@ export default function MyPlans() {
                     <div className="prev-data" style={{ marginTop:0 }}>
                       {hasPrev && pw != null && (
                         <span className="prev-item">
-                          poprz.: {pw}kg <Delta val={dPrev} />
+                          {t('prev_week_abbr')} {pw}kg <Delta val={dPrev} />
                         </span>
                       )}
                       {showW1 && w1 != null && (
                         <span className="prev-item">
-                          tydz.1: {w1}kg <Delta val={dW1} />
+                          {t('week1_abbr')} {w1}kg <Delta val={dW1} />
                         </span>
                       )}
                     </div>
@@ -678,14 +668,18 @@ export default function MyPlans() {
 
         <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid var(--border)' }}>
           <button className="btn btn-success btn-full btn-lg" onClick={() => setConfirm('day')}>
-            <CheckCircle2 size={18} /> Zakończ dzień
+            <CheckCircle2 size={18} /> {t('finish_day_btn')}
           </button>
         </div>
 
         {confirm === 'day' && (
-          <Confirm title="Zakończyć trening?" body="Oznacz dzień jako ukończony. Możesz edytować wpisy później."
-            okLabel="Zakończ dzień" okClass="btn-success"
-            onOk={() => { finishDay(); setConfirm(null); }} onCancel={() => setConfirm(null)} />
+          <ConfirmDialog
+            title={t('finish_day_title')}
+            body={t('finish_day_body')}
+            okLabel={t('finish_day_btn')} okClass="btn-success"
+            cancelLabel={t('cancel_btn')}
+            onOk={() => { finishDay(); setConfirm(null); }} onCancel={() => setConfirm(null)}
+          />
         )}
       </div>
     );

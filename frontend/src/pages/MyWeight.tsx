@@ -1,14 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { weightApi } from '../services/api';
+import { useLanguage } from '../i18n/LanguageContext';
 import type { WeightCycle, WeightWeek } from '../types';
-import { DAY_NAMES } from '../types';
 import { Scale, ArrowLeft, CheckCircle2, RotateCcw, TrendingDown, TrendingUp, Plus } from 'lucide-react';
 
 type View = 'setup' | 'weeks' | 'week-detail';
 
-function Confirm({ title, body, onOk, onCancel, okLabel = 'Potwierdź', okClass = 'btn-primary' }: {
+function ConfirmDialog({ title, body, onOk, onCancel, okLabel, cancelLabel, okClass = 'btn-primary' }: {
   title: string; body: string; onOk: () => void; onCancel: () => void;
-  okLabel?: string; okClass?: string;
+  okLabel: string; cancelLabel: string; okClass?: string;
 }) {
   return (
     <div className="modal-overlay">
@@ -16,7 +16,7 @@ function Confirm({ title, body, onOk, onCancel, okLabel = 'Potwierdź', okClass 
         <div className="modal-title">{title}</div>
         <p className="modal-body">{body}</p>
         <div className="modal-actions">
-          <button className="btn btn-outline btn-sm" onClick={onCancel}>Anuluj</button>
+          <button className="btn btn-outline btn-sm" onClick={onCancel}>{cancelLabel}</button>
           <button className={`btn ${okClass} btn-sm`} onClick={onOk}>{okLabel}</button>
         </div>
       </div>
@@ -24,7 +24,7 @@ function Confirm({ title, body, onOk, onCancel, okLabel = 'Potwierdź', okClass 
   );
 }
 
-function DiffBadge({ val }: { val: number | null }) {
+function DiffBadge({ val, noChangeLabel }: { val: number | null; noChangeLabel: string }) {
   if (val === null) return null;
   if (val < 0) return (
     <span style={{ display:'inline-flex', alignItems:'center', gap:3, color:'var(--success)', fontWeight:700, fontSize:14 }}>
@@ -36,10 +36,12 @@ function DiffBadge({ val }: { val: number | null }) {
       <TrendingUp size={13} />+{val} kg
     </span>
   );
-  return <span style={{ color:'var(--text-muted)', fontWeight:600, fontSize:14 }}>— bez zmian</span>;
+  return <span style={{ color:'var(--text-muted)', fontWeight:600, fontSize:14 }}>{noChangeLabel}</span>;
 }
 
 export default function MyWeight() {
+  const { t } = useLanguage();
+
   const [cycle, setCycle]               = useState<WeightCycle | null>(null);
   const [loading, setLoading]           = useState(true);
   const [view, setView]                 = useState<View>('setup');
@@ -83,13 +85,13 @@ export default function MyWeight() {
   const handleSetup = async (e: React.FormEvent) => {
     e.preventDefault();
     const w = parseFloat(startWeight);
-    if (isNaN(w) || w <= 0) { setSetupError('Podaj prawidłową wagę'); return; }
+    if (isNaN(w) || w <= 0) { setSetupError(t('setup_error_invalid')); return; }
     setSetupLoading(true); setSetupError('');
     try {
       const res = await weightApi.createCycle(w, months);
       setCycle(res.data); setView('weeks');
     } catch (err: any) {
-      setSetupError(err.response?.data?.detail || 'Nie udało się utworzyć cyklu');
+      setSetupError(err.response?.data?.detail || t('setup_error_default'));
     } finally { setSetupLoading(false); }
   };
 
@@ -153,17 +155,23 @@ export default function MyWeight() {
     return prev ? computeAverage(prev) : null;
   };
 
+  // Translated day names by index (0=Mon … 6=Sun)
+  const dayNames = [
+    t('day_mon'), t('day_tue'), t('day_wed'),
+    t('day_thu'), t('day_fri'), t('day_sat'), t('day_sun'),
+  ];
+
   if (loading) return (
-    <div className="loading-screen"><div className="spinner" /><span className="loading-text">Ładowanie danych wagowych…</span></div>
+    <div className="loading-screen"><div className="spinner" /><span className="loading-text">{t('loading_weight')}</span></div>
   );
 
-  /* ═══ KONFIGURACJA ═══ */
+  /* ═══ SETUP ═══ */
   if (view === 'setup') return (
     <div style={{ maxWidth: 520 }}>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Moja waga</h1>
-          <p className="page-subtitle">Śledź postępy wagowe w czasie</p>
+          <h1 className="page-title">{t('my_weight_title')}</h1>
+          <p className="page-subtitle">{t('my_weight_subtitle')}</p>
         </div>
       </div>
 
@@ -173,8 +181,8 @@ export default function MyWeight() {
             <Scale size={20} color="var(--primary)" />
           </div>
           <div>
-            <div style={{ fontSize:16, fontWeight:800, color:'var(--text-heading)' }}>Skonfiguruj śledzenie wagi</div>
-            <div style={{ fontSize:13, color:'var(--text-muted)' }}>Loguj wagę codziennie, aby monitorować trendy</div>
+            <div style={{ fontSize:16, fontWeight:800, color:'var(--text-heading)' }}>{t('setup_weight_title')}</div>
+            <div style={{ fontSize:13, color:'var(--text-muted)' }}>{t('setup_weight_subtitle')}</div>
           </div>
         </div>
 
@@ -182,10 +190,10 @@ export default function MyWeight() {
 
         <form onSubmit={handleSetup} style={{ display:'flex', flexDirection:'column', gap:20 }}>
           <div className="form-group">
-            <label className="form-label">Waga startowa (kg)</label>
+            <label className="form-label">{t('start_weight_label')}</label>
             <input
               type="number" className="form-input"
-              placeholder="np. 75.5" step="0.1" min="1"
+              placeholder={t('start_weight_placeholder')} step="0.1" min="1"
               value={startWeight} onChange={e => setStartWeight(e.target.value)}
               required
             />
@@ -193,8 +201,8 @@ export default function MyWeight() {
 
           <div className="form-group">
             <label className="form-label">
-              Czas trwania — <strong>{months} {months === 1 ? 'miesiąc' : 'miesięcy'}</strong>
-              <span style={{ color:'var(--text-muted)', fontWeight:400 }}> · {months * 4} tygodni</span>
+              {t('duration_label')} <strong>{months} {months === 1 ? t('month_singular') : t('months_plural')}</strong>
+              <span style={{ color:'var(--text-muted)', fontWeight:400 }}> · {months * 4} {t('weeks_label')}</span>
             </label>
             <div className="num-picker" style={{ marginTop:10 }}>
               {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
@@ -206,35 +214,35 @@ export default function MyWeight() {
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={setupLoading} style={{ marginTop:4 }}>
-            {setupLoading ? 'Konfigurowanie…' : <><Plus size={16} /> Rozpocznij śledzenie</>}
+            {setupLoading ? t('configuring') : <><Plus size={16} /> {t('start_tracking_btn')}</>}
           </button>
         </form>
       </div>
     </div>
   );
 
-  /* ═══ TYGODNIE ═══ */
+  /* ═══ WEEKS VIEW ═══ */
   if (view === 'weeks' && cycle) {
     const allComplete = cycle.weeks.every(w => w.status === 'completed');
     return (
       <div style={{ maxWidth: 900 }}>
         <div className="page-header">
           <div>
-            <h1 className="page-title">Moja waga</h1>
+            <h1 className="page-title">{t('my_weight_title')}</h1>
             <p className="page-subtitle">
-              Rozpoczęto od <strong>{cycle.start_weight} kg</strong> · {cycle.months} {cycle.months === 1 ? 'miesiąc' : 'miesięcy'}
+              {t('started_from')} <strong>{cycle.start_weight} kg</strong> · {cycle.months} {cycle.months === 1 ? t('month_singular') : t('months_plural')}
             </p>
           </div>
           <button className="btn btn-outline btn-sm" onClick={() => setShowReset(true)}
             style={{ color:'var(--danger)', borderColor:'var(--danger)' }}>
-            <RotateCcw size={13} /> Zresetuj
+            <RotateCcw size={13} /> {t('reset_btn')}
           </button>
         </div>
 
         {allComplete && (
           <div style={{ background:'var(--success-light)', border:'1px solid var(--success-border)', borderRadius:'var(--radius-lg)', padding:'14px 18px', marginBottom:20, display:'flex', alignItems:'center', gap:10 }}>
             <CheckCircle2 size={18} color="var(--success)" />
-            <span style={{ fontSize:14, fontWeight:600, color:'var(--success)' }}>Wszystkie tygodnie ukończone! Zakończyłeś cykl śledzenia wagi.</span>
+            <span style={{ fontSize:14, fontWeight:600, color:'var(--success)' }}>{t('all_weeks_complete_msg')}</span>
           </div>
         )}
 
@@ -251,7 +259,7 @@ export default function MyWeight() {
                 {week.status === 'completed'
                   ? <CheckCircle2 size={24} color="var(--success)" />
                   : <span className="tile-num">T{week.week_number}</span>}
-                <span className="tile-label">Tydzień {week.week_number}</span>
+                <span className="tile-label">{t('week_tile_label')} {week.week_number}</span>
                 {avg != null && (
                   <span style={{ fontSize:13, fontWeight:700, color:'var(--text-body)' }}>{avg} kg</span>
                 )}
@@ -266,10 +274,11 @@ export default function MyWeight() {
         </div>
 
         {showReset && (
-          <Confirm
-            title="Zresetować śledzenie wagi?"
-            body="Wszystkie dane wagowe zostaną trwale usunięte. Tej operacji nie można cofnąć."
-            okLabel="Zresetuj" okClass="btn-danger"
+          <ConfirmDialog
+            title={t('reset_weight_title')}
+            body={t('reset_weight_body')}
+            okLabel={t('reset_btn')} okClass="btn-danger"
+            cancelLabel={t('cancel_btn')}
             onOk={handleReset} onCancel={() => setShowReset(false)}
           />
         )}
@@ -277,7 +286,7 @@ export default function MyWeight() {
     );
   }
 
-  /* ═══ SZCZEGÓŁY TYGODNIA ═══ */
+  /* ═══ WEEK DETAIL ═══ */
   if (view === 'week-detail' && selectedWeek && cycle) {
     const avg      = computeAverage(selectedWeek);
     const prevAvg  = getPrevWeekAvg(selectedWeek.week_number);
@@ -287,23 +296,22 @@ export default function MyWeight() {
     return (
       <div style={{ maxWidth: 700 }}>
         <button className="back-btn" onClick={() => setView('weeks')}>
-          <ArrowLeft size={15} /> Wszystkie tygodnie
+          <ArrowLeft size={15} /> {t('all_weeks_back')}
         </button>
 
         <div className="page-header">
           <div>
-            <h1 className="page-title">Tydzień {selectedWeek.week_number}</h1>
-            <p className="page-subtitle">Wpisz dzienne odczyty wagi</p>
+            <h1 className="page-title">{t('week_tile_label')} {selectedWeek.week_number}</h1>
+            <p className="page-subtitle">{t('my_weight_subtitle')}</p>
           </div>
         </div>
 
-        {/* Statystyki */}
         {avg != null && (
           <div className="card" style={{ marginBottom:16 }}>
             <div style={{ display:'flex', gap:32, flexWrap:'wrap' }}>
               <div>
                 <div style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--text-subtle)', marginBottom:4 }}>
-                  Średnia tygodnia
+                  {t('week_avg_label')}
                 </div>
                 <div style={{ fontSize:28, fontWeight:900, color:'var(--text-heading)', letterSpacing:'-0.5px' }}>
                   {avg} <span style={{ fontSize:16, fontWeight:500, color:'var(--text-muted)' }}>kg</span>
@@ -312,27 +320,26 @@ export default function MyWeight() {
               {diffPrev !== null && (
                 <div>
                   <div style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--text-subtle)', marginBottom:4 }}>
-                    vs poprz. tydz.
+                    {t('vs_prev_week_label')}
                   </div>
-                  <div style={{ marginTop:4 }}><DiffBadge val={diffPrev} /></div>
+                  <div style={{ marginTop:4 }}><DiffBadge val={diffPrev} noChangeLabel={t('no_change')} /></div>
                 </div>
               )}
               {diffW1 !== null && (
                 <div>
                   <div style={{ fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--text-subtle)', marginBottom:4 }}>
-                    vs Tydzień 1
+                    {t('vs_week1_label')}
                   </div>
-                  <div style={{ marginTop:4 }}><DiffBadge val={diffW1} /></div>
+                  <div style={{ marginTop:4 }}><DiffBadge val={diffW1} noChangeLabel={t('no_change')} /></div>
                 </div>
-          )}
+              )}
             </div>
           </div>
         )}
 
-        {/* Dzienne odczyty */}
         <div className="card">
           <div style={{ fontSize:13, fontWeight:600, color:'var(--text-muted)', marginBottom:14 }}>
-            Dzienne odczyty
+            {t('daily_readings_label')}
           </div>
           <div className="weight-grid">
             {selectedWeek.day_logs
@@ -341,7 +348,7 @@ export default function MyWeight() {
                 const isSaved = dayLog.weight_kg != null || daySaved[dayLog.id];
                 return (
                   <div key={dayLog.id} className="weight-day">
-                    <div className="weight-day-name">{DAY_NAMES[dayLog.day_of_week]}</div>
+                    <div className="weight-day-name">{dayNames[dayLog.day_of_week]}</div>
                     <input
                       type="number"
                       className={`weight-day-input${isSaved ? ' is-saved' : ''}`}
@@ -355,7 +362,7 @@ export default function MyWeight() {
                       disabled={daySaving[dayLog.id]}
                       onClick={() => saveDayWeight(dayLog.id, selectedWeek.id, dayLog.day_of_week)}
                     >
-                      {daySaving[dayLog.id] ? '…' : daySaved[dayLog.id] ? <CheckCircle2 size={13} /> : 'Zapisz'}
+                      {daySaving[dayLog.id] ? '…' : daySaved[dayLog.id] ? <CheckCircle2 size={13} /> : t('save_sets_btn')}
                     </button>
                   </div>
                 );
@@ -366,16 +373,17 @@ export default function MyWeight() {
         {selectedWeek.status !== 'completed' && (
           <div style={{ marginTop: 20 }}>
             <button className="btn btn-success btn-full" onClick={() => setShowComplete(true)}>
-              <CheckCircle2 size={16} /> Zakończ tydzień
+              <CheckCircle2 size={16} /> {t('finish_week_btn')}
             </button>
           </div>
         )}
 
         {showComplete && (
-          <Confirm
-            title={`Zakończyć tydzień ${selectedWeek.week_number}?`}
-            body="Oznacz tydzień jako ukończony. Możesz edytować wpisy później."
-            okLabel="Zakończ tydzień" okClass="btn-success"
+          <ConfirmDialog
+            title={`${t('finish_week_question')} ${selectedWeek.week_number}?`}
+            body={t('finish_week_body')}
+            okLabel={t('finish_week_btn')} okClass="btn-success"
+            cancelLabel={t('cancel_btn')}
             onOk={() => completeWeek(selectedWeek.id)}
             onCancel={() => setShowComplete(false)}
           />

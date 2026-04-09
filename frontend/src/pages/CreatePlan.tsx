@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { plansApi } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
+import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Plus, Trash2, ChevronUp, ChevronDown, ArrowRight, ArrowLeft, Dumbbell } from 'lucide-react';
 
 type Step = 1 | 2 | 3 | 4;
@@ -9,26 +11,19 @@ type Step = 1 | 2 | 3 | 4;
 interface ExDraft { name: string; muscle_group: string; sets: number; }
 interface DayDraft { day_name: string; exercises: ExDraft[]; }
 
-const DEFAULT_DAY_NAMES = ['Pchanie', 'Ciąganie', 'Nogi', 'Górna część', 'Dolna część', 'Całe ciało', 'Kardio'];
-
-function StepIndicator({ step }: { step: Step }) {
-  const steps = [
-    { n:1, label:'Dni/tydz.' },
-    { n:2, label:'Czas' },
-    { n:3, label:'Nazwy dni' },
-    { n:4, label:'Ćwiczenia' },
-  ];
+function StepIndicator({ step, labels }: { step: Step; labels: string[] }) {
   return (
     <div className="steps">
-      {steps.map((s, i) => {
-        const state = step > s.n ? 'done' : step === s.n ? 'active' : 'todo';
+      {labels.map((label, i) => {
+        const n = (i + 1) as Step;
+        const state = step > n ? 'done' : step === n ? 'active' : 'todo';
         return (
-          <div key={s.n} className={`step-item ${state}`} style={{ flex: i < steps.length - 1 ? 1 : 'none', display:'flex', alignItems:'center', minWidth: 0 }}>
+          <div key={n} className={`step-item ${state}`} style={{ flex: i < labels.length - 1 ? 1 : 'none', display:'flex', alignItems:'center', minWidth: 0 }}>
             <div className={`step-bubble ${state}`}>
-              {state === 'done' ? '✓' : s.n}
+              {state === 'done' ? '✓' : n}
             </div>
-            <span className="step-name" style={{ whiteSpace:'nowrap', marginRight:6 }}>{s.label}</span>
-            {i < steps.length - 1 && <div className={`step-connector ${state === 'done' ? 'done' : ''}`} />}
+            <span className="step-name" style={{ whiteSpace:'nowrap', marginRight:6 }}>{label}</span>
+            {i < labels.length - 1 && <div className={`step-connector ${state === 'done' ? 'done' : ''}`} />}
           </div>
         );
       })}
@@ -38,18 +33,32 @@ function StepIndicator({ step }: { step: Step }) {
 
 export default function CreatePlan() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+
   const [step, setStep]               = useState<Step>(1);
   const [daysPerWeek, setDaysPerWeek] = useState(3);
   const [months, setMonths]           = useState(3);
-  const [planName, setPlanName]       = useState('Mój plan treningowy');
+  const [planName, setPlanName]       = useState('');
   const [days, setDays]               = useState<DayDraft[]>([]);
   const [activeDayIdx, setActiveDayIdx] = useState<number>(0);
   const [saving, setSaving]           = useState(false);
   const [error, setError]             = useState('');
 
+  const defaultDayNames = [
+    t('default_day_push'), t('default_day_pull'), t('default_day_legs'),
+    t('default_day_upper'), t('default_day_lower'), t('default_day_full'), t('default_day_cardio'),
+  ];
+
+  const stepLabels = [
+    t('step_days_per_week'),
+    t('step_duration'),
+    t('step_day_names'),
+    t('step_exercises'),
+  ];
+
   const goToStep3 = () => {
     const next: DayDraft[] = Array.from({ length: daysPerWeek }, (_, i) =>
-      days[i] ?? { day_name: DEFAULT_DAY_NAMES[i] ?? `Dzień ${i + 1}`, exercises: [] }
+      days[i] ?? { day_name: defaultDayNames[i] ?? `${t('day_number_fallback')} ${i + 1}`, exercises: [] }
     );
     setDays(next);
     setActiveDayIdx(0);
@@ -81,12 +90,12 @@ export default function CreatePlan() {
   };
 
   const moveEx = (ei: number, dir: -1 | 1) => {
-    const t = ei + dir;
+    const target = ei + dir;
     setDays(d => d.map((day, i) => {
       if (i !== activeDayIdx) return day;
       const exs = [...day.exercises];
-      if (t < 0 || t >= exs.length) return day;
-      [exs[ei], exs[t]] = [exs[t], exs[ei]];
+      if (target < 0 || target >= exs.length) return day;
+      [exs[ei], exs[target]] = [exs[target], exs[ei]];
       return { ...day, exercises: exs };
     }));
   };
@@ -105,7 +114,7 @@ export default function CreatePlan() {
       });
       navigate('/plans');
     } catch (e: any) {
-      setError(e.response?.data?.detail || 'Nie udało się zapisać planu');
+      setError(e.response?.data?.detail || t('save_plan_error'));
     } finally {
       setSaving(false);
     }
@@ -117,23 +126,23 @@ export default function CreatePlan() {
     <div style={{ maxWidth: 720 }}>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Utwórz plan treningowy</h1>
-          <p className="page-subtitle">Zbuduj swój spersonalizowany harmonogram treningów</p>
+          <h1 className="page-title">{t('create_plan_title')}</h1>
+          <p className="page-subtitle">{t('create_plan_subtitle')}</p>
         </div>
       </div>
 
-      <StepIndicator step={step} />
+      <StepIndicator step={step} labels={stepLabels} />
 
       <div className="card">
 
-        {/* ── Krok 1: dni/tydzień ── */}
+        {/* Step 1: days/week */}
         {step === 1 && (
           <div>
             <h2 style={{ fontSize:18, fontWeight:800, color:'var(--text-heading)', marginBottom:6 }}>
-              Ile dni w tygodniu?
+              {t('step1_heading')}
             </h2>
             <p style={{ fontSize:14, color:'var(--text-muted)', marginBottom:24 }}>
-              Wybierz, jak często chcesz trenować każdego tygodnia.
+              {t('step1_body')}
             </p>
             <div className="num-picker" style={{ marginBottom:32 }}>
               {[1,2,3,4,5,6,7].map(n => (
@@ -143,23 +152,23 @@ export default function CreatePlan() {
             </div>
             <div style={{ background:'var(--primary-light)', borderRadius:10, padding:'12px 16px', marginBottom:28 }}>
               <span style={{ fontSize:13, color:'var(--primary)', fontWeight:600 }}>
-                {daysPerWeek} {daysPerWeek === 1 ? 'dzień treningowy' : 'dni treningowych'} w tygodniu
+                {daysPerWeek} {daysPerWeek === 1 ? t('training_day_singular') : t('training_days_plural')}
               </span>
             </div>
             <button className="btn btn-primary" onClick={() => setStep(2)}>
-              Dalej <ArrowRight size={16} />
+              {t('next_btn')} <ArrowRight size={16} />
             </button>
           </div>
         )}
 
-        {/* ── Krok 2: miesiące ── */}
+        {/* Step 2: months */}
         {step === 2 && (
           <div>
             <h2 style={{ fontSize:18, fontWeight:800, color:'var(--text-heading)', marginBottom:6 }}>
-              Na ile miesięcy?
+              {t('step2_heading')}
             </h2>
             <p style={{ fontSize:14, color:'var(--text-muted)', marginBottom:24 }}>
-              Określa łączny czas trwania planu.
+              {t('step2_body')}
             </p>
             <div className="num-picker" style={{ marginBottom:32 }}>
               {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
@@ -169,38 +178,38 @@ export default function CreatePlan() {
             </div>
             <div style={{ background:'var(--primary-light)', borderRadius:10, padding:'12px 16px', marginBottom:28 }}>
               <span style={{ fontSize:13, color:'var(--primary)', fontWeight:600 }}>
-                {months} mies. · {months * 4} tyg. łącznie · {months * 4 * daysPerWeek} sesji treningowych
+                {months} {t('months_abbr')} · {months * 4} {t('weeks_abbr')} · {months * 4 * daysPerWeek} {t('training_sessions')}
               </span>
             </div>
             <div style={{ display:'flex', gap:10 }}>
               <button className="btn btn-outline" onClick={() => setStep(1)}>
-                <ArrowLeft size={16} /> Wstecz
+                <ArrowLeft size={16} /> {t('back_btn')}
               </button>
               <button className="btn btn-primary" onClick={goToStep3}>
-                Dalej <ArrowRight size={16} />
+                {t('next_btn')} <ArrowRight size={16} />
               </button>
             </div>
           </div>
         )}
 
-        {/* ── Krok 3: nazwa planu + dni ── */}
+        {/* Step 3: plan name + days */}
         {step === 3 && (
           <div>
             <h2 style={{ fontSize:18, fontWeight:800, color:'var(--text-heading)', marginBottom:6 }}>
-              Skonfiguruj swój plan
+              {t('step3_heading')}
             </h2>
             <p style={{ fontSize:14, color:'var(--text-muted)', marginBottom:20 }}>
-              Nadaj nazwę planowi i każdemu dniu, następnie kliknij dzień, aby dodać ćwiczenia.
+              {t('step3_body')}
             </p>
 
             <div className="form-group" style={{ marginBottom:24 }}>
-              <label className="form-label">Nazwa planu</label>
+              <label className="form-label">{t('plan_name_label')}</label>
               <input className="form-input" value={planName}
                 onChange={e => setPlanName(e.target.value)}
-                placeholder="np. GBP 3-dniowy split" />
+                placeholder={t('plan_name_placeholder')} />
             </div>
 
-            <div className="section-title">Dni treningowe</div>
+            <div className="section-title">{t('training_days_section')}</div>
             <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:28 }}>
               {days.map((day, i) => (
                 <div key={i} style={{
@@ -214,15 +223,15 @@ export default function CreatePlan() {
                   <input className="form-input" style={{ flex:1, minWidth:0 }}
                     value={day.day_name}
                     onChange={e => setDayName(i, e.target.value)}
-                    placeholder={`Nazwa dnia ${i+1}`}
+                    placeholder={`${t('day_name_placeholder')} ${i+1}`}
                     onClick={e => e.stopPropagation()}
                   />
                   <button className="btn btn-outline btn-sm" onClick={() => goToExercises(i)}
                     style={{ flexShrink:0, display:'flex', alignItems:'center', gap:6 }}>
                     <Dumbbell size={14} />
                     {day.exercises.length > 0
-                      ? `${day.exercises.length} ${day.exercises.length === 1 ? 'ćwiczenie' : 'ćwiczeń'}`
-                      : 'Dodaj ćwiczenia'}
+                      ? `${day.exercises.length} ${day.exercises.length === 1 ? t('exercise_singular') : t('exercises_plural')}`
+                      : t('add_exercises_btn')}
                   </button>
                 </div>
               ))}
@@ -231,31 +240,31 @@ export default function CreatePlan() {
             {error && <div className="alert alert-error">{error}</div>}
             <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
               <button className="btn btn-outline" onClick={() => setStep(2)}>
-                <ArrowLeft size={16} /> Wstecz
+                <ArrowLeft size={16} /> {t('back_btn')}
               </button>
               <button className="btn btn-primary" disabled={saving} onClick={savePlan}>
-                {saving ? 'Zapisywanie…' : <><span>Zapisz plan</span><ArrowRight size={16} /></>}
+                {saving ? t('saving') : <><span>{t('save_plan_btn')}</span><ArrowRight size={16} /></>}
               </button>
             </div>
           </div>
         )}
 
-        {/* ── Krok 4: ćwiczenia ── */}
+        {/* Step 4: exercises */}
         {step === 4 && activeDay && (
           <div>
             <button className="back-btn" onClick={() => setStep(3)}>
-              <ArrowLeft size={15} /> Wróć do dni
+              <ArrowLeft size={15} /> {t('back_to_days')}
             </button>
             <h2 style={{ fontSize:18, fontWeight:800, color:'var(--text-heading)', marginBottom:4 }}>
               {activeDay.day_name}
             </h2>
             <p style={{ fontSize:14, color:'var(--text-muted)', marginBottom:20 }}>
-              Dodaj ćwiczenia do tego dnia treningowego
+              {t('step4_body')}
             </p>
 
             {activeDay.exercises.length === 0 && (
               <div style={{ textAlign:'center', padding:'32px 0', color:'var(--text-muted)', fontSize:14 }}>
-                Brak ćwiczeń — dodaj pierwsze poniżej
+                {t('no_exercises_empty')}
               </div>
             )}
 
@@ -267,18 +276,20 @@ export default function CreatePlan() {
                       <span style={{ fontSize:11, fontWeight:800, color:'var(--text-subtle)' }}>{ei+1}</span>
                     </div>
                     <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr auto', gap:8 }}>
-                      <input className="form-input" placeholder="Nazwa ćwiczenia (np. Wyciskanie)"
+                      <input className="form-input" placeholder={t('exercise_name_placeholder')}
                         value={ex.name} onChange={e => setEx(ei, 'name', e.target.value)} />
                       <select className="form-select" style={{ width:'auto', minWidth:130 }}
                         value={ex.muscle_group} onChange={e => setEx(ei, 'muscle_group', e.target.value)}>
-                        {MUSCLE_GROUPS.map(g => <option key={g}>{g}</option>)}
+                        {MUSCLE_GROUPS.map(g => (
+                          <option key={g} value={g}>{t(MUSCLE_GROUP_TO_KEY[g] ?? 'muscle_chest')}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
 
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingLeft:36 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                      <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>Serie:</span>
+                      <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>{t('sets_label')}</span>
                       <div style={{ display:'flex', alignItems:'center', gap:6, background:'white', border:'1.5px solid var(--border)', borderRadius:8, padding:'4px 8px' }}>
                         <button style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', padding:'2px 4px', fontSize:18, lineHeight:1, display:'flex', alignItems:'center' }}
                           onClick={() => setEx(ei, 'sets', Math.max(1, ex.sets - 1))}>−</button>
@@ -308,16 +319,16 @@ export default function CreatePlan() {
             </div>
 
             <button className="btn btn-outline btn-full" onClick={addEx} style={{ marginBottom:24 }}>
-              <Plus size={16} /> Dodaj ćwiczenie
+              <Plus size={16} /> {t('add_exercise_btn')}
             </button>
 
             {error && <div className="alert alert-error">{error}</div>}
             <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
               <button className="btn btn-outline" onClick={() => setStep(3)}>
-                <ArrowLeft size={16} /> Wróć do dni
+                <ArrowLeft size={16} /> {t('back_to_days')}
               </button>
               <button className="btn btn-primary" disabled={saving} onClick={savePlan}>
-                {saving ? 'Zapisywanie…' : <><span>Zapisz plan</span><ArrowRight size={16} /></>}
+                {saving ? t('saving') : <><span>{t('save_plan_btn')}</span><ArrowRight size={16} /></>}
               </button>
             </div>
           </div>

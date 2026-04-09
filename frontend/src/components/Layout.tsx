@@ -1,23 +1,25 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../i18n/LanguageContext';
 import {
   LayoutDashboard, PlusCircle, ClipboardList, Scale,
   LogOut, Menu, X, Dumbbell
 } from 'lucide-react';
-
-const NAV = [
-  { path: '/',            label: 'Panel',          icon: LayoutDashboard },
-  { path: '/create-plan', label: 'Utwórz plan',    icon: PlusCircle },
-  { path: '/plans',       label: 'Moje plany',     icon: ClipboardList },
-  { path: '/weight',      label: 'Moja waga',      icon: Scale },
-];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { lang, setLang, t } = useLanguage();
+
+  const NAV = [
+    { path: '/',            label: t('nav_panel'),       icon: LayoutDashboard },
+    { path: '/create-plan', label: t('nav_create_plan'), icon: PlusCircle },
+    { path: '/plans',       label: t('nav_my_plans'),    icon: ClipboardList },
+    { path: '/weight',      label: t('nav_my_weight'),   icon: Scale },
+  ];
 
   const go = (path: string) => { navigate(path); setOpen(false); };
   const handleLogout = () => { logout(); navigate('/login'); };
@@ -48,13 +50,46 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </nav>
 
       <div className="sidebar-footer">
+        {/* Language selector */}
+        <div style={{
+          display: 'flex', gap: 6, padding: '10px 14px',
+          borderBottom: '1px solid var(--border)',
+        }}>
+          <button
+            onClick={() => setLang('pl')}
+            style={{
+              flex: 1, padding: '5px 8px', fontSize: 12, fontWeight: 600,
+              borderRadius: 8, cursor: 'pointer', border: '1.5px solid',
+              borderColor: lang === 'pl' ? 'var(--primary)' : 'var(--border)',
+              background: lang === 'pl' ? 'var(--primary-light)' : 'transparent',
+              color: lang === 'pl' ? 'var(--primary)' : 'var(--text-muted)',
+              transition: 'all 0.15s',
+            }}
+          >
+            🇵🇱 PL
+          </button>
+          <button
+            onClick={() => setLang('en')}
+            style={{
+              flex: 1, padding: '5px 8px', fontSize: 12, fontWeight: 600,
+              borderRadius: 8, cursor: 'pointer', border: '1.5px solid',
+              borderColor: lang === 'en' ? 'var(--primary)' : 'var(--border)',
+              background: lang === 'en' ? 'var(--primary-light)' : 'transparent',
+              color: lang === 'en' ? 'var(--primary)' : 'var(--text-muted)',
+              transition: 'all 0.15s',
+            }}
+          >
+            🇬🇧 EN
+          </button>
+        </div>
+
         <div className="user-row">
           <div className="user-avatar">{initials}</div>
           <div className="user-info">
-            <div className="user-name">{user?.display_name || 'Użytkownik'}</div>
+            <div className="user-name">{user?.display_name || t('nav_user_fallback')}</div>
             <div className="user-email">{user?.email}</div>
           </div>
-          <button className="logout-btn" onClick={handleLogout} title="Wyloguj">
+          <button className="logout-btn" onClick={handleLogout} title={t('nav_logout')}>
             <LogOut size={16} />
           </button>
         </div>
