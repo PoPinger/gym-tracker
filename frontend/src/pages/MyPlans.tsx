@@ -250,6 +250,8 @@ export default function MyPlans() {
 
   const prevW = (exId: number, setNum: number) =>
     dayLog?.prev_week_data?.[exId]?.find(s => s.set_number === setNum)?.weight_kg ?? null;
+  const prevR = (exId: number, setNum: number) =>
+    dayLog?.prev_week_data?.[exId]?.find(s => s.set_number === setNum)?.reps ?? null;
   const w1W = (exId: number, setNum: number) =>
     dayLog?.week1_data?.[exId]?.find(s => s.set_number === setNum)?.weight_kg ?? null;
 
@@ -621,19 +623,31 @@ export default function MyPlans() {
                   </button>
                 </div>
 
-                <div className="sets-header" style={{ gridTemplateColumns:'40px 1fr' }}>
+                <div className="sets-header" style={{ gridTemplateColumns:'40px 1fr 1fr' }}>
                   <span>{t('sets_header')}</span>
                   <span>{t('reps_header')}</span>
+                  <span>{t('prev_week_abbr')}</span>
                 </div>
 
-                {el.set_logs.map(s => (
-                  <div key={s.set_number} className="set-row" style={{ gridTemplateColumns:'40px 1fr' }}>
-                    <span className="set-num">{s.set_number}</span>
-                    <input type="number" className="set-input" placeholder={t('reps_placeholder')} min={0}
-                      value={s.reps ?? ''}
-                      onChange={e => editSet(el.id, s.set_number, e.target.value)} />
-                  </div>
-                ))}
+                {el.set_logs.map(s => {
+                  const prevReps = prevR(el.exercise_id, s.set_number);
+                  const dReps = trend(s.reps ?? null, prevReps);
+                  return (
+                    <div key={s.set_number} className="set-row" style={{ gridTemplateColumns:'40px 1fr 1fr' }}>
+                      <span className="set-num">{s.set_number}</span>
+                      <input type="number" className="set-input" placeholder={t('reps_placeholder')} min={0}
+                        value={s.reps ?? ''}
+                        onChange={e => editSet(el.id, s.set_number, e.target.value)} />
+                      {prevReps !== null ? (
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          {prevReps} <Delta val={dReps} />
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                    </div>
+                  );
+                })}
 
                 <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:10, flexWrap:'wrap',
                   paddingTop:10, borderTop:'1px solid var(--border)' }}>
