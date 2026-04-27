@@ -141,6 +141,30 @@ def update_plan_structure(db: Session, plan: TrainingPlan, data) -> TrainingPlan
                     ex.muscle_group = ex_data.muscle_group
                     ex.sets = ex_data.sets
                     ex.exercise_order = ex_data.exercise_order
+                    # Synchronizuj SetLog dla wszystkich istniejących ExerciseLog tego ćwiczenia
+                    existing_ex_logs = db.query(ExerciseLog).filter(
+                        ExerciseLog.exercise_id == ex.id
+                    ).all()
+                    for ex_log in existing_ex_logs:
+                        current_set_numbers = {
+                            s.set_number for s in db.query(SetLog)
+                            .filter(SetLog.exercise_log_id == ex_log.id).all()
+                        }
+                        new_sets = ex_data.sets
+                        for set_num in current_set_numbers:
+                            if set_num > new_sets:
+                                db.query(SetLog).filter(
+                                    SetLog.exercise_log_id == ex_log.id,
+                                    SetLog.set_number == set_num
+                                ).delete()
+                        for set_num in range(1, new_sets + 1):
+                            if set_num not in current_set_numbers:
+                                db.add(SetLog(
+                                    exercise_log_id=ex_log.id,
+                                    set_number=set_num,
+                                    reps=None,
+                                    weight_kg=None,
+                                ))
             else:
                 db.add(Exercise(
                     plan_day_id=day.id,
