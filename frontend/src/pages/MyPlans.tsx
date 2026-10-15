@@ -57,7 +57,7 @@ export default function MyPlans() {
   const [weekInfo, setWeekInfo]     = useState<WeekInfo | null>(null);
   const [dayLog, setDayLog]         = useState<DayLog | null>(null);
   const [loading, setLoading]       = useState(true);
-  const [confirm, setConfirm]       = useState<null | 'day' | 'week' | 'plan'>(null);
+  const [confirm, setConfirm]       = useState<null | 'day' | 'week' | 'plan' | 'shorten'>(null);
 
   const [saving,  setSaving]  = useState<Record<number, boolean>>({});
   const [saved,   setSaved]   = useState<Record<number, boolean>>({});
@@ -65,6 +65,7 @@ export default function MyPlans() {
 
   const [editPlan, setEditPlan]               = useState<Plan | null>(null);
   const [editName, setEditName]               = useState('');
+  const [editMonths, setEditMonths]           = useState(3);
   const [editDays, setEditDays]               = useState<EditDayDraft[]>([]);
   const [editActiveDayIdx, setEditActiveDayIdx] = useState(0);
   const [editSaving, setEditSaving]           = useState(false);
@@ -176,6 +177,7 @@ export default function MyPlans() {
     const full: Plan = r.data;
     setEditPlan(full);
     setEditName(full.name);
+    setEditMonths(full.months);
     setEditDays(full.days.map(d => ({
       id: d.id,
       day_name: d.day_name,
@@ -205,11 +207,23 @@ export default function MyPlans() {
             .map((e, ei) => ({ id: e.id, name: e.name, muscle_group: e.muscle_group, sets: e.sets, exercise_order: ei })),
         })),
       });
+      if (editMonths !== editPlan.months) {
+        await plansApi.update(editPlan.id, { months: editMonths });
+      }
       await loadPlans();
       setView('list');
     } catch (e: any) {
       setEditError(e.response?.data?.detail || t('save_changes_error'));
     } finally { setEditSaving(false); }
+  };
+
+  const handleSaveEdit = () => {
+    if (!editPlan) return;
+    if (editMonths < editPlan.months) {
+      setConfirm('shorten');
+    } else {
+      void saveEdit();
+    }
   };
 
   const addEditEx = () => {
@@ -341,7 +355,7 @@ export default function MyPlans() {
           <div>
             <h1 className="page-title">{t('edit_plan_title')}</h1>
             <p className="page-subtitle">
-              {editPlan.days_per_week} {t('days_per_week_abbr')} · {editPlan.months} {t('months_abbr')} · {editPlan.months * 4} {t('weeks_abbr')}
+              {editPlan.days_per_week} {t('days_per_week_abbr')} · {editMonths} {t('months_abbr')} · {editMonths * 4} {t('weeks_abbr')}
             </p>
           </div>
         </div>
@@ -351,6 +365,19 @@ export default function MyPlans() {
             <label className="form-label">{t('plan_name_label')}</label>
             <input className="form-input" value={editName}
               onChange={e => setEditName(e.target.value)} />
+          </div>
+
+          <div className="form-group" style={{ marginBottom:24 }}>
+            <label className="form-label">{t('edit_duration_label')}</label>
+            <div className="num-picker" style={{ marginBottom:8 }}>
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
+                <button key={n} className={`num-pill ${editMonths === n ? 'selected' : ''}`}
+                  onClick={() => setEditMonths(n)}>{n}</button>
+              ))}
+            </div>
+            <span style={{ fontSize:13, color:'var(--text-muted)' }}>
+              {editMonths} {t('months_abbr')} · {editMonths * 4} {t('weeks_abbr')}
+            </span>
           </div>
 
           <div className="section-title">{t('training_days_section')}</div>
@@ -385,11 +412,22 @@ export default function MyPlans() {
           {editError && <div className="alert alert-error" style={{ marginBottom:16 }}>{editError}</div>}
           <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
             <button className="btn btn-outline" onClick={() => setView('list')}>{t('cancel_btn')}</button>
-            <button className="btn btn-primary" disabled={editSaving} onClick={saveEdit}>
+            <button className="btn btn-primary" disabled={editSaving} onClick={handleSaveEdit}>
               {editSaving ? t('saving') : t('save_changes_btn')}
             </button>
           </div>
         </div>
+
+        {confirm === 'shorten' && (
+          <ConfirmDialog
+            title={t('shorten_plan_title')}
+            body={t('shorten_plan_body')}
+            okLabel={t('shorten_plan_confirm')} okClass="btn-danger"
+            cancelLabel={t('cancel_btn')}
+            onOk={() => { setConfirm(null); void saveEdit(); }}
+            onCancel={() => setConfirm(null)}
+          />
+        )}
 
         {activeEditDay && activeEditDay.exercises.length > 0 && (
           <div style={{ marginTop:12, padding:'12px 16px', background:'var(--bg-subtle)', borderRadius:'var(--radius)', fontSize:13, color:'var(--text-muted)' }}>

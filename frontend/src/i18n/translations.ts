@@ -182,6 +182,10 @@ export interface TranslationMap {
   // My Plans – edit plan
   edit_plan_title: string;
   back_to_my_plans: string;
+  edit_duration_label: string;
+  shorten_plan_title: string;
+  shorten_plan_body: string;
+  shorten_plan_confirm: string;
   save_changes_btn: string;
   cancel_btn: string;
   save_changes_error: string;
@@ -437,6 +441,10 @@ const pl: TranslationMap = {
 
   edit_plan_title: 'Edytuj plan',
   back_to_my_plans: 'Moje plany',
+  edit_duration_label: 'Czas trwania',
+  shorten_plan_title: 'Skrócić plan?',
+  shorten_plan_body: 'Tygodnie poza nowym zakresem zostaną trwale usunięte wraz z zapisanymi treningami. Tej operacji nie można cofnąć.',
+  shorten_plan_confirm: 'Skróć plan',
   save_changes_btn: 'Zapisz zmiany',
   cancel_btn: 'Anuluj',
   save_changes_error: 'Nie udało się zapisać zmian',
@@ -683,6 +691,10 @@ const en: TranslationMap = {
 
   edit_plan_title: 'Edit plan',
   back_to_my_plans: 'My Plans',
+  edit_duration_label: 'Duration',
+  shorten_plan_title: 'Shorten plan?',
+  shorten_plan_body: 'Weeks outside the new range will be permanently deleted along with any saved workouts. This action cannot be undone.',
+  shorten_plan_confirm: 'Shorten plan',
   save_changes_btn: 'Save changes',
   cancel_btn: 'Cancel',
   save_changes_error: 'Failed to save changes',

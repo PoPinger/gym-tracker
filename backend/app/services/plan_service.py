@@ -69,7 +69,24 @@ def update_plan(db: Session, plan: TrainingPlan, data: PlanUpdate) -> TrainingPl
     if data.days_per_week is not None:
         plan.days_per_week = data.days_per_week
     if data.months is not None:
+        old_weeks = plan.months * 4
+        new_weeks = data.months * 4
         plan.months = data.months
+
+        if new_weeks > old_weeks:
+            for w in range(old_weeks + 1, new_weeks + 1):
+                db.add(TrainingWeek(plan_id=plan.id, week_number=w, status="active"))
+            if plan.status == "completed":
+                plan.status = "active"
+        elif new_weeks < old_weeks:
+            excess = (
+                db.query(TrainingWeek)
+                .filter(TrainingWeek.plan_id == plan.id, TrainingWeek.week_number > new_weeks)
+                .all()
+            )
+            for week in excess:
+                db.delete(week)
+
     db.commit()
     db.refresh(plan)
     return plan
