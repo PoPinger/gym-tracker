@@ -667,6 +667,7 @@ export default function MyPlans() {
                     <div className="ex-name">{el.exercise_name}</div>
                     <div className="ex-meta">
                       {muscleKey ? t(muscleKey) : el.muscle_group} · {el.sets} {t('sets_unit')}
+                      {repRange && ` · ${t('rep_range_label')} ${repRange}`}
                     </div>
                   </div>
                   <button
@@ -691,17 +692,9 @@ export default function MyPlans() {
                   return (
                     <div key={s.set_number} className="set-row" style={{ gridTemplateColumns:'40px 1fr 1fr' }}>
                       <span className="set-num">{s.set_number}</span>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
-                        <input type="number" className="set-input" placeholder={t('reps_placeholder')} min={0}
-                          value={s.reps ?? ''}
-                          onChange={e => editSet(el.id, s.set_number, e.target.value)} />
-                        {repRange && (
-                          <span style={{ fontSize:12, color:'var(--text-muted)', whiteSpace:'nowrap',
-                            visibility: s.set_number === el.set_logs[0]?.set_number ? 'visible' : 'hidden' }}>
-                            {repRange} {t('reps_short')}
-                          </span>
-                        )}
-                      </div>
+                      <input type="number" className="set-input" placeholder={t('reps_placeholder')} min={0}
+                        value={s.reps ?? ''}
+                        onChange={e => editSet(el.id, s.set_number, e.target.value)} />
                       {prevReps !== null ? (
                         <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
                           {prevReps} <Delta val={dReps} />

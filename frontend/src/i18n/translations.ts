@@ -147,7 +147,6 @@ export interface TranslationMap {
   sets_label: string;
   rep_range_label: string;
   rep_range_error: string;
-  reps_short: string;
   add_exercise_btn: string;
 
   // Create Plan – default day names
@@ -413,7 +412,6 @@ const pl: TranslationMap = {
   sets_label: 'Serie:',
   rep_range_label: 'Zakres:',
   rep_range_error: 'Zakres powtórzeń: podaj obie wartości (liczby całkowite 1–100), min nie może być większe niż max',
-  reps_short: 'powt.',
   add_exercise_btn: 'Dodaj ćwiczenie',
 
   default_day_push: 'Pchanie',
@@ -666,7 +664,6 @@ const en: TranslationMap = {
   sets_label: 'Sets:',
   rep_range_label: 'Range:',
   rep_range_error: 'Rep range: enter both values (whole numbers 1–100), min cannot be greater than max',
-  reps_short: 'reps',
   add_exercise_btn: 'Add exercise',
 
   default_day_push: 'Push',
