@@ -293,6 +293,7 @@ a { text-decoration: none; color: inherit; }
   .auth-card { padding: 20px; }
   .card { padding: 16px; }
   .exercise-card { padding: 14px; }
+  .sets-header span { font-size: 10px; letter-spacing: 0.02em; }
   .steps { flex-wrap: wrap; gap: 6px; }
   .step-connector { display: none; }
   .modal-actions { flex-direction: column-reverse; }

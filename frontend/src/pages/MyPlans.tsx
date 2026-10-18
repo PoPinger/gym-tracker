@@ -686,7 +686,7 @@ export default function MyPlans() {
                   </button>
                 </div>
 
-                <div className="sets-header" style={{ gridTemplateColumns:'40px 1fr 1fr' }}>
+                <div className="sets-header" style={{ gridTemplateColumns:'40px minmax(0, 1fr) minmax(0, 1fr)' }}>
                   <span>{t('sets_header')}</span>
                   <span>{t('reps_header')}</span>
                   <span>{t('prev_week_abbr')}</span>
@@ -695,7 +695,7 @@ export default function MyPlans() {
                 {el.set_logs.map(s => {
                   const prevReps = prevR(el.exercise_id, s.set_number);
                   return (
-                    <div key={s.set_number} className="set-row" style={{ gridTemplateColumns:'40px 1fr 1fr' }}>
+                    <div key={s.set_number} className="set-row" style={{ gridTemplateColumns:'40px minmax(0, 1fr) minmax(0, 1fr)' }}>
                       <span className="set-num">{s.set_number}</span>
                       <input type="number" className="set-input" placeholder={t('reps_placeholder')} min={0}
                         value={s.reps ?? ''}
