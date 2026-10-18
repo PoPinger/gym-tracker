@@ -5,6 +5,7 @@ import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { useLanguage } from '../i18n/LanguageContext';
 import { isValidRepRange, repRangePayload, formatRepRange } from '../utils/repRange';
+import { exerciseScore, progressPct, formatPct, formatKg, firstWeight } from '../utils/progress';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog } from '../types';
 import {
   ChevronRight, Copy, CheckCircle2, ArrowLeft,
@@ -29,6 +30,30 @@ function Delta({ val }: { val: number | null }) {
   return <span className="delta delta-neu">—</span>;
 }
 
+function RefBlock({ title, weightLabel, progressLabel, weight, pct, lang }: {
+  title: string; weightLabel: string; progressLabel: string;
+  weight: number | null; pct: number | null; lang: string;
+}) {
+  const pctColor = pct == null || pct === 0 ? 'var(--text-muted)' : pct > 0 ? 'var(--success)' : 'var(--danger)';
+  const label = { fontSize:11, color:'var(--text-subtle)' } as const;
+  const value = { fontSize:15, fontWeight:600, color:'var(--text-heading)' } as const;
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+      <span style={{ ...label, fontWeight:600 }}>{title}</span>
+      <div style={{ display:'flex', alignItems:'baseline', gap:'2px 12px', flexWrap:'wrap' }}>
+        <span style={{ display:'flex', alignItems:'baseline', gap:4 }}>
+          <span style={label}>{weightLabel}</span>
+          <span style={value}>{weight != null ? formatKg(weight, lang) : '—'}</span>
+        </span>
+        <span style={{ display:'flex', alignItems:'baseline', gap:4 }}>
+          <span style={label}>{progressLabel}</span>
+          <span style={{ ...value, color: pctColor }}>{pct != null ? formatPct(pct, lang) : '—'}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ConfirmDialog({ title, body, onOk, onCancel, okLabel, cancelLabel, okClass = 'btn-primary' }: {
   title: string; body: string; onOk: () => void; onCancel: () => void;
   okLabel: string; cancelLabel: string; okClass?: string;
@@ -49,7 +74,7 @@ function ConfirmDialog({ title, body, onOk, onCancel, okLabel, cancelLabel, okCl
 
 export default function MyPlans() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const [view, setView]             = useState<View>('list');
   const [plans, setPlans]           = useState<PlanSummary[]>([]);
@@ -270,12 +295,8 @@ export default function MyPlans() {
     await loadPlans();
   };
 
-  const prevW = (exId: number, setNum: number) =>
-    dayLog?.prev_week_data?.[exId]?.find(s => s.set_number === setNum)?.weight_kg ?? null;
   const prevR = (exId: number, setNum: number) =>
     dayLog?.prev_week_data?.[exId]?.find(s => s.set_number === setNum)?.reps ?? null;
-  const w1W = (exId: number, setNum: number) =>
-    dayLog?.week1_data?.[exId]?.find(s => s.set_number === setNum)?.weight_kg ?? null;
 
   const allDaysComplete  = weekInfo?.days.every(d => d.status === 'completed') ?? false;
   const allWeeksComplete = weeks.length > 0 && weeks.every(w => w.status === 'completed');
@@ -650,13 +671,10 @@ export default function MyPlans() {
 
         <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
           {dayLog.exercise_logs.map(el => {
-            const hasPrev = !!dayLog.prev_week_data?.[el.exercise_id];
-            const showW1  = !!dayLog.week1_data?.[el.exercise_id] && (dayLog.week_number ?? 1) > 1;
-            const pw      = prevW(el.exercise_id, 1);
-            const w1      = w1W(el.exercise_id, 1);
-            const curW    = exerciseWeights[el.id] !== '' ? Number(exerciseWeights[el.id]) : null;
-            const dPrev   = trend(curW, pw);
-            const dW1     = trend(curW, w1);
+            const weekNum   = dayLog.week_number ?? 1;
+            const prevSets  = dayLog.prev_week_data?.[el.exercise_id];
+            const w1Sets    = dayLog.week1_data?.[el.exercise_id];
+            const curScore  = exerciseScore(el.set_logs);
             const muscleKey = MUSCLE_GROUP_TO_KEY[el.muscle_group];
             const repRange  = formatRepRange(el.rep_min, el.rep_max);
 
@@ -706,30 +724,26 @@ export default function MyPlans() {
                   );
                 })}
 
-                <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:10, flexWrap:'wrap',
+                <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:'12px 24px', flexWrap:'wrap',
                   paddingTop:10, borderTop:'1px solid var(--border)' }}>
-                  <span style={{ fontSize:13, fontWeight:600, color:'var(--text-muted)' }}>{t('weight_field_label')}</span>
-                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                    <input type="number" className="set-input" placeholder="0" step={0.5} min={0}
-                      style={{ width:80 }}
-                      value={exerciseWeights[el.id] ?? ''}
-                      onChange={e => editExerciseWeight(el.id, e.target.value)} />
-                    <span style={{ fontSize:13, color:'var(--text-muted)' }}>kg</span>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <span style={{ fontSize:13, fontWeight:600, color:'var(--text-muted)' }}>{t('weight_field_label')}</span>
+                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                      <input type="number" className="set-input" placeholder="0" step={0.5} min={0}
+                        style={{ width:80 }}
+                        value={exerciseWeights[el.id] ?? ''}
+                        onChange={e => editExerciseWeight(el.id, e.target.value)} />
+                      <span style={{ fontSize:13, color:'var(--text-muted)' }}>kg</span>
+                    </div>
                   </div>
 
-                  {(hasPrev || showW1) && (
-                    <div className="prev-data" style={{ marginTop:0 }}>
-                      {hasPrev && pw != null && (
-                        <span className="prev-item">
-                          {t('prev_week_abbr')} {pw}kg <Delta val={dPrev} />
-                        </span>
-                      )}
-                      {showW1 && w1 != null && (
-                        <span className="prev-item">
-                          {t('week1_abbr')} {w1}kg <Delta val={dW1} />
-                        </span>
-                      )}
-                    </div>
+                  {weekNum > 1 && (
+                    <RefBlock title={t('prev_week_label')} weightLabel={t('weight_field_label')} progressLabel={t('progress_label')}
+                      weight={firstWeight(prevSets)} pct={progressPct(curScore, exerciseScore(prevSets))} lang={lang} />
+                  )}
+                  {weekNum > 2 && (
+                    <RefBlock title={t('first_week_label')} weightLabel={t('weight_field_label')} progressLabel={t('progress_label')}
+                      weight={firstWeight(w1Sets)} pct={progressPct(curScore, exerciseScore(w1Sets))} lang={lang} />
                   )}
                 </div>
               </div>

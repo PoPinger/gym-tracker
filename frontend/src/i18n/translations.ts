@@ -218,7 +218,9 @@ export interface TranslationMap {
   weight_field_label: string;
   sets_unit: string;
   prev_week_abbr: string;
-  week1_abbr: string;
+  prev_week_label: string;
+  first_week_label: string;
+  progress_label: string;
   save_sets_btn: string;
   save_sets_saving: string;
   save_sets_saved: string;
@@ -475,7 +477,9 @@ const pl: TranslationMap = {
   weight_field_label: 'Ciężar:',
   sets_unit: 'serii',
   prev_week_abbr: 'poprz.',
-  week1_abbr: 'tydz.1',
+  prev_week_label: 'Poprzedni tydzień:',
+  first_week_label: 'Pierwszy tydzień:',
+  progress_label: 'Progres:',
   save_sets_btn: 'Zapisz',
   save_sets_saving: 'Zapisywanie…',
   save_sets_saved: 'Zapisano',
@@ -727,7 +731,9 @@ const en: TranslationMap = {
   weight_field_label: 'Weight:',
   sets_unit: 'sets',
   prev_week_abbr: 'prev.',
-  week1_abbr: 'wk.1',
+  prev_week_label: 'Previous week:',
+  first_week_label: 'First week:',
+  progress_label: 'Progress:',
   save_sets_btn: 'Save',
   save_sets_saving: 'Saving…',
   save_sets_saved: 'Saved',

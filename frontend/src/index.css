@@ -241,8 +241,6 @@ a { text-decoration: none; color: inherit; }
 .set-row { display: grid; grid-template-columns: 32px 1fr 1fr; gap: 8px; align-items: center; }
 .set-num { font-size: 13px; font-weight: 700; color: var(--text-subtle); text-align: center; }
 .set-row + .set-row { margin-top: 8px; }
-.prev-data { display: flex; gap: 10px; padding-left: 40px; margin-top: 3px; margin-bottom: 6px; flex-wrap: wrap; }
-.prev-item { font-size: 11px; color: var(--text-subtle); display: flex; align-items: center; gap: 4px; }
 
 /* ── WEIGHT ── */
 .weight-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
