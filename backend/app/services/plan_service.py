@@ -33,6 +33,8 @@ def create_plan(db: Session, user_id: int, data: PlanCreate) -> TrainingPlan:
                 name=ex_data.name,
                 muscle_group=ex_data.muscle_group,
                 sets=ex_data.sets,
+                rep_min=ex_data.rep_min,
+                rep_max=ex_data.rep_max,
                 exercise_order=ex_data.exercise_order,
             )
             db.add(exercise)
@@ -117,6 +119,8 @@ def copy_plan(db: Session, original: TrainingPlan, user_id: int) -> TrainingPlan
                 name=ex.name,
                 muscle_group=ex.muscle_group,
                 sets=ex.sets,
+                rep_min=ex.rep_min,
+                rep_max=ex.rep_max,
                 exercise_order=ex.exercise_order,
             ))
 
@@ -157,6 +161,8 @@ def update_plan_structure(db: Session, plan: TrainingPlan, data) -> TrainingPlan
                     ex.name = ex_data.name
                     ex.muscle_group = ex_data.muscle_group
                     ex.sets = ex_data.sets
+                    ex.rep_min = ex_data.rep_min
+                    ex.rep_max = ex_data.rep_max
                     ex.exercise_order = ex_data.exercise_order
                     # Synchronizuj SetLog dla wszystkich istniejących ExerciseLog tego ćwiczenia
                     existing_ex_logs = db.query(ExerciseLog).filter(
@@ -188,6 +194,8 @@ def update_plan_structure(db: Session, plan: TrainingPlan, data) -> TrainingPlan
                     name=ex_data.name,
                     muscle_group=ex_data.muscle_group,
                     sets=ex_data.sets,
+                    rep_min=ex_data.rep_min,
+                    rep_max=ex_data.rep_max,
                     exercise_order=ex_data.exercise_order,
                 ))
 

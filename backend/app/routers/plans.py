@@ -336,6 +336,8 @@ def _serialize_day_log(log) -> dict:
             "exercise_name": ex.name if ex else "Nieznane",
             "muscle_group": ex.muscle_group if ex else "",
             "sets": ex.sets if ex else 0,
+            "rep_min": ex.rep_min if ex else None,
+            "rep_max": ex.rep_max if ex else None,
             "set_logs": set_logs,
         })
     return {

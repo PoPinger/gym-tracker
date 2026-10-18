@@ -1,10 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from app.database import Base, engine
 from app.routers import auth, plans, weight, dashboard
 
 # Create all tables on startup
 Base.metadata.create_all(bind=engine)
+
+# create_all doesn't add columns to existing tables — add new ones idempotently
+with engine.begin() as conn:
+    conn.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS rep_min INTEGER"))
+    conn.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS rep_max INTEGER"))
 
 app = FastAPI(title="GymTracker API", version="1.0.0")
 

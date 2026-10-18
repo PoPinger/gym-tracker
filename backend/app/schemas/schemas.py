@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -43,7 +43,23 @@ class UserOut(BaseModel):
 
 # ── Plans ─────────────────────────────────────────────────────────────────────
 
-class ExerciseEditItem(BaseModel):
+class RepRangeMixin(BaseModel):
+    rep_min: Optional[int] = None
+    rep_max: Optional[int] = None
+
+    @model_validator(mode="after")
+    def validate_rep_range(self):
+        if (self.rep_min is None) != (self.rep_max is None):
+            raise ValueError("Podaj oba końce zakresu powtórzeń albo żaden")
+        if self.rep_min is not None:
+            if not (1 <= self.rep_min <= 100 and 1 <= self.rep_max <= 100):
+                raise ValueError("Zakres powtórzeń musi mieścić się w przedziale 1–100")
+            if self.rep_min > self.rep_max:
+                raise ValueError("Minimalna liczba powtórzeń nie może być większa niż maksymalna")
+        return self
+
+
+class ExerciseEditItem(RepRangeMixin):
     id: Optional[int] = None   # None = new exercise
     name: str
     muscle_group: str
@@ -62,7 +78,7 @@ class PlanStructureUpdate(BaseModel):
     days: List[PlanDayEdit] = []
 
 
-class ExerciseCreate(BaseModel):
+class ExerciseCreate(RepRangeMixin):
     name: str
     muscle_group: str
     sets: int
@@ -74,6 +90,8 @@ class ExerciseOut(BaseModel):
     name: str
     muscle_group: str
     sets: int
+    rep_min: Optional[int] = None
+    rep_max: Optional[int] = None
     exercise_order: int
 
     class Config:

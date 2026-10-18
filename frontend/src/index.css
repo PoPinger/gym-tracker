@@ -137,6 +137,10 @@ a { text-decoration: none; color: inherit; }
 .set-input { background: var(--bg-subtle); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text-heading); padding: 8px 6px; font-size: 14px; font-family: inherit; text-align: center; min-height: 44px; width: 100%; transition: var(--t); }
 .set-input:focus { border-color: var(--primary); background: var(--bg-white); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
 .set-input::placeholder { color: var(--text-subtle); font-size: 12px; }
+.rep-range-input { width: 36px; border: none; background: none; font-family: inherit; font-weight: 800; font-size: 15px; color: var(--text-heading); text-align: center; padding: 2px 0; -moz-appearance: textfield; }
+.rep-range-input:focus { outline: none; }
+.rep-range-input::placeholder { color: var(--text-subtle); font-weight: 500; font-size: 12px; }
+.rep-range-input::-webkit-outer-spin-button, .rep-range-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* ── BADGES ── */
 .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }

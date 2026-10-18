@@ -4,6 +4,7 @@ import { plansApi, logsApi } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { useLanguage } from '../i18n/LanguageContext';
+import { isValidRepRange, repRangePayload, formatRepRange } from '../utils/repRange';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog } from '../types';
 import {
   ChevronRight, Copy, CheckCircle2, ArrowLeft,
@@ -13,7 +14,7 @@ import {
 
 type View = 'list' | 'weeks' | 'days' | 'workout' | 'edit-plan' | 'edit-exercises';
 
-interface EditExDraft { id?: number; name: string; muscle_group: string; sets: number; }
+interface EditExDraft { id?: number; name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
 interface EditDayDraft { id: number; day_name: string; exercises: EditExDraft[]; }
 
 const trend = (curr: number | null, prev: number | null) => {
@@ -186,6 +187,8 @@ export default function MyPlans() {
         name: ex.name,
         muscle_group: ex.muscle_group,
         sets: ex.sets,
+        rep_min: ex.rep_min != null ? String(ex.rep_min) : '',
+        rep_max: ex.rep_max != null ? String(ex.rep_max) : '',
       })),
     })));
     setEditActiveDayIdx(0);
@@ -195,6 +198,8 @@ export default function MyPlans() {
 
   const saveEdit = async () => {
     if (!editPlan) return;
+    const named = editDays.flatMap(d => d.exercises.filter(e => e.name.trim()));
+    if (named.some(e => !isValidRepRange(e.rep_min, e.rep_max))) { setEditError(t('rep_range_error')); return; }
     setEditSaving(true); setEditError('');
     try {
       await plansApi.updateStructure(editPlan.id, {
@@ -204,7 +209,10 @@ export default function MyPlans() {
           day_name: d.day_name,
           exercises: d.exercises
             .filter(e => e.name.trim())
-            .map((e, ei) => ({ id: e.id, name: e.name, muscle_group: e.muscle_group, sets: e.sets, exercise_order: ei })),
+            .map((e, ei) => ({
+              id: e.id, name: e.name, muscle_group: e.muscle_group, sets: e.sets, exercise_order: ei,
+              ...repRangePayload(e.rep_min, e.rep_max),
+            })),
         })),
       });
       if (editMonths !== editPlan.months) {
@@ -228,7 +236,7 @@ export default function MyPlans() {
 
   const addEditEx = () => {
     setEditDays(d => d.map((day, i) => i !== editActiveDayIdx ? day : {
-      ...day, exercises: [...day.exercises, { name: '', muscle_group: MUSCLE_GROUPS[0], sets: 3 }]
+      ...day, exercises: [...day.exercises, { name: '', muscle_group: MUSCLE_GROUPS[0], sets: 3, rep_min: '', rep_max: '' }]
     }));
   };
 
@@ -482,7 +490,7 @@ export default function MyPlans() {
                 </div>
 
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingLeft:36 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
                     <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>{t('sets_label')}</span>
                     <div style={{ display:'flex', alignItems:'center', gap:6, background:'white',
                       border:'1.5px solid var(--border)', borderRadius:8, padding:'4px 8px' }}>
@@ -493,6 +501,15 @@ export default function MyPlans() {
                       <button style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)',
                         padding:'2px 4px', fontSize:18, lineHeight:1 }}
                         onClick={() => setEditEx(ei, 'sets', Math.min(10, ex.sets + 1))}>+</button>
+                    </div>
+                    <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>{t('rep_range_label')}</span>
+                    <div style={{ display:'flex', alignItems:'center', gap:4, background:'white',
+                      border:'1.5px solid var(--border)', borderRadius:8, padding:'4px 8px' }}>
+                      <input type="number" min={1} max={100} step={1} className="rep-range-input" placeholder="min"
+                        value={ex.rep_min} onChange={e => setEditEx(ei, 'rep_min', e.target.value)} />
+                      <span style={{ color:'var(--text-muted)' }}>–</span>
+                      <input type="number" min={1} max={100} step={1} className="rep-range-input" placeholder="max"
+                        value={ex.rep_max} onChange={e => setEditEx(ei, 'rep_max', e.target.value)} />
                     </div>
                   </div>
 
@@ -641,6 +658,7 @@ export default function MyPlans() {
             const dPrev   = trend(curW, pw);
             const dW1     = trend(curW, w1);
             const muscleKey = MUSCLE_GROUP_TO_KEY[el.muscle_group];
+            const repRange  = formatRepRange(el.rep_min, el.rep_max);
 
             return (
               <div key={el.id} className="exercise-card">
@@ -673,9 +691,17 @@ export default function MyPlans() {
                   return (
                     <div key={s.set_number} className="set-row" style={{ gridTemplateColumns:'40px 1fr 1fr' }}>
                       <span className="set-num">{s.set_number}</span>
-                      <input type="number" className="set-input" placeholder={t('reps_placeholder')} min={0}
-                        value={s.reps ?? ''}
-                        onChange={e => editSet(el.id, s.set_number, e.target.value)} />
+                      <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
+                        <input type="number" className="set-input" placeholder={t('reps_placeholder')} min={0}
+                          value={s.reps ?? ''}
+                          onChange={e => editSet(el.id, s.set_number, e.target.value)} />
+                        {repRange && (
+                          <span style={{ fontSize:12, color:'var(--text-muted)', whiteSpace:'nowrap',
+                            visibility: s.set_number === el.set_logs[0]?.set_number ? 'visible' : 'hidden' }}>
+                            {repRange} {t('reps_short')}
+                          </span>
+                        )}
+                      </div>
                       {prevReps !== null ? (
                         <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
                           {prevReps} <Delta val={dReps} />

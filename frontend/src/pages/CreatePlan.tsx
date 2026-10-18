@@ -4,11 +4,12 @@ import { plansApi } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { useLanguage } from '../i18n/LanguageContext';
+import { isValidRepRange, repRangePayload } from '../utils/repRange';
 import { Plus, Trash2, ChevronUp, ChevronDown, ArrowRight, ArrowLeft, Dumbbell } from 'lucide-react';
 
 type Step = 1 | 2 | 3 | 4;
 
-interface ExDraft { name: string; muscle_group: string; sets: number; }
+interface ExDraft { name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
 interface DayDraft { day_name: string; exercises: ExDraft[]; }
 
 function StepIndicator({ step, labels }: { step: Step; labels: string[] }) {
@@ -73,7 +74,7 @@ export default function CreatePlan() {
 
   const addEx = () => {
     setDays(d => d.map((day, i) => i !== activeDayIdx ? day : {
-      ...day, exercises: [...day.exercises, { name: '', muscle_group: MUSCLE_GROUPS[0], sets: 3 }]
+      ...day, exercises: [...day.exercises, { name: '', muscle_group: MUSCLE_GROUPS[0], sets: 3, rep_min: '', rep_max: '' }]
     }));
   };
 
@@ -101,6 +102,8 @@ export default function CreatePlan() {
   };
 
   const savePlan = async () => {
+    const named = days.flatMap(d => d.exercises.filter(e => e.name.trim()));
+    if (named.some(e => !isValidRepRange(e.rep_min, e.rep_max))) { setError(t('rep_range_error')); return; }
     setSaving(true); setError('');
     try {
       await plansApi.create({
@@ -109,6 +112,7 @@ export default function CreatePlan() {
           day_name: d.day_name, day_order: di,
           exercises: d.exercises.filter(e => e.name.trim()).map((e, ei) => ({
             name: e.name, muscle_group: e.muscle_group, sets: e.sets, exercise_order: ei,
+            ...repRangePayload(e.rep_min, e.rep_max),
           })),
         })),
       });
@@ -288,7 +292,7 @@ export default function CreatePlan() {
                   </div>
 
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingLeft:36 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
                       <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>{t('sets_label')}</span>
                       <div style={{ display:'flex', alignItems:'center', gap:6, background:'white', border:'1.5px solid var(--border)', borderRadius:8, padding:'4px 8px' }}>
                         <button style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', padding:'2px 4px', fontSize:18, lineHeight:1, display:'flex', alignItems:'center' }}
@@ -296,6 +300,14 @@ export default function CreatePlan() {
                         <span style={{ fontWeight:800, fontSize:15, color:'var(--text-heading)', minWidth:16, textAlign:'center' }}>{ex.sets}</span>
                         <button style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', padding:'2px 4px', fontSize:18, lineHeight:1, display:'flex', alignItems:'center' }}
                           onClick={() => setEx(ei, 'sets', Math.min(10, ex.sets + 1))}>+</button>
+                      </div>
+                      <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>{t('rep_range_label')}</span>
+                      <div style={{ display:'flex', alignItems:'center', gap:4, background:'white', border:'1.5px solid var(--border)', borderRadius:8, padding:'4px 8px' }}>
+                        <input type="number" min={1} max={100} step={1} className="rep-range-input" placeholder="min"
+                          value={ex.rep_min} onChange={e => setEx(ei, 'rep_min', e.target.value)} />
+                        <span style={{ color:'var(--text-muted)' }}>–</span>
+                        <input type="number" min={1} max={100} step={1} className="rep-range-input" placeholder="max"
+                          value={ex.rep_max} onChange={e => setEx(ei, 'rep_max', e.target.value)} />
                       </div>
                     </div>
 

@@ -59,6 +59,8 @@ class Exercise(Base):
     name = Column(String(255), nullable=False)
     muscle_group = Column(String(100), nullable=False)
     sets = Column(Integer, nullable=False)
+    rep_min = Column(Integer, nullable=True)
+    rep_max = Column(Integer, nullable=True)
     exercise_order = Column(Integer, nullable=False, default=0)
 
     plan_day = relationship("PlanDay", back_populates="exercises")

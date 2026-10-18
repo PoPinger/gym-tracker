@@ -15,6 +15,8 @@ export interface Exercise {
   name: string;
   muscle_group: string;
   sets: number;
+  rep_min?: number | null;
+  rep_max?: number | null;
   exercise_order: number;
 }
 
@@ -57,6 +59,8 @@ export interface ExerciseLog {
   exercise_name: string;
   muscle_group: string;
   sets: number;
+  rep_min?: number | null;
+  rep_max?: number | null;
   set_logs: SetLog[];
 }
 
