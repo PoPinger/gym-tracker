@@ -696,7 +696,7 @@ export default function MyPlans() {
                         value={s.reps ?? ''}
                         onChange={e => editSet(el.id, s.set_number, e.target.value)} />
                       {prevReps !== null ? (
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 4 }}>
                           {prevReps} <Delta val={dReps} />
                         </span>
                       ) : (
