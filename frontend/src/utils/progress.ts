@@ -18,7 +18,7 @@ export const progressPct = (current: number | null, reference: number | null): n
 const locale = (lang: string) => (lang === 'pl' ? 'pl-PL' : 'en-US');
 
 export const formatPct = (pct: number, lang: string): string => {
-  const abs = Math.abs(pct).toLocaleString(locale(lang), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const abs = Math.abs(pct).toLocaleString(locale(lang), { minimumFractionDigits: 0, maximumFractionDigits: 1 });
   return `${pct > 0 ? '+' : pct < 0 ? '−' : ''}${abs}%`;
 };
 
