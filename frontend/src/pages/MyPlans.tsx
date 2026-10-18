@@ -9,7 +9,7 @@ import { exerciseScore, progressPct, formatPct, formatKg, firstWeight } from '..
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog } from '../types';
 import {
   ChevronRight, Copy, CheckCircle2, ArrowLeft,
-  Dumbbell, TrendingUp, TrendingDown, Trophy, Plus,
+  Dumbbell, Trophy, Plus,
   Pencil, Trash2, ChevronUp, ChevronDown,
 } from 'lucide-react';
 
@@ -17,18 +17,6 @@ type View = 'list' | 'weeks' | 'days' | 'workout' | 'edit-plan' | 'edit-exercise
 
 interface EditExDraft { id?: number; name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
 interface EditDayDraft { id: number; day_name: string; exercises: EditExDraft[]; }
-
-const trend = (curr: number | null, prev: number | null) => {
-  if (curr == null || prev == null) return null;
-  return +(curr - prev).toFixed(1);
-};
-
-function Delta({ val }: { val: number | null }) {
-  if (val === null) return null;
-  if (val > 0) return <span className="delta delta-pos"><TrendingUp size={10} /> +{val}</span>;
-  if (val < 0) return <span className="delta delta-neg"><TrendingDown size={10} /> {val}</span>;
-  return <span className="delta delta-neu">—</span>;
-}
 
 function RefBlock({ title, weightLabel, progressLabel, weight, pct, lang }: {
   title: string; weightLabel: string; progressLabel: string;
@@ -706,7 +694,6 @@ export default function MyPlans() {
 
                 {el.set_logs.map(s => {
                   const prevReps = prevR(el.exercise_id, s.set_number);
-                  const dReps = trend(s.reps ?? null, prevReps);
                   return (
                     <div key={s.set_number} className="set-row" style={{ gridTemplateColumns:'40px 1fr 1fr' }}>
                       <span className="set-num">{s.set_number}</span>
@@ -714,8 +701,8 @@ export default function MyPlans() {
                         value={s.reps ?? ''}
                         onChange={e => editSet(el.id, s.set_number, e.target.value)} />
                       {prevReps !== null ? (
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 4 }}>
-                          {prevReps} <Delta val={dReps} />
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
+                          {prevReps}
                         </span>
                       ) : (
                         <span />
