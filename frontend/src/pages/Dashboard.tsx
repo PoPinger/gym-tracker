@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { dashboardApi } from '../services/api';
 import { useLanguage } from '../i18n/LanguageContext';
 import WorkoutCalendar from '../components/WorkoutCalendar';
+import AppLoader from '../components/AppLoader';
 import type { DashboardData } from '../types';
 import {
   Flame, TrendingUp, Calendar, Dumbbell, Scale,
@@ -47,12 +48,7 @@ export default function Dashboard() {
     dashboardApi.get().then(r => setData(r.data)).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div className="loading-screen">
-      <div className="spinner" />
-      <span className="loading-text">{t('loading_dashboard')}</span>
-    </div>
-  );
+  if (loading) return <AppLoader />;
 
   const d = data!;
   const hasAnything = d.quick_stats.total > 0 || d.current_plan || d.weight_panel;

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { plansApi, logsApi, apiErrorDetail } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
+import AppLoader from '../components/AppLoader';
 import { useLanguage } from '../i18n/LanguageContext';
 import { isValidRepRange, repRangePayload, formatRepRange } from '../utils/repRange';
 import { exerciseScore, progressPct, formatPct, formatKg, firstWeight, shouldAddWeight } from '../utils/progress';
@@ -386,7 +387,7 @@ export default function MyPlans() {
   const allDaysComplete  = weekInfo?.days.every(d => d.status === 'completed') ?? false;
   const allWeeksComplete = weeks.length > 0 && weeks.every(w => w.status === 'completed');
 
-  if (loading) return <div className="loading-screen"><div className="spinner" /><span className="loading-text">{t('loading_plans')}</span></div>;
+  if (loading) return <AppLoader />;
 
   /* ═══ PLAN LIST ═══ */
   if (view === 'list') return (

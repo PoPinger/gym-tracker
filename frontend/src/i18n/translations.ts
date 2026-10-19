@@ -43,7 +43,7 @@ export interface TranslationMap {
   register_login: string;
 
   // Dashboard – loading / header
-  loading_dashboard: string;
+  loading_app: string;
   dashboard_title: string;
   dashboard_subtitle: string;
   dashboard_create_plan: string;
@@ -184,7 +184,6 @@ export interface TranslationMap {
   day_number_fallback: string;
 
   // My Plans – list
-  loading_plans: string;
   my_plans_title: string;
   plans_count_1: string;
   plans_count_other: string;
@@ -262,7 +261,6 @@ export interface TranslationMap {
   training_fallback: string;
 
   // My Weight – setup
-  loading_weight: string;
   my_weight_title: string;
   my_weight_subtitle: string;
   setup_weight_title: string;
@@ -353,7 +351,7 @@ const pl: TranslationMap = {
   register_has_account: 'Masz już konto?',
   register_login: 'Zaloguj się',
 
-  loading_dashboard: 'Ładowanie panelu…',
+  loading_app: 'Ładowanie aplikacji…',
   dashboard_title: 'Panel',
   dashboard_subtitle: 'Oto co dzieje się z Twoim treningiem',
   dashboard_create_plan: 'Utwórz plan',
@@ -480,7 +478,6 @@ const pl: TranslationMap = {
   default_day_cardio: 'Kardio',
   day_number_fallback: 'Dzień',
 
-  loading_plans: 'Ładowanie planów…',
   my_plans_title: 'Moje plany',
   plans_count_1: 'plan',
   plans_count_other: 'planów',
@@ -551,7 +548,6 @@ const pl: TranslationMap = {
   confirm_btn: 'Potwierdź',
   training_fallback: 'Trening',
 
-  loading_weight: 'Ładowanie danych wagowych…',
   my_weight_title: 'Moja waga',
   my_weight_subtitle: 'Śledź postępy wagowe w czasie',
   setup_weight_title: 'Skonfiguruj śledzenie wagi',
@@ -638,7 +634,7 @@ const en: TranslationMap = {
   register_has_account: 'Already have an account?',
   register_login: 'Sign in',
 
-  loading_dashboard: 'Loading dashboard…',
+  loading_app: 'Loading app…',
   dashboard_title: 'Dashboard',
   dashboard_subtitle: "Here's what's happening with your training",
   dashboard_create_plan: 'Create Plan',
@@ -765,7 +761,6 @@ const en: TranslationMap = {
   default_day_cardio: 'Cardio',
   day_number_fallback: 'Day',
 
-  loading_plans: 'Loading plans…',
   my_plans_title: 'My Plans',
   plans_count_1: 'plan',
   plans_count_other: 'plans',
@@ -836,7 +831,6 @@ const en: TranslationMap = {
   confirm_btn: 'Confirm',
   training_fallback: 'Training',
 
-  loading_weight: 'Loading weight data…',
   my_weight_title: 'My Weight',
   my_weight_subtitle: 'Track your weight progress over time',
   setup_weight_title: 'Set up weight tracking',

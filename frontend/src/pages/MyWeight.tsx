@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { weightApi, apiErrorDetail } from '../services/api';
+import AppLoader from '../components/AppLoader';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { WeightCycle, WeightWeek } from '../types';
 import { Scale, ArrowLeft, CheckCircle2, RotateCcw, TrendingDown, TrendingUp, Plus } from 'lucide-react';
@@ -161,9 +162,7 @@ export default function MyWeight() {
     t('day_thu'), t('day_fri'), t('day_sat'), t('day_sun'),
   ];
 
-  if (loading) return (
-    <div className="loading-screen"><div className="spinner" /><span className="loading-text">{t('loading_weight')}</span></div>
-  );
+  if (loading) return <AppLoader />;
 
   /* ═══ SETUP ═══ */
   if (view === 'setup') return (

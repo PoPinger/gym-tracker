@@ -178,10 +178,18 @@ a { text-decoration: none; color: inherit; }
 
 /* ── MISC ── */
 .divider { height: 1px; background: var(--border); }
-.spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.75s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-screen { display: flex; align-items: center; justify-content: center; min-height: 240px; flex-direction: column; gap: 12px; }
-.loading-text { font-size: 13px; color: var(--text-muted); }
+
+/* Branded full-screen loader: logo icon (left square of logo.png), shimmering wordmark */
+.app-loader { position: fixed; inset: 0; z-index: 1000; min-height: 100vh; min-height: 100dvh; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; }
+.app-loader-logo { width: 72px; height: 72px; object-fit: cover; object-position: left; border-radius: 18px; mix-blend-mode: multiply; }
+.app-loader-name { position: relative; font-size: 34px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; color: var(--text-heading); }
+.app-loader-name span { color: var(--primary); }
+.app-loader-name::after { content: attr(data-text); position: absolute; inset: 0; color: transparent; pointer-events: none;
+  background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,0.85) 50%, transparent 65%) no-repeat;
+  background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; animation: loader-shimmer 1.5s linear infinite; }
+@keyframes loader-shimmer { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+.app-loader-text { font-size: 13px; color: var(--text-muted); }
+@media (prefers-reduced-motion: reduce) { .app-loader-name::after { display: none; animation: none; } }
 
 .empty-state { text-align: center; padding: 56px 24px; }
 .empty-state-emoji { font-size: 44px; margin-bottom: 16px; }
