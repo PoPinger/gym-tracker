@@ -86,8 +86,9 @@ export const logsApi = {
 // Weight
 export const weightApi = {
   getCurrentCycle: () => api.get('/weight/current-cycle'),
-  createCycle: (startWeight: number, months: number) =>
-    api.post('/weight/cycles', { start_weight: startWeight, months }),
+  createCycle: (months: number, goal: 'bulk' | 'cut') =>
+    api.post('/weight/cycles', { months, goal }),
+  updateGoal: (id: number, goal: 'bulk' | 'cut') => api.patch(`/weight/cycles/${id}`, { goal }),
   deleteCycle: (id: number) => api.delete(`/weight/cycles/${id}`),
   saveDayWeight: (dayLogId: number, weightKg: number) =>
     api.put(`/weight/day-logs/${dayLogId}`, { weight_kg: weightKg }),

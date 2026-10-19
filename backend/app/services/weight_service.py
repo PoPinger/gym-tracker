@@ -19,6 +19,7 @@ def create_cycle(db: Session, user_id: int, data: WeightCycleCreate) -> WeightCy
         user_id=user_id,
         start_weight=data.start_weight,
         months=data.months,
+        goal=data.goal,
         status="active",
     )
     db.add(cycle)
@@ -41,6 +42,19 @@ def create_cycle(db: Session, user_id: int, data: WeightCycleCreate) -> WeightCy
                 logged_at=None,
             ))
 
+    db.commit()
+    db.refresh(cycle)
+    return cycle
+
+
+def update_cycle_goal(db: Session, cycle_id: int, user_id: int, goal: str) -> Optional[WeightCycle]:
+    cycle = db.query(WeightCycle).filter(
+        WeightCycle.id == cycle_id,
+        WeightCycle.user_id == user_id,
+    ).first()
+    if not cycle:
+        return None
+    cycle.goal = goal
     db.commit()
     db.refresh(cycle)
     return cycle

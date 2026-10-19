@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import User, WeightCycle, WeightWeek, WeightDayLog
-from app.schemas.schemas import WeightCycleCreate, WeightCycleOut, WeightWeekOut, WeightDayLogOut
+from app.schemas.schemas import WeightCycleCreate, WeightCycleUpdate, WeightCycleOut, WeightWeekOut, WeightDayLogOut
 from app.auth.auth import get_current_user
 from app.services import weight_service
 
@@ -21,6 +21,14 @@ def get_current_cycle(db: Session = Depends(get_db), user: User = Depends(get_cu
 @router.post("/cycles", status_code=201)
 def create_cycle(data: WeightCycleCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     cycle = weight_service.create_cycle(db, user.id, data)
+    return _serialize_cycle(cycle)
+
+
+@router.patch("/cycles/{cycle_id}")
+def update_cycle(cycle_id: int, data: WeightCycleUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    cycle = weight_service.update_cycle_goal(db, cycle_id, user.id, data.goal)
+    if not cycle:
+        raise HTTPException(404, "Cykl nie został znaleziony")
     return _serialize_cycle(cycle)
 
 
@@ -82,6 +90,7 @@ def _serialize_cycle(cycle: WeightCycle) -> dict:
         "id": cycle.id,
         "start_weight": cycle.start_weight,
         "months": cycle.months,
+        "goal": cycle.goal,
         "status": cycle.status,
         "created_at": cycle.created_at.isoformat(),
         "weeks": [_serialize_week(w) for w in cycle.weeks],

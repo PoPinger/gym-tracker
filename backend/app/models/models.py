@@ -143,9 +143,10 @@ class WeightCycle(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    start_weight = Column(Float, nullable=False)
+    start_weight = Column(Float, nullable=True)  # legacy; the first logged weight is used instead
     months = Column(Integer, nullable=False)
     status = Column(String(20), default="active")  # active, completed
+    goal = Column(String(10), nullable=True)  # "bulk" | "cut"; null = not set (neutral colours)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="weight_cycles")

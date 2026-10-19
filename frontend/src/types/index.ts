@@ -126,9 +126,10 @@ export interface WeightWeek {
 
 export interface WeightCycle {
   id: number;
-  start_weight: number;
+  start_weight: number | null;
   months: number;
   status: string;
+  goal: 'bulk' | 'cut' | null;
   created_at: string;
   weeks: WeightWeek[];
 }
@@ -170,6 +171,7 @@ export interface DashboardData {
     last_weight: number | null;
     avg_last_week: number | null;
     change_vs_prev_week: number | null;
+    goal: 'bulk' | 'cut' | null;
   } | null;
   next_workout: {
     day_name: string | null;

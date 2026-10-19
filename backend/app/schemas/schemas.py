@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Literal, Optional, List
 from datetime import date, datetime
 from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
@@ -275,9 +275,13 @@ class ExerciseReorderRequest(BaseModel):
 
 # ── Weight ────────────────────────────────────────────────────────────────────
 
+WeightGoal = Literal["bulk", "cut"]
+
+
 class WeightCycleCreate(BaseModel):
-    start_weight: float
     months: int
+    goal: WeightGoal
+    start_weight: Optional[float] = None
 
     @field_validator("months")
     @classmethod
@@ -289,9 +293,13 @@ class WeightCycleCreate(BaseModel):
     @field_validator("start_weight")
     @classmethod
     def weight_positive(cls, v):
-        if v <= 0:
+        if v is not None and v <= 0:
             raise ValueError("Waga musi być większa od zera")
         return v
+
+
+class WeightCycleUpdate(BaseModel):
+    goal: WeightGoal
 
 
 class WeightDayLogOut(BaseModel):
@@ -323,9 +331,10 @@ class WeightWeekOut(BaseModel):
 
 class WeightCycleOut(BaseModel):
     id: int
-    start_weight: float
+    start_weight: Optional[float] = None
     months: int
     status: str
+    goal: Optional[str] = None
     created_at: datetime
     weeks: List[WeightWeekOut] = []
 

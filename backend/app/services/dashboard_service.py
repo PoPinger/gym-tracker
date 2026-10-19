@@ -141,6 +141,7 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
             "last_weight": last_weight,
             "avg_last_week": avg_last_week,
             "change_vs_prev_week": change,
+            "goal": active_cycle.goal,
         }
 
     # ── Recent workouts ──────────────────────────────────────────────────────

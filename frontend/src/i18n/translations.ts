@@ -283,12 +283,17 @@ export interface TranslationMap {
   // My Weight – setup
   my_weight_title: string;
   my_weight_subtitle: string;
-  setup_weight_title: string;
-  setup_weight_subtitle: string;
-  setup_error_invalid: string;
   setup_error_default: string;
-  start_weight_label: string;
-  start_weight_placeholder: string;
+  goal_label: string;
+  goal_bulk: string;
+  goal_cut: string;
+  goal_required: string;
+  goal_not_set: string;
+  weight_chart_title: string;
+  weight_chart_empty: string;
+  weight_start_label: string;
+  weight_now_label: string;
+  weight_readings_count: string;
   duration_label: string;
   month_singular: string;
   months_plural: string;
@@ -590,12 +595,17 @@ const pl: TranslationMap = {
 
   my_weight_title: 'Moja waga',
   my_weight_subtitle: 'Śledź postępy wagowe w czasie',
-  setup_weight_title: 'Skonfiguruj śledzenie wagi',
-  setup_weight_subtitle: 'Loguj wagę codziennie, aby monitorować trendy',
-  setup_error_invalid: 'Podaj prawidłową wagę',
   setup_error_default: 'Nie udało się utworzyć cyklu',
-  start_weight_label: 'Waga startowa (kg)',
-  start_weight_placeholder: 'np. 75.5',
+  goal_label: 'Cel',
+  goal_bulk: 'Masa',
+  goal_cut: 'Redukcja',
+  goal_required: 'Wybierz cel: masa lub redukcja.',
+  goal_not_set: 'Ustaw cel, aby kolorować zmiany wagi.',
+  weight_chart_title: 'Średnie tygodniowe',
+  weight_chart_empty: 'Wykres pojawi się po dwóch tygodniach z pomiarami.',
+  weight_start_label: 'Start',
+  weight_now_label: 'Teraz',
+  weight_readings_count: '{n}/7 pomiarów',
   duration_label: 'Czas trwania —',
   month_singular: 'miesiąc',
   months_plural: 'miesięcy',
@@ -893,12 +903,17 @@ const en: TranslationMap = {
 
   my_weight_title: 'My Weight',
   my_weight_subtitle: 'Track your weight progress over time',
-  setup_weight_title: 'Set up weight tracking',
-  setup_weight_subtitle: 'Log weight daily to monitor trends',
-  setup_error_invalid: 'Please enter a valid weight',
   setup_error_default: 'Failed to create cycle',
-  start_weight_label: 'Starting weight (kg)',
-  start_weight_placeholder: 'e.g. 75.5',
+  goal_label: 'Goal',
+  goal_bulk: 'Bulk',
+  goal_cut: 'Cut',
+  goal_required: 'Choose a goal: bulk or cut.',
+  goal_not_set: 'Set a goal to colour weight changes.',
+  weight_chart_title: 'Weekly averages',
+  weight_chart_empty: 'The chart appears after two weeks with readings.',
+  weight_start_label: 'Start',
+  weight_now_label: 'Now',
+  weight_readings_count: '{n}/7 readings',
   duration_label: 'Duration —',
   month_singular: 'month',
   months_plural: 'months',

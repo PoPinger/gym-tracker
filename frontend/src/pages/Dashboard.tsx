@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardApi } from '../services/api';
+import { trendTone } from '../utils/weightTrend';
 import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
 import WorkoutCalendar from '../components/WorkoutCalendar';
@@ -224,10 +225,8 @@ export default function Dashboard() {
                     {d.weight_panel.change_vs_prev_week !== null && (
                       <div>
                         <div style={{ fontSize:11, fontWeight:600, color:'var(--text-subtle)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{t('vs_prev_week')}</div>
-                        <div style={{
-                          fontSize:20, fontWeight:800, marginTop:2,
-                          color: d.weight_panel.change_vs_prev_week <= 0 ? 'var(--success)' : 'var(--danger)'
-                        }}>
+                        <div className={`tone-${trendTone(d.weight_panel.change_vs_prev_week, d.weight_panel.goal)}`}
+                          style={{ fontSize:20, fontWeight:800, marginTop:2 }}>
                           {d.weight_panel.change_vs_prev_week > 0 ? '+' : ''}{d.weight_panel.change_vs_prev_week} kg
                         </div>
                       </div>
