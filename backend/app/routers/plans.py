@@ -308,9 +308,11 @@ def _check_workout_date(workout_date: Optional[date]) -> None:
 
 @router.put("/exercise-logs/{log_id}/sets")
 def save_sets(log_id: int, sets: List[SetLogIn], workout_date: Optional[date] = None,
-              skipped: Optional[bool] = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+              skipped: Optional[bool] = None, exercise_skipped: Optional[bool] = None,
+              db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     _check_workout_date(workout_date)
-    result = plan_service.save_exercise_sets(db, log_id, sets, user.id, workout_date, skipped)
+    result = plan_service.save_exercise_sets(
+        db, log_id, sets, user.id, workout_date, skipped, exercise_skipped)
     if not result:
         raise HTTPException(404, "Dziennik ćwiczenia nie został znaleziony")
     return {"ok": True, "exercise_log_id": log_id}
@@ -351,6 +353,7 @@ def _serialize_day_log(log) -> dict:
             "sets": ex.sets if ex else 0,
             "rep_min": ex.rep_min if ex else None,
             "rep_max": ex.rep_max if ex else None,
+            "skipped": bool(ex_log.skipped),
             "set_logs": set_logs,
         })
     return {

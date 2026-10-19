@@ -221,6 +221,8 @@ export interface TranslationMap {
   exercise_name_edit_placeholder: string;
   done_label: string;
   skipped_label: string;
+  exercise_skipped_checkbox: string;
+  exercise_skipped_label: string;
 
   // My Plans – weeks view
   all_weeks: string;
@@ -511,6 +513,8 @@ const pl: TranslationMap = {
   exercise_name_edit_placeholder: 'Nazwa ćwiczenia',
   done_label: 'Gotowe',
   skipped_label: 'Pominięty',
+  exercise_skipped_checkbox: 'Ćwiczenie pominięte',
+  exercise_skipped_label: 'Pominięte',
 
   all_weeks: 'Wszystkie tygodnie',
   finish_plan_btn: 'Zakończ plan',
@@ -793,6 +797,8 @@ const en: TranslationMap = {
   exercise_name_edit_placeholder: 'Exercise name',
   done_label: 'Done',
   skipped_label: 'Skipped',
+  exercise_skipped_checkbox: 'Exercise skipped',
+  exercise_skipped_label: 'Skipped',
 
   all_weeks: 'All weeks',
   finish_plan_btn: 'Finish plan',

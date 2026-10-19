@@ -61,6 +61,7 @@ export interface ExerciseLog {
   sets: number;
   rep_min?: number | null;
   rep_max?: number | null;
+  skipped: boolean;
   set_logs: SetLog[];
 }
 

@@ -318,7 +318,8 @@ def get_day_log(db: Session, log_id: int, user_id: int) -> Optional[TrainingDayL
 
 
 def save_exercise_sets(db: Session, exercise_log_id: int, sets_data: list, user_id: int,
-                       workout_date: Optional[date] = None, skipped: Optional[bool] = None):
+                       workout_date: Optional[date] = None, skipped: Optional[bool] = None,
+                       exercise_skipped: Optional[bool] = None):
     ex_log = db.query(ExerciseLog).filter(
         ExerciseLog.id == exercise_log_id,
         ExerciseLog.user_id == user_id,
@@ -345,6 +346,8 @@ def save_exercise_sets(db: Session, exercise_log_id: int, sets_data: list, user_
         ex_log.day_log.workout_date = workout_date
     if skipped is not None:
         ex_log.day_log.skipped = skipped
+    if exercise_skipped is not None:
+        ex_log.skipped = exercise_skipped
     db.commit()
     db.refresh(ex_log)
     return ex_log

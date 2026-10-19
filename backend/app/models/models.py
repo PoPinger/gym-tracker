@@ -113,6 +113,7 @@ class ExerciseLog(Base):
     training_day_log_id = Column(Integer, ForeignKey("training_day_logs.id", ondelete="CASCADE"), nullable=False, index=True)
     exercise_id = Column(Integer, ForeignKey("exercises.id", ondelete="CASCADE"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    skipped = Column(Boolean, nullable=False, default=False, server_default=false())
 
     day_log = relationship("TrainingDayLog", back_populates="exercise_logs")
     exercise = relationship("Exercise", back_populates="exercise_logs")

@@ -188,6 +188,7 @@ class ExerciseLogOut(BaseModel):
     exercise_name: str
     muscle_group: str
     sets: int
+    skipped: bool = False
     set_logs: List[SetLogOut] = []
 
     class Config:

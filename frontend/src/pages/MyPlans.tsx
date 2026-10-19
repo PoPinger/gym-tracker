@@ -176,14 +176,12 @@ export default function MyPlans() {
 
   const dateInvalid = !workoutDate || workoutDate > todayIso();
 
-  // Skipped workout: copy reps/weight from the previous week's same day; unchecking keeps the data
-  const toggleSkipped = (checked: boolean) => {
-    setSkipped(checked);
-    if (!checked || !dayLog) return;
+  // Copy reps/weight from the previous week's same exercise; fields without previous data stay as they are
+  const fillFromPrevWeek = (log: DayLog, exLogIds: number[]) => {
     const weights: Record<number, string> = {};
-    const exercise_logs = dayLog.exercise_logs.map(el => {
-      const prev = dayLog.prev_week_data?.[el.exercise_id];
-      if (!prev?.length) return el;
+    const exercise_logs = log.exercise_logs.map(el => {
+      const prev = log.prev_week_data?.[el.exercise_id];
+      if (!exLogIds.includes(el.id) || !prev?.length) return el;
       const w = firstWeight(prev);
       if (w != null) weights[el.id] = String(w);
       return {
@@ -196,7 +194,20 @@ export default function MyPlans() {
       };
     });
     setExerciseWeights(prev => ({ ...prev, ...weights }));
-    setDayLog({ ...dayLog, exercise_logs });
+    setDayLog({ ...log, exercise_logs });
+  };
+
+  // Skipped workout / exercise: auto-fill from the previous week; unchecking keeps the data
+  const toggleSkipped = (checked: boolean) => {
+    setSkipped(checked);
+    if (checked && dayLog) fillFromPrevWeek(dayLog, dayLog.exercise_logs.map(el => el.id));
+  };
+
+  const toggleExerciseSkipped = (exLogId: number, checked: boolean) => {
+    if (!dayLog) return;
+    const log = { ...dayLog, exercise_logs: dayLog.exercise_logs.map(el => el.id === exLogId ? { ...el, skipped: checked } : el) };
+    if (checked) fillFromPrevWeek(log, [exLogId]);
+    else setDayLog(log);
   };
 
   const saveSets = async (exLogId: number) => {
@@ -205,7 +216,7 @@ export default function MyPlans() {
     if (!el) return;
     setSaving(p => ({ ...p, [exLogId]: true }));
     try {
-      await logsApi.saveSets(exLogId, el.set_logs, workoutDate, skipped);
+      await logsApi.saveSets(exLogId, el.set_logs, workoutDate, skipped, el.skipped);
       setSaved(p => ({ ...p, [exLogId]: true }));
       setTimeout(() => setSaved(p => ({ ...p, [exLogId]: false })), 2500);
     } finally { setSaving(p => ({ ...p, [exLogId]: false })); }
@@ -214,7 +225,7 @@ export default function MyPlans() {
   const finishDay = async () => {
     if (!dayLog || dateInvalid) return;
     // Auto-filled values of a skipped day would otherwise be lost (sets are saved per exercise)
-    if (skipped) await Promise.all(dayLog.exercise_logs.map(el => logsApi.saveSets(el.id, el.set_logs, workoutDate, skipped)));
+    if (skipped) await Promise.all(dayLog.exercise_logs.map(el => logsApi.saveSets(el.id, el.set_logs, workoutDate, skipped, el.skipped)));
     await logsApi.completeDay(dayLog.id, workoutDate, skipped);
     if (weekInfo) { const r = await logsApi.getWeekDays(weekInfo.week_id); setWeekInfo(r.data); }
     setView('days');
@@ -732,23 +743,32 @@ export default function MyPlans() {
             const repRange  = formatRepRange(el.rep_min, el.rep_max);
 
             return (
-              <div key={el.id} className="exercise-card">
+              <div key={el.id} className={`exercise-card${el.skipped ? ' skipped' : ''}`}>
                 <div className="ex-header">
                   <div>
-                    <div className="ex-name">{el.exercise_name}</div>
+                    <div className="ex-name">
+                      {el.exercise_name}
+                      {el.skipped && <span className="ex-skipped-badge">{t('exercise_skipped_label')}</span>}
+                    </div>
                     <div className="ex-meta">
                       {muscleKey ? t(muscleKey) : el.muscle_group} · {el.sets} {t('sets_unit')}
                       {repRange && ` · ${t('rep_range_label')} ${repRange}`}
                     </div>
                   </div>
-                  <button
-                    className={`btn btn-sm ${saved[el.id] ? 'btn-success' : 'btn-outline'}`}
-                    disabled={saving[el.id] || dateInvalid}
-                    onClick={() => saveSets(el.id)}
-                    style={{ flexShrink:0 }}
-                  >
-                    {saving[el.id] ? t('save_sets_saving') : saved[el.id] ? <><CheckCircle2 size={14} /> {t('save_sets_saved')}</> : t('save_sets_btn')}
-                  </button>
+                  <div className="ex-actions">
+                    <label className="ex-skip">
+                      <input type="checkbox" checked={el.skipped} onChange={e => toggleExerciseSkipped(el.id, e.target.checked)} />
+                      {t('exercise_skipped_checkbox')}
+                    </label>
+                    <button
+                      className={`btn btn-sm ${saved[el.id] ? 'btn-success' : 'btn-outline'}`}
+                      disabled={saving[el.id] || dateInvalid}
+                      onClick={() => saveSets(el.id)}
+                      style={{ flexShrink:0 }}
+                    >
+                      {saving[el.id] ? t('save_sets_saving') : saved[el.id] ? <><CheckCircle2 size={14} /> {t('save_sets_saved')}</> : t('save_sets_btn')}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="sets-header" style={{ gridTemplateColumns:'40px minmax(0, 1fr) minmax(0, 1fr)' }}>
@@ -791,11 +811,11 @@ export default function MyPlans() {
 
                   {weekNum > 1 && (
                     <RefBlock title={t('prev_week_label')} weightLabel={t('weight_field_label')} progressLabel={t('progress_label')}
-                      weight={firstWeight(prevSets)} pct={progressPct(curScore, exerciseScore(prevSets))} lang={lang} />
+                      weight={firstWeight(prevSets)} pct={el.skipped ? null : progressPct(curScore, exerciseScore(prevSets))} lang={lang} />
                   )}
                   {weekNum > 2 && (
                     <RefBlock title={t('first_week_label')} weightLabel={t('weight_field_label')} progressLabel={t('progress_label')}
-                      weight={firstWeight(w1Sets)} pct={progressPct(curScore, exerciseScore(w1Sets))} lang={lang} />
+                      weight={firstWeight(w1Sets)} pct={el.skipped ? null : progressPct(curScore, exerciseScore(w1Sets))} lang={lang} />
                   )}
                 </div>
               </div>

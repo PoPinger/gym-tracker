@@ -229,8 +229,13 @@ a { text-decoration: none; color: inherit; }
 
 /* ── EXERCISE CARD ── */
 .exercise-card { background: var(--bg-white); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px; }
-.ex-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.ex-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
 .ex-name { font-size: 15px; font-weight: 700; color: var(--text-heading); }
+.ex-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto; }
+.ex-skip { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; white-space: nowrap; }
+.ex-skip input { width: 16px; height: 16px; accent-color: var(--danger); }
+.exercise-card.skipped { border-color: var(--danger-border); }
+.ex-skipped-badge { margin-left: 8px; font-size: 11px; font-weight: 600; color: var(--danger); background: var(--danger-light); padding: 2px 8px; border-radius: 99px; vertical-align: middle; }
 .ex-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .sets-header { display: grid; grid-template-columns: 32px 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .sets-header span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); text-align: center; }

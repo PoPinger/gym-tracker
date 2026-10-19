@@ -224,7 +224,7 @@ def _compute_best_progress(db: Session, user_id: int) -> Optional[dict]:
         # Find the exercise where weight increased most from first to last log
         ex_logs = (
             db.query(ExerciseLog)
-            .filter(ExerciseLog.user_id == user_id)
+            .filter(ExerciseLog.user_id == user_id, ExerciseLog.skipped.is_(False))
             .all()
         )
         if not ex_logs:

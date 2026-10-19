@@ -13,6 +13,7 @@ with engine.begin() as conn:
     conn.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS rep_max INTEGER"))
     conn.execute(text("ALTER TABLE training_day_logs ADD COLUMN IF NOT EXISTS workout_date DATE"))
     conn.execute(text("ALTER TABLE training_day_logs ADD COLUMN IF NOT EXISTS skipped BOOLEAN NOT NULL DEFAULT FALSE"))
+    conn.execute(text("ALTER TABLE exercise_logs ADD COLUMN IF NOT EXISTS skipped BOOLEAN NOT NULL DEFAULT FALSE"))
 
 app = FastAPI(title="GymTracker API", version="1.0.0")
 
