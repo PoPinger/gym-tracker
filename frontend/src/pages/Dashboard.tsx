@@ -6,8 +6,8 @@ import WorkoutCalendar from '../components/WorkoutCalendar';
 import AppLoader from '../components/AppLoader';
 import type { DashboardData } from '../types';
 import {
-  Flame, TrendingUp, Calendar, Dumbbell, Scale,
-  ChevronRight, Award, BarChart2, Clock
+  TrendingUp, Dumbbell, Scale,
+  ChevronRight, Award, Clock
 } from 'lucide-react';
 
 function StatCard({ icon, iconClass, label, value, sub }: {
@@ -83,13 +83,13 @@ export default function Dashboard() {
 
           {/* Stats row */}
           <div className="stats-grid">
-            <StatCard icon={<Calendar size={20} />} iconClass="green"
+            <StatCard icon={<img className="stat-icon-img" src="/icons/stat-month.png" alt="" />} iconClass="green"
               label={t('stat_this_month')} value={d.quick_stats.this_month}
               sub={workoutLabel(d.quick_stats.this_month)} />
-            <StatCard icon={<BarChart2 size={20} />} iconClass="amber"
+            <StatCard icon={<img className="stat-icon-img" src="/icons/stat-year.png" alt="" />} iconClass="amber"
               label={t('stat_this_year')} value={d.quick_stats.this_year}
               sub={workoutLabel(d.quick_stats.this_year)} />
-            <StatCard icon={<Flame size={20} />} iconClass="red"
+            <StatCard icon={<img className="stat-icon-img" src="/icons/stat-streak.png" alt="" />} iconClass="red"
               label={t('stat_streak')} value={d.streak}
               sub={weekLabel(d.streak)} />
           </div>
