@@ -52,15 +52,15 @@ export interface TranslationMap {
   dashboard_create_first_plan: string;
 
   // Dashboard – stat cards
-  stat_this_week: string;
   stat_this_month: string;
-  stat_total: string;
+  stat_this_year: string;
   stat_streak: string;
   workouts_1: string;
   workouts_2_4: string;
   workouts_5plus: string;
-  days_streak_1: string;
-  days_streak_other: string;
+  weeks_streak_1: string;
+  weeks_streak_2_4: string;
+  weeks_streak_5plus: string;
 
   // Dashboard – plan card
   current_plan_label: string;
@@ -364,15 +364,15 @@ const pl: TranslationMap = {
   dashboard_welcome_body: 'Utwórz pierwszy plan treningowy i zacznij logować treningi, aby zobaczyć postępy.',
   dashboard_create_first_plan: 'Utwórz pierwszy plan',
 
-  stat_this_week: 'W tym tygodniu',
   stat_this_month: 'W tym miesiącu',
-  stat_total: 'Łącznie',
+  stat_this_year: 'W tym roku',
   stat_streak: 'Seria',
   workouts_1: 'trening',
   workouts_2_4: 'treningi',
   workouts_5plus: 'treningów',
-  days_streak_1: 'dzień z rzędu',
-  days_streak_other: 'dni z rzędu',
+  weeks_streak_1: 'tydzień bez pominięcia',
+  weeks_streak_2_4: 'tygodnie bez pominięcia',
+  weeks_streak_5plus: 'tygodni bez pominięcia',
 
   current_plan_label: 'Aktualny plan',
   badge_active: 'Aktywny',
@@ -652,15 +652,15 @@ const en: TranslationMap = {
   dashboard_welcome_body: 'Create your first training plan and start logging workouts to see your progress.',
   dashboard_create_first_plan: 'Create first plan',
 
-  stat_this_week: 'This week',
   stat_this_month: 'This month',
-  stat_total: 'Total',
+  stat_this_year: 'This year',
   stat_streak: 'Streak',
   workouts_1: 'workout',
   workouts_2_4: 'workouts',
   workouts_5plus: 'workouts',
-  days_streak_1: 'day in a row',
-  days_streak_other: 'days in a row',
+  weeks_streak_1: 'week without a skip',
+  weeks_streak_2_4: 'weeks without a skip',
+  weeks_streak_5plus: 'weeks without a skip',
 
   current_plan_label: 'Current plan',
   badge_active: 'Active',

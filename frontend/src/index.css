@@ -169,6 +169,8 @@ a { text-decoration: none; color: inherit; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr; } }
 
 /* ── ALERTS ── */
 .alert { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 14px; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }

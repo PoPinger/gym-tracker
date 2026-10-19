@@ -7,7 +7,7 @@ import AppLoader from '../components/AppLoader';
 import type { DashboardData } from '../types';
 import {
   Flame, TrendingUp, Calendar, Dumbbell, Scale,
-  ChevronRight, Activity, Award, BarChart2, Clock
+  ChevronRight, Award, BarChart2, Clock
 } from 'lucide-react';
 
 function StatCard({ icon, iconClass, label, value, sub }: {
@@ -33,16 +33,11 @@ export default function Dashboard() {
   const fmt = (d: string | null) =>
     d ? new Date(d).toLocaleDateString(lang === 'en' ? 'en-US' : 'pl-PL', { day:'numeric', month:'short' }) : '—';
 
-  const workoutLabel = (n: number) => {
-    if (n === 1) return t('workouts_1');
-    if (n >= 2 && n <= 4) return t('workouts_2_4');
-    return t('workouts_5plus');
-  };
-
-  const dayLabel = (n: number) => {
-    if (n === 1) return t('days_streak_1');
-    return t('days_streak_other');
-  };
+  // Polish plural forms: 1 / 2–4, 22–24… (not 12–14) / everything else
+  const plural = (n: number, one: string, few: string, many: string) =>
+    n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? few : many;
+  const workoutLabel = (n: number) => plural(n, t('workouts_1'), t('workouts_2_4'), t('workouts_5plus'));
+  const weekLabel = (n: number) => plural(n, t('weeks_streak_1'), t('weeks_streak_2_4'), t('weeks_streak_5plus'));
 
   useEffect(() => {
     dashboardApi.get().then(r => setData(r.data)).finally(() => setLoading(false));
@@ -51,7 +46,7 @@ export default function Dashboard() {
   if (loading) return <AppLoader />;
 
   const d = data!;
-  const hasAnything = d.quick_stats.total > 0 || d.current_plan || d.weight_panel;
+  const hasAnything = d.quick_stats.this_year > 0 || d.recent_workouts.length > 0 || d.current_plan || d.weight_panel;
 
   return (
     <div style={{ maxWidth: 1100 }}>
@@ -87,19 +82,16 @@ export default function Dashboard() {
           <WorkoutCalendar workouts={d.workout_calendar ?? []} />
 
           {/* Stats row */}
-          <div className="grid-4">
-            <StatCard icon={<Activity size={20} />} iconClass="indigo"
-              label={t('stat_this_week')} value={d.quick_stats.this_week}
-              sub={workoutLabel(d.quick_stats.this_week)} />
+          <div className="stats-grid">
             <StatCard icon={<Calendar size={20} />} iconClass="green"
               label={t('stat_this_month')} value={d.quick_stats.this_month}
               sub={workoutLabel(d.quick_stats.this_month)} />
             <StatCard icon={<BarChart2 size={20} />} iconClass="amber"
-              label={t('stat_total')} value={d.quick_stats.total}
-              sub={workoutLabel(d.quick_stats.total)} />
+              label={t('stat_this_year')} value={d.quick_stats.this_year}
+              sub={workoutLabel(d.quick_stats.this_year)} />
             <StatCard icon={<Flame size={20} />} iconClass="red"
               label={t('stat_streak')} value={d.streak}
-              sub={dayLabel(d.streak)} />
+              sub={weekLabel(d.streak)} />
           </div>
 
           {/* Plan + Progress */}

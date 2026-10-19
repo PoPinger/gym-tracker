@@ -159,9 +159,8 @@ export interface DashboardData {
     exercise_count: number;
   } | null;
   quick_stats: {
-    this_week: number;
     this_month: number;
-    total: number;
+    this_year: number;
   };
   weight_panel: {
     last_weight: number | null;

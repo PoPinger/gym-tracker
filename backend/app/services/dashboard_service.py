@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime
 from typing import Optional
 from sqlalchemy.orm import Session
 from app.models.models import (
@@ -87,29 +87,18 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
         }
 
     # ── Quick stats ──────────────────────────────────────────────────────────
-    now = datetime.utcnow()
-    week_start = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
-    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-    all_completed = (
-        db.query(TrainingDayLog)
-        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.status == "completed", TrainingDayLog.skipped.is_(False))
-        .all()
-    )
-    workouts_this_week = sum(
-        1 for l in all_completed
-        if l.completed_at and l.completed_at >= week_start
-    )
-    workouts_this_month = sum(
-        1 for l in all_completed
-        if l.completed_at and l.completed_at >= month_start
-    )
-    total_workouts = len(all_completed)
-
+    # Workouts are counted by their "Data treningu"; skipped and undated days don't count
+    today = date.today()
+    workout_dates = [
+        d for (d,) in db.query(TrainingDayLog.workout_date).filter(
+            TrainingDayLog.user_id == user_id,
+            TrainingDayLog.workout_date.isnot(None),
+            TrainingDayLog.skipped.is_(False),
+        )
+    ]
     quick_stats = {
-        "this_week": workouts_this_week,
-        "this_month": workouts_this_month,
-        "total": total_workouts,
+        "this_month": sum(1 for d in workout_dates if d.year == today.year and d.month == today.month),
+        "this_year": sum(1 for d in workout_dates if d.year == today.year),
     }
 
     # ── Weight panel ─────────────────────────────────────────────────────────
@@ -203,7 +192,7 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
     best_progress = _compute_best_progress(db, user_id)
 
     # ── Streak ───────────────────────────────────────────────────────────────
-    streak = _compute_streak(all_completed)
+    streak = _compute_streak(db, user_id)
 
     return {
         "current_plan": current_plan_data,
@@ -255,22 +244,25 @@ def _compute_best_progress(db: Session, user_id: int) -> Optional[dict]:
         return None
 
 
-def _compute_streak(completed_logs: list) -> int:
-    if not completed_logs:
-        return 0
-    dates = sorted(
-        set(l.completed_at.date() for l in completed_logs if l.completed_at),
-        reverse=True,
+def _compute_streak(db: Session, user_id: int) -> int:
+    """Consecutive finished training weeks, newest first, without a skipped training day.
+
+    Unfinished weeks (including the current one) are ignored, so they never break the streak.
+    """
+    weeks = (
+        db.query(TrainingWeek)
+        .join(TrainingPlan, TrainingPlan.id == TrainingWeek.plan_id)
+        .filter(TrainingPlan.user_id == user_id, TrainingWeek.status == "completed")
+        .all()
     )
-    if not dates:
-        return 0
+
+    def finished_at(week) -> datetime:
+        times = [l.completed_at for l in week.day_logs if l.completed_at]
+        return max(times) if times else datetime.min
+
     streak = 0
-    today = datetime.utcnow().date()
-    expected = today
-    for d in dates:
-        if d == expected or d == expected - timedelta(days=1):
-            streak += 1
-            expected = d - timedelta(days=1)
-        else:
+    for week in sorted(weeks, key=finished_at, reverse=True):
+        if any(l.skipped for l in week.day_logs):
             break
+        streak += 1
     return streak
