@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import datetime
+from datetime import date, datetime
 from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
 
@@ -199,12 +199,17 @@ class DayLogCreate(BaseModel):
     training_week_id: int
 
 
+class DayCompleteIn(BaseModel):
+    workout_date: Optional[date] = None
+
+
 class DayLogOut(BaseModel):
     id: int
     training_week_id: int
     plan_day_id: int
     status: str
     completed_at: Optional[datetime]
+    workout_date: Optional[date] = None
     exercise_logs: List[ExerciseLogOut] = []
 
     class Config:
@@ -309,5 +314,6 @@ class DashboardOut(BaseModel):
     weight_panel: Optional[dict] = None
     next_workout: Optional[dict] = None
     recent_workouts: List[dict] = []
+    workout_calendar: List[dict] = []
     best_progress: Optional[dict] = None
     streak: int = 0

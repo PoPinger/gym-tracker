@@ -1,4 +1,5 @@
-from typing import List
+from datetime import date, timedelta
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -7,7 +8,7 @@ from app.schemas.schemas import (
     PlanCreate, PlanUpdate, PlanOut, PlanSummary,
     PlanDayCreate, PlanDayOut, PlanDayUpdate,
     ExerciseCreate, ExerciseOut, ExerciseUpdate,
-    ExerciseReorderRequest, WeekOut, WeekSummary, DayLogCreate, DayLogOut, SetLogIn,
+    ExerciseReorderRequest, WeekOut, WeekSummary, DayLogCreate, DayLogOut, DayCompleteIn, SetLogIn,
     PlanStructureUpdate,
 )
 from app.auth.auth import get_current_user
@@ -298,17 +299,28 @@ def get_day_log(log_id: int, db: Session = Depends(get_db), user: User = Depends
     return result
 
 
+def _check_workout_date(workout_date: Optional[date]) -> None:
+    # Server runs in UTC; allow one day of slack for users ahead of UTC (frontend enforces local today)
+    if workout_date and workout_date > date.today() + timedelta(days=1):
+        raise HTTPException(400, "Data treningu nie może być z przyszłości")
+
+
 @router.put("/exercise-logs/{log_id}/sets")
-def save_sets(log_id: int, sets: List[SetLogIn], db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    result = plan_service.save_exercise_sets(db, log_id, sets, user.id)
+def save_sets(log_id: int, sets: List[SetLogIn], workout_date: Optional[date] = None,
+              db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    _check_workout_date(workout_date)
+    result = plan_service.save_exercise_sets(db, log_id, sets, user.id, workout_date)
     if not result:
         raise HTTPException(404, "Dziennik ćwiczenia nie został znaleziony")
     return {"ok": True, "exercise_log_id": log_id}
 
 
 @router.post("/day-logs/{log_id}/complete")
-def complete_day(log_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    log = plan_service.complete_day_log(db, log_id, user.id)
+def complete_day(log_id: int, data: Optional[DayCompleteIn] = None,
+                 db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    workout_date = data.workout_date if data else None
+    _check_workout_date(workout_date)
+    log = plan_service.complete_day_log(db, log_id, user.id, workout_date)
     if not log:
         raise HTTPException(404, "Dziennik nie został znaleziony")
     return {"ok": True, "status": log.status}
@@ -346,5 +358,6 @@ def _serialize_day_log(log) -> dict:
         "plan_day_id": log.plan_day_id,
         "status": log.status,
         "completed_at": log.completed_at.isoformat() if log.completed_at else None,
+        "workout_date": log.workout_date.isoformat() if log.workout_date else None,
         "exercise_logs": exercise_logs,
     }

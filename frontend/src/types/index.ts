@@ -70,6 +70,7 @@ export interface DayLog {
   plan_day_id: number;
   status: string;
   completed_at: string | null;
+  workout_date: string | null;
   exercise_logs: ExerciseLog[];
   prev_week_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null }>>;
   week1_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null }>>;
@@ -124,6 +125,15 @@ export interface WeightCycle {
   weeks: WeightWeek[];
 }
 
+export interface CalendarWorkout {
+  date: string;
+  log_id: number;
+  plan_id: number;
+  week_id: number;
+  plan_day_id: number;
+  day_name: string;
+}
+
 export interface DashboardData {
   current_plan: {
     id: number;
@@ -165,6 +175,7 @@ export interface DashboardData {
     day_name: string;
     plan_name: string;
   }>;
+  workout_calendar: CalendarWorkout[];
   best_progress: {
     exercise: string;
     gain_kg: number;

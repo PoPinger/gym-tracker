@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.models.models import (
@@ -317,7 +317,8 @@ def get_day_log(db: Session, log_id: int, user_id: int) -> Optional[TrainingDayL
     ).first()
 
 
-def save_exercise_sets(db: Session, exercise_log_id: int, sets_data: list, user_id: int):
+def save_exercise_sets(db: Session, exercise_log_id: int, sets_data: list, user_id: int,
+                       workout_date: Optional[date] = None):
     ex_log = db.query(ExerciseLog).filter(
         ExerciseLog.id == exercise_log_id,
         ExerciseLog.user_id == user_id,
@@ -340,17 +341,22 @@ def save_exercise_sets(db: Session, exercise_log_id: int, sets_data: list, user_
                 reps=s.reps,
                 weight_kg=s.weight_kg,
             ))
+    if workout_date:
+        ex_log.day_log.workout_date = workout_date
     db.commit()
     db.refresh(ex_log)
     return ex_log
 
 
-def complete_day_log(db: Session, log_id: int, user_id: int) -> Optional[TrainingDayLog]:
+def complete_day_log(db: Session, log_id: int, user_id: int,
+                     workout_date: Optional[date] = None) -> Optional[TrainingDayLog]:
     log = get_day_log(db, log_id, user_id)
     if not log:
         return None
     log.status = "completed"
     log.completed_at = datetime.utcnow()
+    if workout_date:
+        log.workout_date = workout_date
     db.commit()
     db.refresh(log)
     return log

@@ -102,6 +102,30 @@ export interface TranslationMap {
   recent_workouts_label: string;
   all_plans: string;
 
+  // Dashboard – workout calendar
+  calendar_title: string;
+  calendar_prev: string;
+  calendar_next: string;
+  month_1: string;
+  month_2: string;
+  month_3: string;
+  month_4: string;
+  month_5: string;
+  month_6: string;
+  month_7: string;
+  month_8: string;
+  month_9: string;
+  month_10: string;
+  month_11: string;
+  month_12: string;
+  weekday_short_1: string;
+  weekday_short_2: string;
+  weekday_short_3: string;
+  weekday_short_4: string;
+  weekday_short_5: string;
+  weekday_short_6: string;
+  weekday_short_7: string;
+
   // Create Plan – step indicator
   step_days_per_week: string;
   step_duration: string;
@@ -225,6 +249,8 @@ export interface TranslationMap {
   save_sets_saving: string;
   save_sets_saved: string;
   finish_day_btn: string;
+  workout_date_label: string;
+  workout_date_future: string;
   finish_day_title: string;
   finish_day_body: string;
   confirm_btn: string;
@@ -374,6 +400,30 @@ const pl: TranslationMap = {
   recent_workouts_label: 'Ostatnie treningi',
   all_plans: 'Wszystkie plany',
 
+  // Dashboard – workout calendar
+  calendar_title: 'Kalendarz treningów',
+  calendar_prev: 'Poprzedni miesiąc',
+  calendar_next: 'Następny miesiąc',
+  month_1: 'Styczeń',
+  month_2: 'Luty',
+  month_3: 'Marzec',
+  month_4: 'Kwiecień',
+  month_5: 'Maj',
+  month_6: 'Czerwiec',
+  month_7: 'Lipiec',
+  month_8: 'Sierpień',
+  month_9: 'Wrzesień',
+  month_10: 'Październik',
+  month_11: 'Listopad',
+  month_12: 'Grudzień',
+  weekday_short_1: 'Pn',
+  weekday_short_2: 'Wt',
+  weekday_short_3: 'Śr',
+  weekday_short_4: 'Cz',
+  weekday_short_5: 'Pt',
+  weekday_short_6: 'So',
+  weekday_short_7: 'Nd',
+
   step_days_per_week: 'Dni/tydz.',
   step_duration: 'Czas',
   step_day_names: 'Nazwy dni',
@@ -484,6 +534,8 @@ const pl: TranslationMap = {
   save_sets_saving: 'Zapisywanie…',
   save_sets_saved: 'Zapisano',
   finish_day_btn: 'Zakończ dzień',
+  workout_date_label: 'Data treningu:',
+  workout_date_future: 'Data treningu nie może być z przyszłości.',
   finish_day_title: 'Zakończyć trening?',
   finish_day_body: 'Oznacz dzień jako ukończony. Możesz edytować wpisy później.',
   confirm_btn: 'Potwierdź',
@@ -628,6 +680,30 @@ const en: TranslationMap = {
   recent_workouts_label: 'Recent workouts',
   all_plans: 'All plans',
 
+  // Dashboard – workout calendar
+  calendar_title: 'Workout calendar',
+  calendar_prev: 'Previous month',
+  calendar_next: 'Next month',
+  month_1: 'January',
+  month_2: 'February',
+  month_3: 'March',
+  month_4: 'April',
+  month_5: 'May',
+  month_6: 'June',
+  month_7: 'July',
+  month_8: 'August',
+  month_9: 'September',
+  month_10: 'October',
+  month_11: 'November',
+  month_12: 'December',
+  weekday_short_1: 'Mo',
+  weekday_short_2: 'Tu',
+  weekday_short_3: 'We',
+  weekday_short_4: 'Th',
+  weekday_short_5: 'Fr',
+  weekday_short_6: 'Sa',
+  weekday_short_7: 'Su',
+
   step_days_per_week: 'Days/week',
   step_duration: 'Duration',
   step_day_names: 'Day names',
@@ -738,6 +814,8 @@ const en: TranslationMap = {
   save_sets_saving: 'Saving…',
   save_sets_saved: 'Saved',
   finish_day_btn: 'Finish day',
+  workout_date_label: 'Workout date:',
+  workout_date_future: 'Workout date cannot be in the future.',
   finish_day_title: 'Finish workout?',
   finish_day_body: 'Mark day as completed. You can edit entries later.',
   confirm_btn: 'Confirm',

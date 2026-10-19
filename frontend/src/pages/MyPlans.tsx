@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { plansApi, logsApi } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { useLanguage } from '../i18n/LanguageContext';
 import { isValidRepRange, repRangePayload, formatRepRange } from '../utils/repRange';
 import { exerciseScore, progressPct, formatPct, formatKg, firstWeight } from '../utils/progress';
+import { todayIso } from '../utils/date';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog } from '../types';
 import {
   ChevronRight, Copy, CheckCircle2, ArrowLeft,
@@ -62,6 +63,7 @@ function ConfirmDialog({ title, body, onOk, onCancel, okLabel, cancelLabel, okCl
 
 export default function MyPlans() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, lang } = useLanguage();
 
   const [view, setView]             = useState<View>('list');
@@ -76,6 +78,7 @@ export default function MyPlans() {
   const [saving,  setSaving]  = useState<Record<number, boolean>>({});
   const [saved,   setSaved]   = useState<Record<number, boolean>>({});
   const [exerciseWeights, setExerciseWeights] = useState<Record<number, string>>({});
+  const [workoutDate, setWorkoutDate] = useState('');
 
   const [editPlan, setEditPlan]               = useState<Plan | null>(null);
   const [editName, setEditName]               = useState('');
@@ -120,9 +123,25 @@ export default function MyPlans() {
       weights[el.id] = w != null ? String(w) : '';
     }
     setExerciseWeights(weights);
+    setWorkoutDate(log.workout_date ?? todayIso());
     setDayLog(log);
     setView('workout');
   };
+
+  // Opened from the dashboard calendar: jump straight to the training day
+  useEffect(() => {
+    const target = (location.state as { openDay?: { planId: number; weekId: number; planDayId: number; logId: number } } | null)?.openDay;
+    if (!target) return;
+    navigate(location.pathname, { replace: true, state: null });
+    (async () => {
+      const [pr, wr, dr] = await Promise.all([
+        plansApi.get(target.planId), plansApi.getWeeks(target.planId), logsApi.getWeekDays(target.weekId),
+      ]);
+      setPlan(pr.data); setWeeks(wr.data); setWeekInfo(dr.data);
+      await openDay(target.weekId, target.planDayId, target.logId);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const editSet = (exLogId: number, setNum: number, raw: string) => {
     const val = raw === '' ? null : Number(raw);
@@ -153,21 +172,23 @@ export default function MyPlans() {
     });
   };
 
+  const dateInvalid = !workoutDate || workoutDate > todayIso();
+
   const saveSets = async (exLogId: number) => {
-    if (!dayLog) return;
+    if (!dayLog || dateInvalid) return;
     const el = dayLog.exercise_logs.find(e => e.id === exLogId);
     if (!el) return;
     setSaving(p => ({ ...p, [exLogId]: true }));
     try {
-      await logsApi.saveSets(exLogId, el.set_logs);
+      await logsApi.saveSets(exLogId, el.set_logs, workoutDate);
       setSaved(p => ({ ...p, [exLogId]: true }));
       setTimeout(() => setSaved(p => ({ ...p, [exLogId]: false })), 2500);
     } finally { setSaving(p => ({ ...p, [exLogId]: false })); }
   };
 
   const finishDay = async () => {
-    if (!dayLog) return;
-    await logsApi.completeDay(dayLog.id);
+    if (!dayLog || dateInvalid) return;
+    await logsApi.completeDay(dayLog.id, workoutDate);
     if (weekInfo) { const r = await logsApi.getWeekDays(weekInfo.week_id); setWeekInfo(r.data); }
     setView('days');
   };
@@ -643,6 +664,12 @@ export default function MyPlans() {
         <button className="back-btn" onClick={() => setView('days')}>
           <ArrowLeft size={15} /> {t('week_tile_label')} {weekInfo.week_number}
         </button>
+        <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:16 }}>
+          <label className="form-label" htmlFor="workout-date">{t('workout_date_label')}</label>
+          <input id="workout-date" type="date" className="form-input" style={{ width:'auto' }}
+            value={workoutDate} max={todayIso()} onChange={e => setWorkoutDate(e.target.value)} />
+        </div>
+        {dateInvalid && <div className="alert alert-error" style={{ marginBottom:16 }}>{t('workout_date_future')}</div>}
         <div className="page-header">
           <div>
             <h1 className="page-title">{dayName}</h1>
@@ -678,7 +705,7 @@ export default function MyPlans() {
                   </div>
                   <button
                     className={`btn btn-sm ${saved[el.id] ? 'btn-success' : 'btn-outline'}`}
-                    disabled={saving[el.id]}
+                    disabled={saving[el.id] || dateInvalid}
                     onClick={() => saveSets(el.id)}
                     style={{ flexShrink:0 }}
                   >
@@ -739,7 +766,7 @@ export default function MyPlans() {
         </div>
 
         <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid var(--border)' }}>
-          <button className="btn btn-success btn-full btn-lg" onClick={() => setConfirm('day')}>
+          <button className="btn btn-success btn-full btn-lg" disabled={dateInvalid} onClick={() => setConfirm('day')}>
             <CheckCircle2 size={18} /> {t('finish_day_btn')}
           </button>
         </div>

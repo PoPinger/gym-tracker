@@ -174,6 +174,27 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
             "plan_name": plan.name if plan else "Nieznany",
         })
 
+    # ── Workout calendar ─────────────────────────────────────────────────────
+    calendar_rows = (
+        db.query(TrainingDayLog, PlanDay, TrainingWeek)
+        .join(PlanDay, PlanDay.id == TrainingDayLog.plan_day_id)
+        .join(TrainingWeek, TrainingWeek.id == TrainingDayLog.training_week_id)
+        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.workout_date.isnot(None))
+        .order_by(TrainingDayLog.workout_date, PlanDay.day_order)
+        .all()
+    )
+    workout_calendar = [
+        {
+            "date": log.workout_date.isoformat(),
+            "log_id": log.id,
+            "plan_id": week.plan_id,
+            "week_id": week.id,
+            "plan_day_id": day.id,
+            "day_name": day.day_name,
+        }
+        for log, day, week in calendar_rows
+    ]
+
     # ── Best progress ────────────────────────────────────────────────────────
     best_progress = _compute_best_progress(db, user_id)
 
@@ -188,6 +209,7 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
         "weight_panel": weight_panel,
         "next_workout": next_workout_data,
         "recent_workouts": recent_workouts,
+        "workout_calendar": workout_calendar,
         "best_progress": best_progress,
         "streak": streak,
     }

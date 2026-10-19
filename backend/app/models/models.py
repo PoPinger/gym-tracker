@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, Float, DateTime, ForeignKey,
+    Column, Integer, String, Float, Date, DateTime, ForeignKey,
     Text, Boolean, UniqueConstraint, Index
 )
 from sqlalchemy.orm import relationship
@@ -92,6 +92,7 @@ class TrainingDayLog(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     status = Column(String(20), default="active")  # active, completed
     completed_at = Column(DateTime, nullable=True)
+    workout_date = Column(Date, nullable=True)
 
     training_week = relationship("TrainingWeek", back_populates="day_logs")
     plan_day = relationship("PlanDay", back_populates="day_logs")

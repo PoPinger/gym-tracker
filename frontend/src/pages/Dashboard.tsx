@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardApi } from '../services/api';
 import { useLanguage } from '../i18n/LanguageContext';
+import WorkoutCalendar from '../components/WorkoutCalendar';
 import type { DashboardData } from '../types';
 import {
   Flame, TrendingUp, Calendar, Dumbbell, Scale,
@@ -102,6 +103,8 @@ export default function Dashboard() {
               label={t('stat_streak')} value={d.streak}
               sub={dayLabel(d.streak)} />
           </div>
+
+          <WorkoutCalendar workouts={d.workout_calendar ?? []} />
 
           {/* Plan + Progress */}
           {d.current_plan && (

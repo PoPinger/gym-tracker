@@ -11,6 +11,7 @@ Base.metadata.create_all(bind=engine)
 with engine.begin() as conn:
     conn.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS rep_min INTEGER"))
     conn.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS rep_max INTEGER"))
+    conn.execute(text("ALTER TABLE training_day_logs ADD COLUMN IF NOT EXISTS workout_date DATE"))
 
 app = FastAPI(title="GymTracker API", version="1.0.0")
 
