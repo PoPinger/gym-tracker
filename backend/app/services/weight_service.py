@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 from sqlalchemy.orm import Session
 from app.models.models import WeightCycle, WeightWeek, WeightDayLog
-from app.schemas.schemas import WeightCycleCreate
+from app.schemas.schemas import WeightCycleCreate, WeightCycleUpdate
 
 
 def get_active_cycle(db: Session, user_id: int) -> Optional[WeightCycle]:
@@ -25,10 +25,18 @@ def create_cycle(db: Session, user_id: int, data: WeightCycleCreate) -> WeightCy
     db.add(cycle)
     db.flush()
 
-    total_weeks = data.months * 4
-    for w in range(1, total_weeks + 1):
+    _add_weeks(db, cycle.id, 1, data.months * 4)
+
+    db.commit()
+    db.refresh(cycle)
+    return cycle
+
+
+def _add_weeks(db: Session, cycle_id: int, first: int, last: int) -> None:
+    """Create weeks first..last (inclusive), each with 7 empty days."""
+    for w in range(first, last + 1):
         week = WeightWeek(
-            weight_cycle_id=cycle.id,
+            weight_cycle_id=cycle_id,
             week_number=w,
             status="active",
         )
@@ -42,19 +50,26 @@ def create_cycle(db: Session, user_id: int, data: WeightCycleCreate) -> WeightCy
                 logged_at=None,
             ))
 
-    db.commit()
-    db.refresh(cycle)
-    return cycle
 
-
-def update_cycle_goal(db: Session, cycle_id: int, user_id: int, goal: str) -> Optional[WeightCycle]:
+def update_cycle(db: Session, cycle_id: int, user_id: int, data: WeightCycleUpdate) -> Optional[WeightCycle]:
     cycle = db.query(WeightCycle).filter(
         WeightCycle.id == cycle_id,
         WeightCycle.user_id == user_id,
     ).first()
     if not cycle:
         return None
-    cycle.goal = goal
+    if data.goal is not None:
+        cycle.goal = data.goal
+    if data.months is not None:
+        old_weeks = cycle.months * 4
+        new_weeks = data.months * 4
+        cycle.months = data.months
+        if new_weeks > old_weeks:
+            _add_weeks(db, cycle.id, old_weeks + 1, new_weeks)
+        elif new_weeks < old_weeks:
+            # Weeks beyond the new length go, with their logged weights (cascade)
+            for week in [w for w in cycle.weeks if w.week_number > new_weeks]:
+                db.delete(week)
     db.commit()
     db.refresh(cycle)
     return cycle

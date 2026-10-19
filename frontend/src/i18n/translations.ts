@@ -294,6 +294,10 @@ export interface TranslationMap {
   weight_start_label: string;
   weight_now_label: string;
   weight_readings_count: string;
+  weight_edit_duration_title: string;
+  shorten_cycle_title: string;
+  shorten_cycle_body: string;
+  shorten_cycle_confirm: string;
   duration_label: string;
   month_singular: string;
   months_plural: string;
@@ -606,6 +610,10 @@ const pl: TranslationMap = {
   weight_start_label: 'Start',
   weight_now_label: 'Teraz',
   weight_readings_count: '{n}/7 pomiarów',
+  weight_edit_duration_title: 'Czas trwania cyklu',
+  shorten_cycle_title: 'Skrócić cykl?',
+  shorten_cycle_body: 'Tygodnie {from}–{to} zostaną trwale usunięte wraz z zapisanymi pomiarami wagi. Tej operacji nie można cofnąć.',
+  shorten_cycle_confirm: 'Skróć cykl',
   duration_label: 'Czas trwania —',
   month_singular: 'miesiąc',
   months_plural: 'miesięcy',
@@ -914,6 +922,10 @@ const en: TranslationMap = {
   weight_start_label: 'Start',
   weight_now_label: 'Now',
   weight_readings_count: '{n}/7 readings',
+  weight_edit_duration_title: 'Cycle duration',
+  shorten_cycle_title: 'Shorten cycle?',
+  shorten_cycle_body: 'Weeks {from}–{to} will be permanently deleted along with their logged weights. This action cannot be undone.',
+  shorten_cycle_confirm: 'Shorten cycle',
   duration_label: 'Duration —',
   month_singular: 'month',
   months_plural: 'months',

@@ -5,7 +5,8 @@ import { useLanguage } from '../i18n/LanguageContext';
 import type { WeightCycle, WeightWeek } from '../types';
 import GoalSwitch from '../components/GoalSwitch';
 import { SetupView, PanelView, WeekView } from '../components/WeightViews';
-import { firstLoggedWeight, lastLoggedWeight, type WeightGoal } from '../utils/weightTrend';
+import { lastLoggedWeight, type WeightGoal } from '../utils/weightTrend';
+import { plural } from '../utils/plural';
 
 type View = 'setup' | 'weeks' | 'week-detail';
 
@@ -92,6 +93,30 @@ export default function MyWeight() {
     } finally { setGoalSaving(false); }
   };
 
+  // Cycle duration: null = dialog closed
+  const [editMonths, setEditMonths]         = useState<number | null>(null);
+  const [durationSaving, setDurationSaving] = useState(false);
+  const [durationError, setDurationError]   = useState('');
+  const [showShorten, setShowShorten]       = useState(false);
+
+  const saveDuration = async () => {
+    if (!cycle || editMonths == null) return;
+    setShowShorten(false);
+    if (editMonths === cycle.months) { setEditMonths(null); return; }
+    setDurationSaving(true); setDurationError('');
+    try {
+      const res = await weightApi.updateMonths(cycle.id, editMonths);
+      setCycle(res.data); setEditMonths(null);
+    } catch (err) {
+      setDurationError(apiErrorDetail(err) || t('save_changes_error'));
+    } finally { setDurationSaving(false); }
+  };
+
+  const handleSaveDuration = () => {
+    if (cycle && editMonths != null && editMonths < cycle.months) setShowShorten(true);
+    else void saveDuration();
+  };
+
   const handleReset = async () => {
     if (!cycle) return;
     await weightApi.deleteCycle(cycle.id);
@@ -169,9 +194,10 @@ export default function MyWeight() {
   /* ═══ WEEKS VIEW ═══ */
   if (view === 'weeks' && cycle) return (
     <>
-      <PanelView cycle={cycle} first={firstLoggedWeight(cycle)} last={lastLoggedWeight(cycle)}
+      <PanelView cycle={cycle} first={getWeek1Avg()} last={lastLoggedWeight(cycle)}
         avg={computeAverage} prevAvg={getPrevWeekAvg}
         onOpenWeek={week => { setSelectedWeek(week); setView('week-detail'); }} onReset={() => setShowReset(true)}
+        onEditDuration={() => { setEditMonths(cycle.months); setDurationError(''); }}
         goalSwitch={<GoalSwitch goal={cycle.goal} onChange={changeGoal} disabled={goalSaving} />} />
       {showReset && (
         <ConfirmDialog
@@ -180,6 +206,42 @@ export default function MyWeight() {
           okLabel={t('reset_btn')} okClass="btn-danger"
           cancelLabel={t('cancel_btn')}
           onOk={handleReset} onCancel={() => setShowReset(false)}
+        />
+      )}
+      {editMonths != null && !showShorten && (
+        <div className="modal-overlay">
+          <div className="modal w-duration-modal" role="dialog" aria-modal="true" aria-label={t('weight_edit_duration_title')}>
+            <div className="modal-title">{t('weight_edit_duration_title')}</div>
+            <label className="form-label">{t('edit_duration_label')}</label>
+            <div className="seg-control seg-control-12" role="radiogroup" aria-label={t('edit_duration_label')}>
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
+                <button key={n} type="button" role="radio" aria-checked={editMonths === n}
+                  className={editMonths === n ? 'selected' : ''} onClick={() => setEditMonths(n)}>{n}</button>
+              ))}
+            </div>
+            <div className="plan-stats one">
+              <div>
+                <span className="plan-stat">{editMonths * 4}</span>
+                <span className="day-list-label">{plural(editMonths * 4, t('weeks_1'), t('weeks_2_4'), t('weeks_5plus'))}</span>
+              </div>
+            </div>
+            {durationError && <div className="alert alert-error">{durationError}</div>}
+            <div className="modal-actions">
+              <button className="btn btn-outline btn-sm" onClick={() => setEditMonths(null)}>{t('cancel_btn')}</button>
+              <button className="btn btn-primary btn-sm" disabled={durationSaving} onClick={handleSaveDuration}>
+                {durationSaving ? t('saving') : t('save_changes_btn')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showShorten && editMonths != null && (
+        <ConfirmDialog
+          title={t('shorten_cycle_title')}
+          body={t('shorten_cycle_body').replace('{from}', String(editMonths * 4 + 1)).replace('{to}', String(cycle.months * 4))}
+          okLabel={t('shorten_cycle_confirm')} okClass="btn-danger"
+          cancelLabel={t('cancel_btn')}
+          onOk={saveDuration} onCancel={() => setShowShorten(false)}
         />
       )}
     </>

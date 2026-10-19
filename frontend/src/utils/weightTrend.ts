@@ -15,6 +15,4 @@ const loggedWeights = (cycle: WeightCycle): number[] =>
     .flatMap(w => [...w.day_logs].sort((a, b) => a.day_of_week - b.day_of_week))
     .filter(d => d.weight_kg != null).map(d => d.weight_kg!);
 
-// Replaces the old "starting weight": the first weight logged in the cycle
-export const firstLoggedWeight = (cycle: WeightCycle): number | null => loggedWeights(cycle)[0] ?? null;
 export const lastLoggedWeight = (cycle: WeightCycle): number | null => loggedWeights(cycle).at(-1) ?? null;

@@ -26,7 +26,7 @@ def create_cycle(data: WeightCycleCreate, db: Session = Depends(get_db), user: U
 
 @router.patch("/cycles/{cycle_id}")
 def update_cycle(cycle_id: int, data: WeightCycleUpdate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    cycle = weight_service.update_cycle_goal(db, cycle_id, user.id, data.goal)
+    cycle = weight_service.update_cycle(db, cycle_id, user.id, data)
     if not cycle:
         raise HTTPException(404, "Cykl nie został znaleziony")
     return _serialize_cycle(cycle)

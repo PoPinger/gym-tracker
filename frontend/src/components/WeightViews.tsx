@@ -1,12 +1,15 @@
 // "Moja waga" views: setup, weight panel (summary, weekly-average chart, week list) and week detail
 import type { ReactNode } from 'react';
-import { ArrowLeft, CalendarDays, Check, CheckCircle2, ChevronRight, Minus, Plus, RotateCcw, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Check, CheckCircle2, ChevronRight, Minus, Pencil, Plus, RotateCcw, TrendingDown, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { plural } from '../utils/plural';
 import { trendTone, type WeightGoal } from '../utils/weightTrend';
 import type { WeightCycle, WeightWeek } from '../types';
 
-const fmtDiff = (d: number | null) => d == null ? '—' : `${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d).toFixed(1)} kg`;
+// Weights in this section use a Polish decimal comma without a trailing ",0" (94,3 / 91)
+const fmtNum = (v: number) => v.toLocaleString('pl-PL', { maximumFractionDigits: 1 });
+const fmtKg = (v: number | null) => v == null ? '—' : `${fmtNum(v)} kg`;
+const fmtDiff = (d: number | null) => d == null ? '—' : `${d > 0 ? '+' : d < 0 ? '−' : ''}${fmtNum(Math.abs(d))} kg`;
 
 // Weight change with arrow, coloured by the cycle goal (see utils/weightTrend)
 function Diff({ d, goal, big }: { d: number | null; goal: string | null; big?: boolean }) {
@@ -70,7 +73,7 @@ function WeeklyChart({ weeks, avg, goal }: { weeks: WeightWeek[]; avg: (w: Weigh
     <div className="card w-chart">
       <div className="day-list-label">{t('weight_chart_title')}</div>
       <div className="w-chart-body">
-        <div className="w-chart-y"><span>{hi.toFixed(1)}</span><span>{((hi + lo) / 2).toFixed(1)}</span><span>{lo.toFixed(1)}</span></div>
+        <div className="w-chart-y"><span>{fmtNum(hi)}</span><span>{fmtNum((hi + lo) / 2)}</span><span>{fmtNum(lo)}</span></div>
         <div className="w-chart-plot">
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             {[0, 50, 100].map(g => <line key={g} x1="0" x2="100" y1={g} y2={g} className="w-chart-grid" />)}
@@ -81,7 +84,7 @@ function WeeklyChart({ weeks, avg, goal }: { weeks: WeightWeek[]; avg: (w: Weigh
           </svg>
           {pts.map((p, k) => (
             <span key={p.n} className={`w-chart-dot tone-${k ? trendTone(+(p.a - pts[k - 1].a).toFixed(1), goal) : 'neutral'}`}
-              style={{ left: `${x(p.i)}%`, top: `${y(p.a)}%` }} title={`${t('week_tile_label')} ${p.n}: ${p.a} kg`} />
+              style={{ left: `${x(p.i)}%`, top: `${y(p.a)}%` }} title={`${t('week_tile_label')} ${p.n}: ${fmtKg(p.a)}`} />
           ))}
         </div>
         <div className="w-chart-x">
@@ -95,10 +98,10 @@ function WeeklyChart({ weeks, avg, goal }: { weeks: WeightWeek[]; avg: (w: Weigh
 }
 
 /* ─────────── PANEL ─────────── */
-export function PanelView({ cycle, first, last, avg, prevAvg, onOpenWeek, onReset, goalSwitch }: {
+export function PanelView({ cycle, first, last, avg, prevAvg, onOpenWeek, onReset, onEditDuration, goalSwitch }: {
   cycle: WeightCycle; first: number | null; last: number | null;
   avg: (w: WeightWeek) => number | null; prevAvg: (n: number) => number | null;
-  onOpenWeek: (w: WeightWeek) => void; onReset: () => void; goalSwitch: ReactNode;
+  onOpenWeek: (w: WeightWeek) => void; onReset: () => void; onEditDuration: () => void; goalSwitch: ReactNode;
 }) {
   const { t } = useLanguage();
   const goal = cycle.goal;
@@ -112,10 +115,11 @@ export function PanelView({ cycle, first, last, avg, prevAvg, onOpenWeek, onRese
       <div className="page-header w-panel-header">
         <div>
           <h1 className="page-title">{t('my_weight_title')}</h1>
-          <p className="page-subtitle">{t('started_from')} <strong>{first != null ? `${first} kg` : '—'}</strong> · {cycle.months} {cycle.months === 1 ? t('month_singular') : t('months_plural')}</p>
+          <p className="page-subtitle">{t('started_from')} <strong>{fmtKg(first)}</strong> · {cycle.months} {cycle.months === 1 ? t('month_singular') : t('months_plural')}</p>
         </div>
         <div className="w-panel-actions">
           {goalSwitch}
+          <button className="btn btn-outline btn-sm" onClick={onEditDuration}><Pencil size={13} /> {t('edit_btn')}</button>
           <button className="btn btn-outline btn-sm btn-danger-outline" onClick={onReset}><RotateCcw size={13} /> {t('reset_btn')}</button>
         </div>
       </div>
@@ -124,9 +128,9 @@ export function PanelView({ cycle, first, last, avg, prevAvg, onOpenWeek, onRese
       {weeks.every(w => w.status === 'completed') && <div className="w-finished"><CheckCircle2 size={18} /> {t('all_weeks_complete_msg')}</div>}
 
       <div className="w-summary">
-        <span><small>{t('weight_start_label')}</small><strong>{first != null ? `${first} kg` : '—'}</strong></span>
+        <span><small>{t('weight_start_label')}</small><strong>{fmtKg(first)}</strong></span>
         <ChevronRight size={16} className="w-summary-arrow" />
-        <span><small>{t('weight_now_label')}</small><strong>{last != null ? `${last} kg` : '—'}</strong></span>
+        <span><small>{t('weight_now_label')}</small><strong>{fmtKg(last)}</strong></span>
         <Diff d={change} goal={goal} big />
         <span className="w-summary-progress">
           <small>{done}/{weeks.length} {t('weeks_abbr')}</small>
@@ -148,7 +152,7 @@ export function PanelView({ cycle, first, last, avg, prevAvg, onOpenWeek, onRese
                 <span className="day-list-label">{t('week_tile_label')} {w.week_number}</span>
                 <span className="w-week-days" aria-label={`${logged}/7`}>{Array.from({ length: 7 }, (_, i) => <i key={i} className={i < logged ? 'on' : ''} />)}<small>{logged}/7</small></span>
               </span>
-              <span className="w-week-avg">{a != null ? `${a} kg` : '—'}</span>
+              <span className="w-week-avg">{fmtKg(a)}</span>
               {d != null ? <Diff d={d} goal={goal} /> : <span className="w-week-diff-empty" />}
               <ChevronRight size={16} className="day-card-chevron" />
             </button>
@@ -178,7 +182,7 @@ export function WeekView({ week, goal, avgVal, diffPrev, diffW1, dayNames, input
       </div></div>
 
       <div className="w-week-stats">
-        <div><span className="day-list-label">{t('week_avg_label')}</span><strong>{avgVal != null ? <>{avgVal} <small>kg</small></> : '—'}</strong></div>
+        <div><span className="day-list-label">{t('week_avg_label')}</span><strong>{avgVal != null ? <>{fmtNum(avgVal)} <small>kg</small></> : '—'}</strong></div>
         <div><span className="day-list-label">{t('vs_prev_week_label')}</span><Diff d={diffPrev} goal={goal} big /></div>
         <div><span className="day-list-label">{t('vs_week1_label')}</span><Diff d={diffW1} goal={goal} big /></div>
       </div>

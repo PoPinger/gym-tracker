@@ -299,7 +299,21 @@ class WeightCycleCreate(BaseModel):
 
 
 class WeightCycleUpdate(BaseModel):
-    goal: WeightGoal
+    goal: Optional[WeightGoal] = None
+    months: Optional[int] = None
+
+    @field_validator("months")
+    @classmethod
+    def months_range(cls, v):
+        if v is not None and not 1 <= v <= 12:
+            raise ValueError("Liczba miesięcy musi wynosić od 1 do 12")
+        return v
+
+    @model_validator(mode="after")
+    def not_empty(self):
+        if self.goal is None and self.months is None:
+            raise ValueError("Podaj cel lub liczbę miesięcy")
+        return self
 
 
 class WeightDayLogOut(BaseModel):
