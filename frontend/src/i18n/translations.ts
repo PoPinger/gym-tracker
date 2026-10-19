@@ -205,7 +205,7 @@ export interface TranslationMap {
   new_plan_btn: string;
   no_plans_title: string;
   no_plans_body: string;
-  create_plan_btn: string;
+  create_first_plan_btn: string;
   days_per_week_abbr: string;
   copy_btn: string;
   edit_btn: string;
@@ -244,6 +244,12 @@ export interface TranslationMap {
   finish_plan_title: string;
   finish_plan_body: string;
   week_tile_label: string;
+  plan_progress_week: string;
+  plan_finished_label: string;
+  weeks_completed_label: string;
+  week_current: string;
+  week_planned: string;
+  more_actions: string;
   week_abbr: string;
 
   // My Plans – days view
@@ -511,9 +517,9 @@ const pl: TranslationMap = {
   plans_count_other: 'planów',
   plans_total_suffix: 'łącznie',
   new_plan_btn: 'Nowy plan',
-  no_plans_title: 'Brak planów',
-  no_plans_body: 'Utwórz pierwszy plan treningowy i zacznij śledzić treningi',
-  create_plan_btn: 'Utwórz plan',
+  no_plans_title: 'Tu pojawią się Twoje plany',
+  no_plans_body: 'Postęp, dni treningowe i tygodnie — wszystko w jednym miejscu.',
+  create_first_plan_btn: 'Utwórz pierwszy plan',
   days_per_week_abbr: 'dni/tydz.',
   copy_btn: 'Kopiuj',
   edit_btn: 'Edytuj',
@@ -548,6 +554,12 @@ const pl: TranslationMap = {
   finish_plan_title: 'Zakończyć plan?',
   finish_plan_body: 'Oznacz plan jako ukończony. Wszystkie dane pozostają zapisane i można je edytować.',
   week_tile_label: 'Tydzień',
+  plan_progress_week: 'Tydzień {n} z {total}',
+  plan_finished_label: 'Plan ukończony',
+  weeks_completed_label: 'Ukończone tygodnie',
+  week_current: 'Bieżący',
+  week_planned: 'Zaplanowany',
+  more_actions: 'Więcej akcji',
   week_abbr: 'T',
 
   finish_week_btn: 'Zakończ tydzień',
@@ -808,9 +820,9 @@ const en: TranslationMap = {
   plans_count_other: 'plans',
   plans_total_suffix: 'total',
   new_plan_btn: 'New plan',
-  no_plans_title: 'No plans',
-  no_plans_body: 'Create your first training plan and start tracking workouts',
-  create_plan_btn: 'Create plan',
+  no_plans_title: 'Your plans will appear here',
+  no_plans_body: 'Progress, training days and weeks — all in one place.',
+  create_first_plan_btn: 'Create your first plan',
   days_per_week_abbr: 'days/wk.',
   copy_btn: 'Copy',
   edit_btn: 'Edit',
@@ -845,6 +857,12 @@ const en: TranslationMap = {
   finish_plan_title: 'Finish plan?',
   finish_plan_body: 'Mark plan as completed. All data remains saved and can be edited.',
   week_tile_label: 'Week',
+  plan_progress_week: 'Week {n} of {total}',
+  plan_finished_label: 'Plan completed',
+  weeks_completed_label: 'Completed weeks',
+  week_current: 'Current',
+  week_planned: 'Planned',
+  more_actions: 'More actions',
   week_abbr: 'W',
 
   finish_week_btn: 'Finish week',

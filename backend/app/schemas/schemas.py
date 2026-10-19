@@ -168,6 +168,14 @@ class PlanOut(BaseModel):
         from_attributes = True
 
 
+class PlanDaySummary(BaseModel):
+    day_name: str
+    color: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class PlanSummary(BaseModel):
     id: int
     name: str
@@ -175,6 +183,8 @@ class PlanSummary(BaseModel):
     months: int
     status: str
     created_at: datetime
+    completed_weeks: int = 0
+    days: List[PlanDaySummary] = []
 
     class Config:
         from_attributes = True

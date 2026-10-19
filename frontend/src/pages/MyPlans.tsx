@@ -4,6 +4,8 @@ import { plansApi, logsApi, apiErrorDetail } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import AppLoader from '../components/AppLoader';
+import PlansEmptyState from '../components/PlansEmptyState';
+import PlanCard from '../components/PlanCard';
 import DayList from '../components/DayList';
 import { resolveDayColor, type DayColor } from '../utils/dayColors';
 import { plural } from '../utils/plural';
@@ -13,9 +15,9 @@ import { exerciseScore, progressPct, formatPct, formatKg, firstWeight, shouldAdd
 import { todayIso } from '../utils/date';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog, SetLog } from '../types';
 import {
-  ChevronRight, Copy, CheckCircle2, XCircle, ArrowLeft,
-  Dumbbell, Trophy, Plus,
-  Pencil, Trash2, ChevronUp, ChevronDown,
+  ChevronRight, CheckCircle2, XCircle, ArrowLeft,
+  Dumbbell, Trophy, Plus, Check,
+  Trash2, ChevronUp, ChevronDown,
 } from 'lucide-react';
 
 type View = 'list' | 'weeks' | 'days' | 'workout' | 'edit-plan' | 'edit-exercises';
@@ -391,6 +393,8 @@ export default function MyPlans() {
 
   const allDaysComplete  = weekInfo?.days.every(d => d.status === 'completed') ?? false;
   const allWeeksComplete = weeks.length > 0 && weeks.every(w => w.status === 'completed');
+  const completedWeeks   = weeks.filter(w => w.status === 'completed').length;
+  const currentWeekId    = weeks.find(w => w.status !== 'completed')?.id;
 
   if (loading) return <AppLoader />;
 
@@ -404,49 +408,21 @@ export default function MyPlans() {
             {plans.length} {plans.length === 1 ? t('plans_count_1') : t('plans_count_other')} {t('plans_total_suffix')}
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate('/create-plan')}>
-          <Plus size={16} /> {t('new_plan_btn')}
-        </button>
+        {/* With no plans the empty state has the only call to action */}
+        {plans.length > 0 && (
+          <button className="btn btn-primary" onClick={() => navigate('/create-plan')}>
+            <Plus size={16} /> {t('new_plan_btn')}
+          </button>
+        )}
       </div>
 
       {plans.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-emoji">📋</div>
-          <h3>{t('no_plans_title')}</h3>
-          <p>{t('no_plans_body')}</p>
-          <button className="btn btn-primary" onClick={() => navigate('/create-plan')}>{t('create_plan_btn')}</button>
-        </div>
+        <PlansEmptyState onCreate={() => navigate('/create-plan')} />
       ) : (
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        <div className="plan-list">
           {plans.map(p => (
-            <div key={p.id} className={`plan-card ${p.status === 'completed' ? 'completed-plan' : ''}`}>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:5 }}>
-                  <span className="plan-card-name">{p.name}</span>
-                  <span className={`badge ${p.status === 'completed' ? 'badge-completed' : 'badge-active'}`}>
-                    {p.status === 'completed' ? <><CheckCircle2 size={10} /> {t('badge_completed')}</> : t('badge_active')}
-                  </span>
-                </div>
-                <div className="plan-card-meta">
-                  {p.days_per_week} {t('days_per_week_abbr')} · {p.months} {t('months_abbr')} · {p.months * 4} {t('weeks_abbr')}
-                </div>
-              </div>
-              <div className="plan-card-actions">
-                <button className="btn btn-outline btn-sm" onClick={() => copyPlan(p.id)}>
-                  <Copy size={13} /> {t('copy_btn')}
-                </button>
-                <button className="btn btn-outline btn-sm" onClick={() => openEdit(p)}>
-                  <Pencil size={13} /> {t('edit_btn')}
-                </button>
-                <button className="btn btn-outline btn-sm" onClick={() => setPlanToDelete(p)}
-                  style={{ color:'var(--danger)', borderColor:'var(--danger)' }}>
-                  <Trash2 size={13} /> {t('delete_btn')}
-                </button>
-                <button className="btn btn-primary btn-sm" onClick={() => openPlan(p)}>
-                  {t('open_btn')} <ChevronRight size={14} />
-                </button>
-              </div>
-            </div>
+            <PlanCard key={p.id} plan={p} onOpen={() => openPlan(p)} onEdit={() => openEdit(p)}
+              onCopy={() => copyPlan(p.id)} onDelete={() => setPlanToDelete(p)} />
           ))}
         </div>
       )}
@@ -645,17 +621,32 @@ export default function MyPlans() {
         )}
       </div>
 
-      <div className="tiles-grid">
-        {weeks.map(w => (
-          <div key={w.id} className={`tile ${w.status === 'completed' ? 'completed' : ''}`}
-            onClick={() => openWeek(w)}>
-            {w.status === 'completed'
-              ? <CheckCircle2 size={24} color="var(--success)" />
-              : <span className="tile-num">{t('week_abbr')}{w.week_number}</span>}
-            <span className="tile-label">{t('week_tile_label')} {w.week_number}</span>
-            {w.status === 'completed' && <span style={{ fontSize:11, color:'var(--success)', fontWeight:600 }}>{t('done_label')}</span>}
-          </div>
-        ))}
+      <div className="plan-summary-card">
+        <div className="plan-summary-count">
+          <span className="plan-summary-big">{completedWeeks}<small>/{weeks.length}</small></span>
+          <span className="day-list-label">{t('weeks_completed_label')}</span>
+        </div>
+        <div className="plan-progress-bar"><span style={{ width: `${weeks.length ? completedWeeks / weeks.length * 100 : 0}%` }} /></div>
+        <div className="day-dots">
+          {plan.days.map((d, i) => (
+            <span key={d.id} className={`day-dot day-color-${resolveDayColor(d.color, i)}`}><span />{d.day_name}</span>
+          ))}
+        </div>
+      </div>
+
+      <div className="week-cards">
+        {weeks.map(w => {
+          const state = w.status === 'completed' ? 'done' : w.id === currentWeekId ? 'current' : '';
+          return (
+            <button key={w.id} className={`week-card ${state}`} onClick={() => openWeek(w)}>
+              <span className="day-list-label">{t('week_tile_label')}</span>
+              <span className="week-card-num">{w.week_number}</span>
+              <span className="week-card-state">
+                {state === 'done' ? <><Check size={12} /> {t('done_label')}</> : state === 'current' ? t('week_current') : t('week_planned')}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {confirm === 'plan' && (
@@ -688,22 +679,24 @@ export default function MyPlans() {
         )}
       </div>
 
-      <div className="tiles-grid">
+      <div className="day-cards">
         {weekInfo.days.map((d, i) => {
-          const done = d.status === 'completed';
-          const skip = done && d.skipped;
+          const state = d.status === 'completed' ? (d.skipped ? 'skipped' : 'done') : '';
           return (
-            <div key={d.plan_day_id}
-              className={`tile day-accent day-color-${resolveDayColor(d.color, i)} ${skip ? 'skipped' : done ? 'completed' : ''}`}
+            <button key={d.plan_day_id} className={`day-card day-color-${resolveDayColor(d.color, i)} ${state}`}
               onClick={() => openDay(weekInfo.week_id, d.plan_day_id, d.log_id)}>
-              {skip
-                ? <XCircle size={24} color="var(--danger)" />
-                : done
-                  ? <CheckCircle2 size={24} color="var(--success)" />
-                  : <Dumbbell size={24} className="tile-day-icon" />}
-              <span className="tile-num" style={{ fontSize:15 }}>{d.day_name}</span>
-              <span className="tile-label">{skip ? t('skipped_label') : done ? t('done_label') : t('tap_to_train')}</span>
-            </div>
+              <span className="day-card-icon">
+                {state === 'skipped' ? <XCircle size={20} /> : state === 'done' ? <CheckCircle2 size={20} /> : <Dumbbell size={20} />}
+              </span>
+              <span className="day-card-body">
+                <span className="day-list-label">{t('day_number_fallback')} {i + 1}</span>
+                <span className="day-card-name">{d.day_name}</span>
+              </span>
+              <span className={`status-pill ${state}`}>
+                {state === 'skipped' ? t('skipped_label') : state === 'done' ? t('done_label') : t('tap_to_train')}
+              </span>
+              <ChevronRight size={16} className="day-card-chevron" />
+            </button>
           );
         })}
       </div>

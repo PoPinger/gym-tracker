@@ -45,6 +45,8 @@ export interface PlanSummary {
   months: number;
   status: string;
   created_at: string;
+  completed_weeks: number;
+  days: Array<{ day_name: string; color?: string | null }>;
 }
 
 export interface SetLog {

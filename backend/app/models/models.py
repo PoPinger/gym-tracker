@@ -38,6 +38,10 @@ class TrainingPlan(Base):
     days = relationship("PlanDay", back_populates="plan", cascade="all, delete-orphan", order_by="PlanDay.day_order")
     weeks = relationship("TrainingWeek", back_populates="plan", cascade="all, delete-orphan", order_by="TrainingWeek.week_number")
 
+    @property
+    def completed_weeks(self) -> int:
+        return sum(1 for w in self.weeks if w.status == "completed")
+
 
 class PlanDay(Base):
     __tablename__ = "plan_days"
