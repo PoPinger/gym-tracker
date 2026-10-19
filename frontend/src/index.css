@@ -201,10 +201,16 @@ a { text-decoration: none; color: inherit; }
 .app-loader-logo img { position: absolute; height: calc(72px * 212 / 206); width: auto; max-width: none; left: calc(-72px * 3 / 206); top: calc(-72px * 3 / 206); }
 .app-loader-name { position: relative; font-size: 34px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; color: var(--text-heading); }
 .app-loader-name span { color: var(--primary); }
-.app-loader-name::after { content: attr(data-text); position: absolute; inset: 0; color: transparent; pointer-events: none;
-  background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,0.85) 50%, transparent 65%) no-repeat;
-  background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; animation: loader-shimmer 1.5s linear infinite; }
-@keyframes loader-shimmer { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+/* Highlight sweep: a copy of the wordmark on top whose glyphs show only a moving light band, so "Gym" / "Tracker"
+   keep their own colours underneath. Safari/iOS needs -webkit-text-fill-color and its own layer to repaint the animation. */
+.app-loader-name::after { content: attr(data-text); position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none;
+  color: transparent; -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(100deg, transparent 38%, rgba(255,255,255,0.9) 50%, transparent 62%);
+  background-repeat: no-repeat; background-size: 250% 100%; -webkit-background-clip: text; background-clip: text;
+  will-change: background-position; transform: translateZ(0);
+  animation: loader-shimmer 1.4s linear infinite; }
+/* With a 250%-wide gradient the band is on the text between ~103% and ~-3%; the extra ends give a short pause */
+@keyframes loader-shimmer { from { background-position: 112% 0; } to { background-position: -12% 0; } }
 .app-loader-text { font-size: 13px; color: var(--text-muted); }
 @media (prefers-reduced-motion: reduce) { .app-loader-name::after { display: none; animation: none; } }
 
