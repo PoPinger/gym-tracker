@@ -144,52 +144,19 @@ export interface CalendarWorkout {
 }
 
 export interface DashboardData {
-  current_plan: {
-    id: number;
-    name: string;
-    current_week: number;
-    total_weeks: number;
-    next_day: string | null;
-  } | null;
-  plan_progress: {
-    percentage: number;
-    completed_weeks: number;
-    total_weeks: number;
-  } | null;
-  last_workout: {
-    id: number;
-    date: string | null;
-    plan_name: string;
-    day_name: string;
-    exercise_count: number;
-  } | null;
+  has_plan: boolean;
   quick_stats: {
     this_month: number;
     this_year: number;
   };
+  // Total change since the cycle start = current week average − week 1 average
   weight_panel: {
-    last_weight: number | null;
-    avg_last_week: number | null;
-    change_vs_prev_week: number | null;
     goal: 'bulk' | 'cut' | null;
+    week1_avg: number | null;
+    current_week_avg: number | null;
+    change: number | null;
   } | null;
-  next_workout: {
-    day_name: string | null;
-    plan_name: string;
-    preview_exercises: Array<{ name: string; muscle_group: string; sets: number }>;
-  } | null;
-  recent_workouts: Array<{
-    id: number;
-    date: string | null;
-    day_name: string;
-    plan_name: string;
-  }>;
   workout_calendar: CalendarWorkout[];
-  best_progress: {
-    exercise: string;
-    gain_kg: number;
-    current_weight: number;
-  } | null;
   streak: number;
 }
 

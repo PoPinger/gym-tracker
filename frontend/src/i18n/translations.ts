@@ -46,7 +46,6 @@ export interface TranslationMap {
   loading_app: string;
   dashboard_title: string;
   dashboard_subtitle: string;
-  dashboard_create_plan: string;
   dashboard_welcome_title: string;
   dashboard_welcome_body: string;
   dashboard_create_first_plan: string;
@@ -63,44 +62,20 @@ export interface TranslationMap {
   weeks_streak_5plus: string;
 
   // Dashboard – plan card
-  current_plan_label: string;
   badge_active: string;
-  week_label: string;
-  next_day_label: string;
-  open_plan: string;
 
   // Dashboard – plan progress
-  plan_progress_label: string;
-  weeks_completed: string;
-  of_preposition: string;
 
   // Dashboard – last / next workout
-  last_workout_label: string;
-  exercises_count: string;
-  no_workouts: string;
-  next_workout_label: string;
-  all_caught_up: string;
-  create_plan_to_start: string;
-  start_workout: string;
 
   // Dashboard – weight panel
   weight_label: string;
-  last_entry: string;
-  vs_prev_week: string;
-  avg_prev_week: string;
-  weight_details: string;
-  no_weight_data: string;
-  configure_tracking: string;
+  weight_tile_current_avg: string;
+  weight_tile_empty: string;
 
   // Dashboard – best progress
-  best_progress_label: string;
-  currently: string;
-  weight_gain: string;
-  complete_workouts_for_records: string;
 
   // Dashboard – recent workouts
-  recent_workouts_label: string;
-  all_plans: string;
 
   // Dashboard – workout calendar
   calendar_title: string;
@@ -401,7 +376,6 @@ const pl: TranslationMap = {
   loading_app: 'Ładowanie aplikacji…',
   dashboard_title: 'Panel',
   dashboard_subtitle: 'Oto co dzieje się z Twoim treningiem',
-  dashboard_create_plan: 'Utwórz plan',
   dashboard_welcome_title: 'Witaj w GymTracker!',
   dashboard_welcome_body: 'Utwórz pierwszy plan treningowy i zacznij logować treningi, aby zobaczyć postępy.',
   dashboard_create_first_plan: 'Utwórz pierwszy plan',
@@ -416,39 +390,15 @@ const pl: TranslationMap = {
   weeks_streak_2_4: 'tygodnie bez pominiętego treningu',
   weeks_streak_5plus: 'tygodni bez pominiętego treningu',
 
-  current_plan_label: 'Aktualny plan',
   badge_active: 'Aktywny',
-  week_label: 'Tydzień',
-  next_day_label: 'Następny',
-  open_plan: 'Otwórz plan',
 
-  plan_progress_label: 'Postęp planu',
-  weeks_completed: 'tygodni ukończonych',
-  of_preposition: 'z',
 
-  last_workout_label: 'Ostatni trening',
-  exercises_count: 'ćwiczeń',
-  no_workouts: 'Brak treningów',
-  next_workout_label: 'Następny trening',
-  all_caught_up: '🎉 Wszystko na bieżąco w tym tygodniu!',
-  create_plan_to_start: 'Utwórz plan, aby zacząć',
-  start_workout: 'Zacznij trening',
 
   weight_label: 'Waga',
-  last_entry: 'Ostatni wpis',
-  vs_prev_week: 'vs poprz. tydz.',
-  avg_prev_week: 'Śr. poprz. tydz.',
-  weight_details: 'Szczegóły',
-  no_weight_data: 'Brak danych wagowych',
-  configure_tracking: 'Skonfiguruj śledzenie',
+  weight_tile_current_avg: 'Średnia z aktualnego tygodnia: {kg}',
+  weight_tile_empty: 'Dodaj pomiary w „Moja waga”',
 
-  best_progress_label: 'Najlepszy postęp',
-  currently: 'Obecnie',
-  weight_gain: 'przyrost wagi',
-  complete_workouts_for_records: 'Ukończ treningi z ciężarami, aby zobaczyć swoje rekordy',
 
-  recent_workouts_label: 'Ostatnie treningi',
-  all_plans: 'Wszystkie plany',
 
   // Dashboard – workout calendar
   calendar_title: 'Kalendarz treningów',
@@ -731,7 +681,6 @@ const en: TranslationMap = {
   loading_app: 'Loading app…',
   dashboard_title: 'Dashboard',
   dashboard_subtitle: "Here's what's happening with your training",
-  dashboard_create_plan: 'Create Plan',
   dashboard_welcome_title: 'Welcome to GymTracker!',
   dashboard_welcome_body: 'Create your first training plan and start logging workouts to see your progress.',
   dashboard_create_first_plan: 'Create first plan',
@@ -746,39 +695,15 @@ const en: TranslationMap = {
   weeks_streak_2_4: 'weeks without a skipped workout',
   weeks_streak_5plus: 'weeks without a skipped workout',
 
-  current_plan_label: 'Current plan',
   badge_active: 'Active',
-  week_label: 'Week',
-  next_day_label: 'Next',
-  open_plan: 'Open plan',
 
-  plan_progress_label: 'Plan progress',
-  weeks_completed: 'weeks completed',
-  of_preposition: 'of',
 
-  last_workout_label: 'Last workout',
-  exercises_count: 'exercises',
-  no_workouts: 'No workouts yet',
-  next_workout_label: 'Next workout',
-  all_caught_up: '🎉 All caught up this week!',
-  create_plan_to_start: 'Create a plan to get started',
-  start_workout: 'Start workout',
 
   weight_label: 'Weight',
-  last_entry: 'Last entry',
-  vs_prev_week: 'vs prev. week',
-  avg_prev_week: 'Avg. prev. week',
-  weight_details: 'Details',
-  no_weight_data: 'No weight data',
-  configure_tracking: 'Set up tracking',
+  weight_tile_current_avg: 'Current week average: {kg}',
+  weight_tile_empty: 'Add readings in “My weight”',
 
-  best_progress_label: 'Best progress',
-  currently: 'Currently',
-  weight_gain: 'weight gain',
-  complete_workouts_for_records: 'Complete workouts with weights to see your records',
 
-  recent_workouts_label: 'Recent workouts',
-  all_plans: 'All plans',
 
   // Dashboard – workout calendar
   calendar_title: 'Workout calendar',

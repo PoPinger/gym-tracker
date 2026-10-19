@@ -2,89 +2,12 @@ from datetime import date, datetime
 from typing import Optional
 from sqlalchemy.orm import Session
 from app.models.models import (
-    TrainingPlan, TrainingWeek, TrainingDayLog, ExerciseLog, SetLog,
-    WeightCycle, WeightWeek, WeightDayLog, PlanDay
+    TrainingPlan, TrainingWeek, TrainingDayLog, WeightCycle, WeightWeek, PlanDay
 )
 
 
 def get_dashboard_data(db: Session, user_id: int) -> dict:
-    # ── Active plan ──────────────────────────────────────────────────────────
-    active_plan = (
-        db.query(TrainingPlan)
-        .filter(TrainingPlan.user_id == user_id, TrainingPlan.status == "active")
-        .order_by(TrainingPlan.created_at.desc())
-        .first()
-    )
-
-    current_plan_data = None
-    plan_progress_data = None
-    next_workout_data = None
-
-    if active_plan:
-        total_weeks = active_plan.months * 4
-        completed_weeks = sum(1 for w in active_plan.weeks if w.status == "completed")
-        current_week_num = completed_weeks + 1
-        pct = round((completed_weeks / total_weeks) * 100) if total_weeks else 0
-
-        # Find current week object
-        current_week = next(
-            (w for w in active_plan.weeks if w.week_number == current_week_num), None
-        )
-
-        # Find next unfinished day in current week
-        next_day_name = None
-        next_day_exercises = []
-        if current_week:
-            completed_day_ids = {
-                dl.plan_day_id for dl in current_week.day_logs if dl.status == "completed"
-            }
-            for day in active_plan.days:
-                if day.id not in completed_day_ids:
-                    next_day_name = day.day_name
-                    next_day_exercises = [
-                        {"name": ex.name, "muscle_group": ex.muscle_group, "sets": ex.sets}
-                        for ex in day.exercises[:3]
-                    ]
-                    break
-
-        current_plan_data = {
-            "id": active_plan.id,
-            "name": active_plan.name,
-            "current_week": current_week_num,
-            "total_weeks": total_weeks,
-            "next_day": next_day_name,
-        }
-        plan_progress_data = {
-            "percentage": pct,
-            "completed_weeks": completed_weeks,
-            "total_weeks": total_weeks,
-        }
-        next_workout_data = {
-            "day_name": next_day_name,
-            "plan_name": active_plan.name,
-            "preview_exercises": next_day_exercises,
-        }
-
-    # ── Last workout ─────────────────────────────────────────────────────────
-    last_log = (
-        db.query(TrainingDayLog)
-        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.status == "completed", TrainingDayLog.skipped.is_(False))
-        .order_by(TrainingDayLog.completed_at.desc())
-        .first()
-    )
-    last_workout_data = None
-    if last_log:
-        plan_day = db.query(PlanDay).filter(PlanDay.id == last_log.plan_day_id).first()
-        week = db.query(TrainingWeek).filter(TrainingWeek.id == last_log.training_week_id).first()
-        plan = db.query(TrainingPlan).filter(TrainingPlan.id == week.plan_id).first() if week else None
-        ex_count = len(last_log.exercise_logs)
-        last_workout_data = {
-            "id": last_log.id,
-            "date": last_log.completed_at.isoformat() if last_log.completed_at else None,
-            "plan_name": plan.name if plan else "Nieznany",
-            "day_name": plan_day.day_name if plan_day else "Nieznany",
-            "exercise_count": ex_count,
-        }
+    has_plan = db.query(TrainingPlan.id).filter(TrainingPlan.user_id == user_id).first() is not None
 
     # ── Quick stats ──────────────────────────────────────────────────────────
     # Workouts are counted by their "Data treningu"; skipped and undated days don't count
@@ -110,59 +33,22 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
         .first()
     )
     if active_cycle:
-        last_weight = None
-        avg_last_week = None
-        prev_avg = None
-        completed_weeks = [w for w in active_cycle.weeks if w.status == "completed"]
-        completed_weeks.sort(key=lambda w: w.week_number)
-
-        all_logged = sorted(
-            [d for w in active_cycle.weeks for d in w.day_logs if d.weight_kg is not None],
-            key=lambda d: d.logged_at or datetime.min,
-            reverse=True,
-        )
-        if all_logged:
-            last_weight = all_logged[0].weight_kg
-
-        if completed_weeks:
-            last_cw = completed_weeks[-1]
-            weights = [d.weight_kg for d in last_cw.day_logs if d.weight_kg is not None]
-            avg_last_week = round(sum(weights) / len(weights), 1) if weights else None
-            if len(completed_weeks) >= 2:
-                prev_cw = completed_weeks[-2]
-                pw = [d.weight_kg for d in prev_cw.day_logs if d.weight_kg is not None]
-                prev_avg = round(sum(pw) / len(pw), 1) if pw else None
-
+        weeks = sorted(active_cycle.weeks, key=lambda w: w.week_number)
+        week1_avg = _week_average(weeks[0]) if weeks else None
+        # The active (first unfinished) week; before it has readings, the latest week that has some
+        current = next((w for w in weeks if w.status != "completed"), None)
+        current_avg = _week_average(current) if current else None
+        if current_avg is None:
+            current_avg = next((a for a in (_week_average(w) for w in reversed(weeks)) if a is not None), None)
         change = None
-        if avg_last_week is not None and prev_avg is not None:
-            change = round(avg_last_week - prev_avg, 1)
-
+        if week1_avg is not None and current_avg is not None:
+            change = round(current_avg - week1_avg, 1)
         weight_panel = {
-            "last_weight": last_weight,
-            "avg_last_week": avg_last_week,
-            "change_vs_prev_week": change,
             "goal": active_cycle.goal,
+            "week1_avg": week1_avg,
+            "current_week_avg": current_avg,
+            "change": change,
         }
-
-    # ── Recent workouts ──────────────────────────────────────────────────────
-    recent_logs = (
-        db.query(TrainingDayLog)
-        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.status == "completed", TrainingDayLog.skipped.is_(False))
-        .order_by(TrainingDayLog.completed_at.desc())
-        .limit(3)
-        .all()
-    )
-    recent_workouts = []
-    for log in recent_logs:
-        day = db.query(PlanDay).filter(PlanDay.id == log.plan_day_id).first()
-        week = db.query(TrainingWeek).filter(TrainingWeek.id == log.training_week_id).first()
-        plan = db.query(TrainingPlan).filter(TrainingPlan.id == week.plan_id).first() if week else None
-        recent_workouts.append({
-            "id": log.id,
-            "date": log.completed_at.isoformat() if log.completed_at else None,
-            "day_name": day.day_name if day else "Nieznany",
-            "plan_name": plan.name if plan else "Nieznany",
-        })
 
     # ── Workout calendar ─────────────────────────────────────────────────────
     calendar_rows = (
@@ -189,60 +75,19 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
         for log, day, week in calendar_rows
     ]
 
-    # ── Best progress ────────────────────────────────────────────────────────
-    best_progress = _compute_best_progress(db, user_id)
-
-    # ── Streak ───────────────────────────────────────────────────────────────
-    streak = _compute_streak(db, user_id)
-
     return {
-        "current_plan": current_plan_data,
-        "plan_progress": plan_progress_data,
-        "last_workout": last_workout_data,
+        "has_plan": has_plan,
         "quick_stats": quick_stats,
         "weight_panel": weight_panel,
-        "next_workout": next_workout_data,
-        "recent_workouts": recent_workouts,
         "workout_calendar": workout_calendar,
-        "best_progress": best_progress,
-        "streak": streak,
+        "streak": _compute_streak(db, user_id),
     }
 
 
-def _compute_best_progress(db: Session, user_id: int) -> Optional[dict]:
-    try:
-        # Find the exercise where weight increased most from first to last log
-        ex_logs = (
-            db.query(ExerciseLog)
-            .filter(ExerciseLog.user_id == user_id, ExerciseLog.skipped.is_(False))
-            .all()
-        )
-        if not ex_logs:
-            return None
-
-        exercise_max: dict = {}
-        for ex_log in ex_logs:
-            ex_id = ex_log.exercise_id
-            weights = [s.weight_kg for s in ex_log.set_logs if s.weight_kg is not None]
-            if not weights:
-                continue
-            max_w = max(weights)
-            if ex_id not in exercise_max:
-                exercise_max[ex_id] = {"first": max_w, "last": max_w, "name": ex_log.exercise.name if ex_log.exercise else ""}
-            else:
-                exercise_max[ex_id]["last"] = max_w
-
-        best = None
-        best_gain = 0
-        for ex_id, data in exercise_max.items():
-            gain = data["last"] - data["first"]
-            if gain > best_gain:
-                best_gain = gain
-                best = {"exercise": data["name"], "gain_kg": round(gain, 1), "current_weight": data["last"]}
-
-        return best
-    except Exception:
-        return None
+def _week_average(week: WeightWeek) -> Optional[float]:
+    """Average of the logged days, rounded like the "Moja waga" view; None without readings."""
+    weights = [d.weight_kg for d in week.day_logs if d.weight_kg is not None]
+    return round(sum(weights) / len(weights), 1) if weights else None
 
 
 def _compute_streak(db: Session, user_id: int) -> int:
