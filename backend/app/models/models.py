@@ -46,6 +46,7 @@ class PlanDay(Base):
     plan_id = Column(Integer, ForeignKey("training_plans.id", ondelete="CASCADE"), nullable=False, index=True)
     day_name = Column(String(100), nullable=False)
     day_order = Column(Integer, nullable=False)
+    color = Column(String(20), nullable=True)  # palette key, e.g. "teal"; null = default cycle
 
     plan = relationship("TrainingPlan", back_populates="days")
     exercises = relationship("Exercise", back_populates="plan_day", cascade="all, delete-orphan", order_by="Exercise.exercise_order")

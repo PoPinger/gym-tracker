@@ -5,12 +5,14 @@ import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { useLanguage } from '../i18n/LanguageContext';
 import { isValidRepRange, repRangePayload } from '../utils/repRange';
-import { Plus, Trash2, ChevronUp, ChevronDown, ArrowRight, ArrowLeft, Dumbbell } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, ArrowRight, ArrowLeft } from 'lucide-react';
+import DayList from '../components/DayList';
+import { defaultDayColor, type DayColor } from '../utils/dayColors';
 
 type Step = 1 | 2 | 3 | 4;
 
 interface ExDraft { name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
-interface DayDraft { day_name: string; exercises: ExDraft[]; }
+interface DayDraft { day_name: string; color: DayColor; exercises: ExDraft[]; }
 
 function StepIndicator({ step, labels, current }: { step: Step; labels: string[]; current: string }) {
   return (
@@ -71,7 +73,7 @@ export default function CreatePlan() {
 
   const goToStep3 = () => {
     const next: DayDraft[] = Array.from({ length: daysPerWeek }, (_, i) =>
-      days[i] ?? { day_name: defaultDayNames[i] ?? `${t('day_number_fallback')} ${i + 1}`, exercises: [] }
+      days[i] ?? { day_name: defaultDayNames[i] ?? `${t('day_number_fallback')} ${i + 1}`, color: defaultDayColor(i), exercises: [] }
     );
     setDays(next);
     setActiveDayIdx(0);
@@ -82,6 +84,10 @@ export default function CreatePlan() {
 
   const setDayName = (i: number, name: string) => {
     setDays(d => d.map((day, idx) => idx === i ? { ...day, day_name: name } : day));
+  };
+
+  const setDayColor = (i: number, color: DayColor) => {
+    setDays(d => d.map((day, idx) => idx === i ? { ...day, color } : day));
   };
 
   const addEx = () => {
@@ -121,7 +127,7 @@ export default function CreatePlan() {
       await plansApi.create({
         name: planName, days_per_week: daysPerWeek, months,
         days: days.map((d, di) => ({
-          day_name: d.day_name, day_order: di,
+          day_name: d.day_name, day_order: di, color: d.color,
           exercises: d.exercises.filter(e => e.name.trim()).map((e, ei) => ({
             name: e.name, muscle_group: e.muscle_group, sets: e.sets, exercise_order: ei,
             ...repRangePayload(e.rep_min, e.rep_max),
@@ -218,40 +224,8 @@ export default function CreatePlan() {
               {t('step3_body')}
             </p>
 
-            <div className="form-group" style={{ marginBottom:24 }}>
-              <label className="form-label">{t('plan_name_label')}</label>
-              <input className="form-input" value={planName}
-                onChange={e => setPlanName(e.target.value)}
-                placeholder={t('plan_name_placeholder')} />
-            </div>
-
-            <div className="section-title">{t('training_days_section')}</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:28 }}>
-              {days.map((day, i) => (
-                <div key={i} style={{
-                  display:'flex', alignItems:'center', gap:10,
-                  background:'var(--bg-subtle)', border:'1.5px solid var(--border)',
-                  borderRadius:'var(--radius)', padding:'12px 14px',
-                }}>
-                  <div style={{ width:28, height:28, background:'var(--primary-light)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <span style={{ fontSize:13, fontWeight:800, color:'var(--primary)' }}>{i+1}</span>
-                  </div>
-                  <input className="form-input" style={{ flex:1, minWidth:0 }}
-                    value={day.day_name}
-                    onChange={e => setDayName(i, e.target.value)}
-                    placeholder={`${t('day_name_placeholder')} ${i+1}`}
-                    onClick={e => e.stopPropagation()}
-                  />
-                  <button className="btn btn-outline btn-sm" onClick={() => goToExercises(i)}
-                    style={{ flexShrink:0, display:'flex', alignItems:'center', gap:6 }}>
-                    <Dumbbell size={14} />
-                    {day.exercises.length > 0
-                      ? `${day.exercises.length} ${day.exercises.length === 1 ? t('exercise_singular') : t('exercises_plural')}`
-                      : t('add_exercises_btn')}
-                  </button>
-                </div>
-              ))}
-            </div>
+            <DayList days={days} planName={planName} onPlanNameChange={setPlanName}
+              onDayNameChange={setDayName} onDayColorChange={setDayColor} onOpenExercises={goToExercises} />
 
             {error && <div className="alert alert-error">{error}</div>}
             <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>

@@ -93,7 +93,7 @@ def add_plan_day(plan_id: int, data: PlanDayCreate, db: Session = Depends(get_db
     plan = plan_service.get_plan(db, plan_id, user.id)
     if not plan:
         raise HTTPException(404, "Plan nie został znaleziony")
-    day = PlanDay(plan_id=plan_id, day_name=data.day_name, day_order=data.day_order)
+    day = PlanDay(plan_id=plan_id, day_name=data.day_name, day_order=data.day_order, color=data.color)
     db.add(day)
     db.flush()
     for ex in data.exercises:
@@ -121,6 +121,8 @@ def update_plan_day(day_id: int, data: PlanDayUpdate, db: Session = Depends(get_
         day.day_name = data.day_name
     if data.day_order is not None:
         day.day_order = data.day_order
+    if data.color is not None:
+        day.color = data.color
     db.commit()
     db.refresh(day)
     return day
@@ -219,6 +221,7 @@ def get_week_days(week_id: int, db: Session = Depends(get_db), user: User = Depe
             "plan_day_id": day.id,
             "day_name": day.day_name,
             "day_order": day.day_order,
+            "color": day.color,
             "log_id": log.id if log else None,
             "status": log.status if log else "not_started",
             "skipped": bool(log.skipped) if log else False,

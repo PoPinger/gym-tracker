@@ -364,3 +364,56 @@ a { text-decoration: none; color: inherit; }
   .cal-cell { border-radius: 7px; }
   .cal-weekday { font-size: 12px; }
 }
+
+/* ── Training day colours (keys: utils/dayColors.ts) ── */
+.day-color-indigo { --day-bg: #eef2ff; --day-fg: #4f46e5; }
+.day-color-blue   { --day-bg: #dbeafe; --day-fg: #2563eb; }
+.day-color-sky    { --day-bg: #e0f2fe; --day-fg: #0284c7; }
+.day-color-teal   { --day-bg: #ccfbf1; --day-fg: #0d9488; }
+.day-color-green  { --day-bg: #dcfce7; --day-fg: #16a34a; }
+.day-color-lime   { --day-bg: #ecfccb; --day-fg: #65a30d; }
+.day-color-amber  { --day-bg: #fef3c7; --day-fg: #d97706; }
+.day-color-orange { --day-bg: #ffedd5; --day-fg: #ea580c; }
+.day-color-red    { --day-bg: #fee2e2; --day-fg: #dc2626; }
+.day-color-pink   { --day-bg: #fce7f3; --day-fg: #db2777; }
+
+.day-color-picker { position: relative; flex-shrink: 0; }
+.day-color-tile { width: 32px; height: 32px; border-radius: 8px; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; background: var(--day-bg); color: var(--day-fg); transition: var(--t); }
+.day-color-tile:hover, .day-color-tile[aria-expanded="true"] { box-shadow: 0 0 0 2px var(--bg-white), 0 0 0 4px var(--day-fg); }
+.day-color-popover { position: absolute; top: calc(100% + 8px); z-index: 50; width: 228px; display: grid; grid-template-columns: repeat(5, 36px); gap: 8px; padding: 10px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+.day-color-popover.above { top: auto; bottom: calc(100% + 8px); }
+.day-color-swatch { width: 36px; height: 36px; border-radius: 50%; border: none; padding: 0; cursor: pointer; background: var(--day-fg); color: white; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+.day-color-swatch:hover { transform: scale(1.08); }
+.day-color-swatch.selected { box-shadow: 0 0 0 2px var(--bg-white), 0 0 0 4px var(--day-fg); }
+
+/* Compact training-day list (create + edit plan) */
+.day-list { border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 28px; background: var(--bg-white); }
+.day-list-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-top: 1px solid var(--border); transition: var(--t); }
+.day-list-row:first-child { border-top: none; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.day-list-row:last-child { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+.day-list-row:hover { background: var(--bg-subtle); }
+.day-list-row:focus-within { background: var(--primary-light); }
+.day-list-row-name { background: var(--bg-subtle); }
+.day-list-icon { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--primary-light); color: var(--primary); }
+.day-list-field { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.day-list-label { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-subtle); }
+.day-list-input { border: 1px solid transparent; border-radius: 6px; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: var(--text-heading); padding: 2px 6px; margin-left: -6px; width: 100%; }
+.day-list-input:hover { border-color: var(--border); background: white; }
+.day-list-input:focus { outline: none; border-color: var(--primary); background: white; }
+.day-list-section { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-subtle); padding: 8px 14px; background: var(--bg); border-top: 1px solid var(--border); }
+.day-list-section:first-child { border-top: none; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.day-list-pill { flex-shrink: 0; display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--border); background: white; color: var(--text-body); font: inherit; font-size: 12px; font-weight: 600; border-radius: 99px; padding: 5px 8px 5px 12px; cursor: pointer; transition: var(--t); }
+.day-list-pill:hover { border-color: var(--primary); color: var(--primary); }
+.day-list-pill.empty { color: var(--primary); border-style: dashed; border-color: var(--primary-muted); }
+/* Narrow phones: the pill moves under the day name so names are never cut off */
+@media (max-width: 420px) {
+  .day-list-row { flex-wrap: wrap; row-gap: 6px; }
+  .day-list-field { flex-basis: calc(100% - 44px); }
+  .day-list-label { white-space: nowrap; }
+  .day-list-pill { margin-left: 44px; }
+}
+
+/* Week view: day colour as top accent + icon colour */
+.tile.day-accent { position: relative; overflow: hidden; }
+.tile.day-accent::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--day-fg); }
+.tile-day-icon { color: var(--day-fg); }

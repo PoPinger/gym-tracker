@@ -24,6 +24,7 @@ export interface PlanDay {
   id: number;
   day_name: string;
   day_order: number;
+  color?: string | null;
   exercises: Exercise[];
 }
 
@@ -85,6 +86,7 @@ export interface WeekDay {
   plan_day_id: number;
   day_name: string;
   day_order: number;
+  color?: string | null;
   log_id: number | null;
   status: string;
   skipped: boolean;

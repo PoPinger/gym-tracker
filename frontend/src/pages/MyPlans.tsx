@@ -4,6 +4,9 @@ import { plansApi, logsApi, apiErrorDetail } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import AppLoader from '../components/AppLoader';
+import DayList from '../components/DayList';
+import { resolveDayColor, type DayColor } from '../utils/dayColors';
+import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
 import { isValidRepRange, repRangePayload, formatRepRange } from '../utils/repRange';
 import { exerciseScore, progressPct, formatPct, formatKg, firstWeight, shouldAddWeight } from '../utils/progress';
@@ -18,7 +21,7 @@ import {
 type View = 'list' | 'weeks' | 'days' | 'workout' | 'edit-plan' | 'edit-exercises';
 
 interface EditExDraft { id?: number; name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
-interface EditDayDraft { id: number; day_name: string; exercises: EditExDraft[]; }
+interface EditDayDraft { id: number; day_name: string; color: DayColor; exercises: EditExDraft[]; }
 // Field values captured before a "skipped" auto-fill, keyed by exercise log id
 type FillSnapshot = Record<number, { set_logs: SetLog[]; weight: string }>;
 
@@ -290,9 +293,10 @@ export default function MyPlans() {
     setEditPlan(full);
     setEditName(full.name);
     setEditMonths(full.months);
-    setEditDays(full.days.map(d => ({
+    setEditDays(full.days.map((d, i) => ({
       id: d.id,
       day_name: d.day_name,
+      color: resolveDayColor(d.color, i),
       exercises: d.exercises.map(ex => ({
         id: ex.id,
         name: ex.name,
@@ -318,6 +322,7 @@ export default function MyPlans() {
         days: editDays.map((d) => ({
           id: d.id,
           day_name: d.day_name,
+          color: d.color,
           exercises: d.exercises
             .filter(e => e.name.trim())
             .map((e, ei) => ({
@@ -495,34 +500,10 @@ export default function MyPlans() {
             </span>
           </div>
 
-          <div className="section-title">{t('training_days_section')}</div>
-          <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:24 }}>
-            {editDays.map((day, i) => (
-              <div key={day.id} style={{
-                display:'flex', alignItems:'center', gap:10,
-                background:'var(--bg-subtle)', border:'1.5px solid var(--border)',
-                borderRadius:'var(--radius)', padding:'12px 14px',
-              }}>
-                <div style={{ width:28, height:28, background:'var(--primary-light)', borderRadius:8,
-                  display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  <span style={{ fontSize:13, fontWeight:800, color:'var(--primary)' }}>{i+1}</span>
-                </div>
-                <input className="form-input" style={{ flex:1, minWidth:0 }}
-                  value={day.day_name}
-                  onChange={e => setEditDays(ds => ds.map((d, idx) => idx === i ? { ...d, day_name: e.target.value } : d))}
-                  onClick={e => e.stopPropagation()}
-                />
-                <button className="btn btn-outline btn-sm"
-                  onClick={() => { setEditActiveDayIdx(i); setView('edit-exercises'); }}
-                  style={{ flexShrink:0, display:'flex', alignItems:'center', gap:6 }}>
-                  <Dumbbell size={14} />
-                  {day.exercises.length > 0
-                    ? `${day.exercises.length} ${day.exercises.length === 1 ? t('exercise_singular') : t('exercises_plural')}`
-                    : t('add_exercises_btn')}
-                </button>
-              </div>
-            ))}
-          </div>
+          <DayList days={editDays}
+            onDayNameChange={(i, name) => setEditDays(ds => ds.map((d, idx) => idx === i ? { ...d, day_name: name } : d))}
+            onDayColorChange={(i, color) => setEditDays(ds => ds.map((d, idx) => idx === i ? { ...d, color } : d))}
+            onOpenExercises={i => { setEditActiveDayIdx(i); setView('edit-exercises'); }} />
 
           {editError && <div className="alert alert-error" style={{ marginBottom:16 }}>{editError}</div>}
           <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
@@ -546,7 +527,7 @@ export default function MyPlans() {
 
         {activeEditDay && activeEditDay.exercises.length > 0 && (
           <div style={{ marginTop:12, padding:'12px 16px', background:'var(--bg-subtle)', borderRadius:'var(--radius)', fontSize:13, color:'var(--text-muted)' }}>
-            <strong style={{ color:'var(--text-body)' }}>{activeEditDay.day_name}</strong> · {activeEditDay.exercises.length} {t('exercises_plural')}
+            <strong style={{ color:'var(--text-body)' }}>{activeEditDay.day_name}</strong> · {activeEditDay.exercises.length} {plural(activeEditDay.exercises.length, t('exercise_singular'), t('exercises_2_4'), t('exercises_plural'))}
           </div>
         )}
       </div>
@@ -708,18 +689,18 @@ export default function MyPlans() {
       </div>
 
       <div className="tiles-grid">
-        {weekInfo.days.map(d => {
+        {weekInfo.days.map((d, i) => {
           const done = d.status === 'completed';
           const skip = done && d.skipped;
           return (
             <div key={d.plan_day_id}
-              className={`tile ${skip ? 'skipped' : done ? 'completed' : ''}`}
+              className={`tile day-accent day-color-${resolveDayColor(d.color, i)} ${skip ? 'skipped' : done ? 'completed' : ''}`}
               onClick={() => openDay(weekInfo.week_id, d.plan_day_id, d.log_id)}>
               {skip
                 ? <XCircle size={24} color="var(--danger)" />
                 : done
                   ? <CheckCircle2 size={24} color="var(--success)" />
-                  : <Dumbbell size={24} color="var(--text-subtle)" />}
+                  : <Dumbbell size={24} className="tile-day-icon" />}
               <span className="tile-num" style={{ fontSize:15 }}>{d.day_name}</span>
               <span className="tile-label">{skip ? t('skipped_label') : done ? t('done_label') : t('tap_to_train')}</span>
             </div>

@@ -43,6 +43,21 @@ class UserOut(BaseModel):
 
 # ── Plans ─────────────────────────────────────────────────────────────────────
 
+# Training day colour keys (must match frontend/src/utils/dayColors.ts)
+DAY_COLORS = {"indigo", "blue", "sky", "teal", "green", "lime", "amber", "orange", "red", "pink"}
+
+
+class DayColorMixin(BaseModel):
+    color: Optional[str] = None
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v):
+        if v is not None and v not in DAY_COLORS:
+            raise ValueError("Nieznany kolor dnia")
+        return v
+
+
 class RepRangeMixin(BaseModel):
     rep_min: Optional[int] = None
     rep_max: Optional[int] = None
@@ -67,7 +82,7 @@ class ExerciseEditItem(RepRangeMixin):
     exercise_order: int = 0
 
 
-class PlanDayEdit(BaseModel):
+class PlanDayEdit(DayColorMixin):
     id: int
     day_name: str
     exercises: List[ExerciseEditItem] = []
@@ -105,7 +120,7 @@ class ExerciseUpdate(BaseModel):
     exercise_order: Optional[int] = None
 
 
-class PlanDayCreate(BaseModel):
+class PlanDayCreate(DayColorMixin):
     day_name: str
     day_order: int
     exercises: List[ExerciseCreate] = []
@@ -115,13 +130,14 @@ class PlanDayOut(BaseModel):
     id: int
     day_name: str
     day_order: int
+    color: Optional[str] = None
     exercises: List[ExerciseOut] = []
 
     class Config:
         from_attributes = True
 
 
-class PlanDayUpdate(BaseModel):
+class PlanDayUpdate(DayColorMixin):
     day_name: Optional[str] = None
     day_order: Optional[int] = None
 

@@ -163,6 +163,18 @@ export interface TranslationMap {
   day_name_placeholder: string;
   exercise_singular: string;
   exercises_plural: string;
+  exercises_2_4: string;
+  day_color_label: string;
+  color_indigo: string;
+  color_blue: string;
+  color_sky: string;
+  color_teal: string;
+  color_green: string;
+  color_lime: string;
+  color_amber: string;
+  color_orange: string;
+  color_red: string;
+  color_pink: string;
   add_exercises_btn: string;
   save_plan_error: string;
   saving: string;
@@ -465,6 +477,18 @@ const pl: TranslationMap = {
   day_name_placeholder: 'Nazwa dnia',
   exercise_singular: 'ćwiczenie',
   exercises_plural: 'ćwiczeń',
+  exercises_2_4: 'ćwiczenia',
+  day_color_label: 'Kolor dnia',
+  color_indigo: 'Indygo',
+  color_blue: 'Niebieski',
+  color_sky: 'Błękitny',
+  color_teal: 'Morski',
+  color_green: 'Zielony',
+  color_lime: 'Limonkowy',
+  color_amber: 'Bursztynowy',
+  color_orange: 'Pomarańczowy',
+  color_red: 'Czerwony',
+  color_pink: 'Różowy',
   add_exercises_btn: 'Dodaj ćwiczenia',
   save_plan_error: 'Nie udało się zapisać planu',
   saving: 'Zapisywanie…',
@@ -753,6 +777,18 @@ const en: TranslationMap = {
   day_name_placeholder: 'Day name',
   exercise_singular: 'exercise',
   exercises_plural: 'exercises',
+  exercises_2_4: 'exercises',
+  day_color_label: 'Day colour',
+  color_indigo: 'Indigo',
+  color_blue: 'Blue',
+  color_sky: 'Sky',
+  color_teal: 'Teal',
+  color_green: 'Green',
+  color_lime: 'Lime',
+  color_amber: 'Amber',
+  color_orange: 'Orange',
+  color_red: 'Red',
+  color_pink: 'Pink',
   add_exercises_btn: 'Add exercises',
   save_plan_error: 'Failed to save plan',
   saving: 'Saving…',

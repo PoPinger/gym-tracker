@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardApi } from '../services/api';
+import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
 import WorkoutCalendar from '../components/WorkoutCalendar';
 import AppLoader from '../components/AppLoader';
@@ -33,9 +34,6 @@ export default function Dashboard() {
   const fmt = (d: string | null) =>
     d ? new Date(d).toLocaleDateString(lang === 'en' ? 'en-US' : 'pl-PL', { day:'numeric', month:'short' }) : '—';
 
-  // Polish plural forms: 1 / 2–4, 22–24… (not 12–14) / everything else
-  const plural = (n: number, one: string, few: string, many: string) =>
-    n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? few : many;
   const workoutLabel = (n: number) => plural(n, t('workouts_1'), t('workouts_2_4'), t('workouts_5plus'));
   const weekLabel = (n: number) => plural(n, t('weeks_streak_1'), t('weeks_streak_2_4'), t('weeks_streak_5plus'));
 

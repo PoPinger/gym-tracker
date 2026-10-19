@@ -24,6 +24,7 @@ def create_plan(db: Session, user_id: int, data: PlanCreate) -> TrainingPlan:
             plan_id=plan.id,
             day_name=day_data.day_name,
             day_order=day_data.day_order,
+            color=day_data.color,
         )
         db.add(plan_day)
         db.flush()
@@ -110,6 +111,7 @@ def copy_plan(db: Session, original: TrainingPlan, user_id: int) -> TrainingPlan
             plan_id=new_plan.id,
             day_name=day.day_name,
             day_order=day.day_order,
+            color=day.color,
         )
         db.add(new_day)
         db.flush()
@@ -143,6 +145,8 @@ def update_plan_structure(db: Session, plan: TrainingPlan, data) -> TrainingPlan
         if not day:
             continue
         day.day_name = day_data.day_name
+        if day_data.color is not None:
+            day.color = day_data.color
 
         existing_ids = {ex.id for ex in day.exercises}
         submitted_ids = {ex.id for ex in day_data.exercises if ex.id is not None}
