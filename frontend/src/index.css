@@ -55,13 +55,13 @@ a { text-decoration: none; color: inherit; }
 
 .sidebar { width: var(--sidebar-w); background: var(--bg-white); border-right: 1px solid var(--border); position: fixed; top: 0; left: 0; height: 100vh; display: flex; flex-direction: column; z-index: 200; transition: transform 0.25s ease; }
 .sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-.logo-img { height: 44px; width: auto; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; }
+.logo-img { height: 44px; width: auto; max-width: 100%; object-fit: contain; }
 
 .sidebar-nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
 .nav-link { display: flex; align-items: center; gap: 12px; padding: 6px 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: var(--t); min-height: 44px; background: none; border: none; width: 100%; text-align: left; }
 .nav-link:hover { background: var(--bg-subtle); color: var(--text-body); }
 .nav-link.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
-.nav-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; mix-blend-mode: multiply; }
+.nav-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
 
 .sidebar-footer { padding: 12px 8px; border-top: 1px solid var(--border); }
 .user-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-sm); }

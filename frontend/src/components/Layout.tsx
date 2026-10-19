@@ -12,10 +12,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { lang, setLang, t } = useLanguage();
 
   const NAV = [
-    { path: '/',            label: t('nav_panel'),       icon: '/panel.png' },
-    { path: '/create-plan', label: t('nav_create_plan'), icon: '/create-plan.png' },
-    { path: '/plans',       label: t('nav_my_plans'),    icon: '/my-plans.png' },
-    { path: '/weight',      label: t('nav_my_weight'),   icon: '/my-weight.png' },
+    { path: '/',            label: t('nav_panel'),       icon: '/icons/panel.png' },
+    { path: '/create-plan', label: t('nav_create_plan'), icon: '/icons/create-plan.png' },
+    { path: '/plans',       label: t('nav_my_plans'),    icon: '/icons/my-plans.png' },
+    { path: '/weight',      label: t('nav_my_weight'),   icon: '/icons/my-weight.png' },
   ];
 
   const go = (path: string) => { navigate(path); setOpen(false); };
@@ -27,7 +27,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const sidebarContent = (
     <>
       <div className="sidebar-logo">
-        <img className="logo-img" src="/logo.png" alt="GymTracker" />
+        <img className="logo-img" src="/icons/logo.png" alt="GymTracker" />
       </div>
 
       <nav className="sidebar-nav">
