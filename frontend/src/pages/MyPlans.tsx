@@ -7,7 +7,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { isValidRepRange, repRangePayload, formatRepRange } from '../utils/repRange';
 import { exerciseScore, progressPct, formatPct, formatKg, firstWeight } from '../utils/progress';
 import { todayIso } from '../utils/date';
-import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog } from '../types';
+import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog, SetLog } from '../types';
 import {
   ChevronRight, Copy, CheckCircle2, XCircle, ArrowLeft,
   Dumbbell, Trophy, Plus,
@@ -18,6 +18,8 @@ type View = 'list' | 'weeks' | 'days' | 'workout' | 'edit-plan' | 'edit-exercise
 
 interface EditExDraft { id?: number; name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
 interface EditDayDraft { id: number; day_name: string; exercises: EditExDraft[]; }
+// Field values captured before a "skipped" auto-fill, keyed by exercise log id
+type FillSnapshot = Record<number, { set_logs: SetLog[]; weight: string }>;
 
 function RefBlock({ title, weightLabel, progressLabel, weight, pct, lang }: {
   title: string; weightLabel: string; progressLabel: string;
@@ -80,6 +82,8 @@ export default function MyPlans() {
   const [exerciseWeights, setExerciseWeights] = useState<Record<number, string>>({});
   const [workoutDate, setWorkoutDate] = useState('');
   const [skipped, setSkipped]         = useState(false);
+  const [daySnapshot, setDaySnapshot] = useState<FillSnapshot | null>(null);
+  const [exSnapshots, setExSnapshots] = useState<FillSnapshot>({});
 
   const [editPlan, setEditPlan]               = useState<Plan | null>(null);
   const [editName, setEditName]               = useState('');
@@ -126,6 +130,8 @@ export default function MyPlans() {
     setExerciseWeights(weights);
     setWorkoutDate(log.workout_date ?? todayIso());
     setSkipped(log.skipped);
+    setDaySnapshot(null);
+    setExSnapshots({});
     setDayLog(log);
     setView('workout');
   };
@@ -197,17 +203,49 @@ export default function MyPlans() {
     setDayLog({ ...log, exercise_logs });
   };
 
-  // Skipped workout / exercise: auto-fill from the previous week; unchecking keeps the data
+  const takeSnapshot = (log: DayLog, exLogIds: number[]): FillSnapshot =>
+    Object.fromEntries(log.exercise_logs.filter(el => exLogIds.includes(el.id))
+      .map(el => [el.id, { set_logs: el.set_logs, weight: exerciseWeights[el.id] ?? '' }]));
+
+  // Restore the pre-check values; without a snapshot (e.g. reopened after saving) the fields are cleared
+  const restoreSnapshot = (log: DayLog, exLogIds: number[], snap: FillSnapshot | null) => {
+    const weights: Record<number, string> = {};
+    const exercise_logs = log.exercise_logs.map(el => {
+      if (!exLogIds.includes(el.id)) return el;
+      const s = snap?.[el.id];
+      weights[el.id] = s ? s.weight : '';
+      return { ...el, set_logs: s ? s.set_logs : el.set_logs.map(x => ({ ...x, reps: null, weight_kg: null })) };
+    });
+    setExerciseWeights(prev => ({ ...prev, ...weights }));
+    setDayLog({ ...log, exercise_logs });
+  };
+
+  // Skipped workout / exercise: checking auto-fills from the previous week, unchecking reverts the fill
   const toggleSkipped = (checked: boolean) => {
     setSkipped(checked);
-    if (checked && dayLog) fillFromPrevWeek(dayLog, dayLog.exercise_logs.map(el => el.id));
+    if (!dayLog) return;
+    // Individually skipped exercises keep their own state
+    const ids = dayLog.exercise_logs.filter(el => !el.skipped).map(el => el.id);
+    if (checked) {
+      setDaySnapshot(takeSnapshot(dayLog, ids));
+      fillFromPrevWeek(dayLog, ids);
+    } else {
+      restoreSnapshot(dayLog, ids, daySnapshot);
+      setDaySnapshot(null);
+    }
   };
 
   const toggleExerciseSkipped = (exLogId: number, checked: boolean) => {
     if (!dayLog) return;
     const log = { ...dayLog, exercise_logs: dayLog.exercise_logs.map(el => el.id === exLogId ? { ...el, skipped: checked } : el) };
-    if (checked) fillFromPrevWeek(log, [exLogId]);
-    else setDayLog(log);
+    if (checked) {
+      setExSnapshots(prev => ({ ...prev, ...takeSnapshot(dayLog, [exLogId]) }));
+      fillFromPrevWeek(log, [exLogId]);
+    } else {
+      const snap = exSnapshots[exLogId];
+      restoreSnapshot(log, [exLogId], snap ? { [exLogId]: snap } : null);
+      setExSnapshots(prev => { const next = { ...prev }; delete next[exLogId]; return next; });
+    }
   };
 
   const saveSets = async (exLogId: number) => {
@@ -224,8 +262,8 @@ export default function MyPlans() {
 
   const finishDay = async () => {
     if (!dayLog || dateInvalid) return;
-    // Auto-filled values of a skipped day would otherwise be lost (sets are saved per exercise)
-    if (skipped) await Promise.all(dayLog.exercise_logs.map(el => logsApi.saveSets(el.id, el.set_logs, workoutDate, skipped, el.skipped)));
+    // Auto-filled (or reverted) values of a skipped day would otherwise be lost (sets are saved per exercise)
+    if (skipped || dayLog.skipped) await Promise.all(dayLog.exercise_logs.map(el => logsApi.saveSets(el.id, el.set_logs, workoutDate, skipped, el.skipped)));
     await logsApi.completeDay(dayLog.id, workoutDate, skipped);
     if (weekInfo) { const r = await logsApi.getWeekDays(weekInfo.week_id); setWeekInfo(r.data); }
     setView('days');
