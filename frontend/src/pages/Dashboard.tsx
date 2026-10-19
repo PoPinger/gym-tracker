@@ -88,6 +88,8 @@ export default function Dashboard() {
       {hasAnything && (
         <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
 
+          <WorkoutCalendar workouts={d.workout_calendar ?? []} />
+
           {/* Stats row */}
           <div className="grid-4">
             <StatCard icon={<Activity size={20} />} iconClass="indigo"
@@ -103,8 +105,6 @@ export default function Dashboard() {
               label={t('stat_streak')} value={d.streak}
               sub={dayLabel(d.streak)} />
           </div>
-
-          <WorkoutCalendar workouts={d.workout_calendar ?? []} />
 
           {/* Plan + Progress */}
           {d.current_plan && (
