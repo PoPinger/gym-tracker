@@ -5,7 +5,8 @@ import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { useLanguage } from '../i18n/LanguageContext';
 import { isValidRepRange, repRangePayload } from '../utils/repRange';
-import { Plus, Trash2, ChevronUp, ChevronDown, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, ArrowRight, ArrowLeft, Dumbbell, Moon } from 'lucide-react';
+import { plural } from '../utils/plural';
 import DayList from '../components/DayList';
 import { defaultDayColor, type DayColor } from '../utils/dayColors';
 
@@ -56,20 +57,14 @@ export default function CreatePlan() {
     t('default_day_upper'), t('default_day_lower'), t('default_day_full'), t('default_day_cardio'),
   ];
 
-  const stepFullLabels = [
-    t('step_full_days_per_week'),
-    t('step_full_duration'),
-    t('step_full_day_names'),
-    t('step_full_exercises'),
-  ];
-  const stepCurrent = `${t('step_counter').replace('{n}', String(step)).replace('{total}', '4')}: ${stepFullLabels[step - 1]}`;
-
+  // 3 visible steps; the exercise editor (internal step 4) belongs to "Układanie planu"
   const stepLabels = [
     t('step_days_per_week'),
     t('step_duration'),
     t('step_day_names'),
-    t('step_exercises'),
   ];
+  const shownStep = Math.min(step, 3) as Step;
+  const stepCurrent = `${t('step_counter').replace('{n}', String(shownStep)).replace('{total}', String(stepLabels.length))}: ${stepLabels[shownStep - 1]}`;
 
   const goToStep3 = () => {
     const next: DayDraft[] = Array.from({ length: daysPerWeek }, (_, i) =>
@@ -153,7 +148,7 @@ export default function CreatePlan() {
         </div>
       </div>
 
-      <StepIndicator step={step} labels={stepLabels} current={stepCurrent} />
+      <StepIndicator step={shownStep} labels={stepLabels} current={stepCurrent} />
 
       <div className="card">
 
@@ -166,16 +161,27 @@ export default function CreatePlan() {
             <p style={{ fontSize:14, color:'var(--text-muted)', marginBottom:24 }}>
               {t('step1_body')}
             </p>
-            <div className="num-picker" style={{ marginBottom:32 }}>
+            <div className="seg-control" role="radiogroup" aria-label={t('step1_heading')}>
               {[1,2,3,4,5,6,7].map(n => (
-                <button key={n} className={`num-pill ${daysPerWeek === n ? 'selected' : ''}`}
-                  onClick={() => setDaysPerWeek(n)}>{n}</button>
+                <button key={n} role="radio" aria-checked={daysPerWeek === n}
+                  className={daysPerWeek === n ? 'selected' : ''} onClick={() => setDaysPerWeek(n)}>{n}</button>
               ))}
             </div>
-            <div style={{ background:'var(--primary-light)', borderRadius:10, padding:'12px 16px', marginBottom:28 }}>
-              <span style={{ fontSize:13, color:'var(--primary)', fontWeight:600 }}>
-                {daysPerWeek} {daysPerWeek === 1 ? t('training_day_singular') : t('training_days_plural')}
-              </span>
+            <div className="day-list plan-summary">
+              <div className="day-list-row">
+                <span className="day-list-icon"><Dumbbell size={16} /></span>
+                <div className="day-list-field">
+                  <span className="day-list-label">{t('summary_trainings_per_week')}</span>
+                  <span className="plan-summary-value">{daysPerWeek}</span>
+                </div>
+              </div>
+              <div className="day-list-row">
+                <span className="day-list-icon plan-summary-rest"><Moon size={16} /></span>
+                <div className="day-list-field">
+                  <span className="day-list-label">{t('summary_rest_days')}</span>
+                  <span className="plan-summary-value">{7 - daysPerWeek}</span>
+                </div>
+              </div>
             </div>
             <button className="btn btn-primary" onClick={() => setStep(2)}>
               {t('next_btn')} <ArrowRight size={16} />
@@ -192,16 +198,21 @@ export default function CreatePlan() {
             <p style={{ fontSize:14, color:'var(--text-muted)', marginBottom:24 }}>
               {t('step2_body')}
             </p>
-            <div className="num-picker" style={{ marginBottom:32 }}>
+            <div className="seg-control seg-control-12" role="radiogroup" aria-label={t('step2_heading')}>
               {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
-                <button key={n} className={`num-pill ${months === n ? 'selected' : ''}`}
-                  onClick={() => setMonths(n)}>{n}</button>
+                <button key={n} role="radio" aria-checked={months === n}
+                  className={months === n ? 'selected' : ''} onClick={() => setMonths(n)}>{n}</button>
               ))}
             </div>
-            <div style={{ background:'var(--primary-light)', borderRadius:10, padding:'12px 16px', marginBottom:28 }}>
-              <span style={{ fontSize:13, color:'var(--primary)', fontWeight:600 }}>
-                {months} {t('months_abbr')} · {months * 4} {t('weeks_abbr')} · {months * 4 * daysPerWeek} {t('training_sessions')}
-              </span>
+            <div className="plan-stats">
+              <div>
+                <span className="plan-stat">{months * 4}</span>
+                <span className="day-list-label">{plural(months * 4, t('weeks_1'), t('weeks_2_4'), t('weeks_5plus'))}</span>
+              </div>
+              <div>
+                <span className="plan-stat">{months * 4 * daysPerWeek}</span>
+                <span className="day-list-label">{plural(months * 4 * daysPerWeek, t('workouts_1'), t('workouts_2_4'), t('workouts_5plus'))}</span>
+              </div>
             </div>
             <div style={{ display:'flex', gap:10 }}>
               <button className="btn btn-outline" onClick={() => setStep(1)}>

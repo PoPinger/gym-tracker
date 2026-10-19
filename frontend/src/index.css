@@ -417,3 +417,18 @@ a { text-decoration: none; color: inherit; }
 .tile.day-accent { position: relative; overflow: hidden; }
 .tile.day-accent::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--day-fg); }
 .tile-day-icon { color: var(--day-fg); }
+
+/* Plan builder steps 1–2: segmented number control + summary */
+.seg-control { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 4px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 16px; }
+.seg-control-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.seg-control button { height: 44px; border: none; border-radius: 10px; background: transparent; font: inherit; font-size: 16px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: var(--t); }
+.seg-control button.selected { background: var(--bg-white); color: var(--primary); box-shadow: 0 1px 3px rgba(15,23,42,0.12), 0 0 0 1.5px var(--primary); }
+@media (hover: hover) { .seg-control button:not(.selected):hover { color: var(--primary); background: rgba(255,255,255,0.6); } }
+.plan-summary { margin-bottom: 28px; }
+.plan-summary-value { font-size: 16px; font-weight: 700; color: var(--text-heading); }
+.plan-summary-rest { background: var(--success-light); color: var(--success); }
+.plan-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 28px; }
+.plan-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; }
+.plan-stats > div + div { border-left: 1px solid var(--border); }
+.plan-stat { font-size: 24px; font-weight: 800; color: var(--primary); line-height: 1.1; }
+@media (max-width: 600px) { .seg-control-12 { grid-template-columns: repeat(6, minmax(0, 1fr)); } }

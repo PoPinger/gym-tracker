@@ -130,11 +130,6 @@ export interface TranslationMap {
   step_days_per_week: string;
   step_duration: string;
   step_day_names: string;
-  step_exercises: string;
-  step_full_days_per_week: string;
-  step_full_duration: string;
-  step_full_day_names: string;
-  step_full_exercises: string;
   step_counter: string;
 
   // Create Plan – step 1
@@ -142,8 +137,11 @@ export interface TranslationMap {
   create_plan_subtitle: string;
   step1_heading: string;
   step1_body: string;
-  training_day_singular: string;
-  training_days_plural: string;
+  summary_trainings_per_week: string;
+  summary_rest_days: string;
+  weeks_1: string;
+  weeks_2_4: string;
+  weeks_5plus: string;
   next_btn: string;
 
   // Create Plan – step 2
@@ -151,7 +149,6 @@ export interface TranslationMap {
   step2_body: string;
   months_abbr: string;
   weeks_abbr: string;
-  training_sessions: string;
   back_btn: string;
 
   // Create Plan – step 3
@@ -444,29 +441,26 @@ const pl: TranslationMap = {
   weekday_short_6: 'So',
   weekday_short_7: 'Nd',
 
-  step_days_per_week: 'Dni/tydz.',
-  step_duration: 'Czas',
-  step_day_names: 'Nazwy dni',
-  step_exercises: 'Ćwiczenia',
-  step_full_days_per_week: 'Dni w tygodniu',
-  step_full_duration: 'Czas trwania',
-  step_full_day_names: 'Nazwy dni',
-  step_full_exercises: 'Ćwiczenia',
+  step_days_per_week: 'Dni treningowe',
+  step_duration: 'Czas trwania planu',
+  step_day_names: 'Układanie planu',
   step_counter: 'Krok {n} z {total}',
 
   create_plan_title: 'Utwórz plan treningowy',
   create_plan_subtitle: 'Zbuduj swój spersonalizowany harmonogram treningów',
   step1_heading: 'Ile dni w tygodniu?',
   step1_body: 'Wybierz, jak często chcesz trenować każdego tygodnia.',
-  training_day_singular: 'dzień treningowy',
-  training_days_plural: 'dni treningowych',
+  summary_trainings_per_week: 'Treningi w tygodniu',
+  summary_rest_days: 'Dni odpoczynku',
+  weeks_1: 'tydzień',
+  weeks_2_4: 'tygodnie',
+  weeks_5plus: 'tygodni',
   next_btn: 'Dalej',
 
   step2_heading: 'Na ile miesięcy?',
   step2_body: 'Określa łączny czas trwania planu.',
   months_abbr: 'mies.',
   weeks_abbr: 'tyg.',
-  training_sessions: 'sesji treningowych',
   back_btn: 'Wstecz',
 
   step3_heading: 'Skonfiguruj swój plan',
@@ -744,29 +738,26 @@ const en: TranslationMap = {
   weekday_short_6: 'Sa',
   weekday_short_7: 'Su',
 
-  step_days_per_week: 'Days/week',
-  step_duration: 'Duration',
-  step_day_names: 'Day names',
-  step_exercises: 'Exercises',
-  step_full_days_per_week: 'Days per week',
-  step_full_duration: 'Duration',
-  step_full_day_names: 'Day names',
-  step_full_exercises: 'Exercises',
+  step_days_per_week: 'Training days',
+  step_duration: 'Plan duration',
+  step_day_names: 'Plan builder',
   step_counter: 'Step {n} of {total}',
 
   create_plan_title: 'Create training plan',
   create_plan_subtitle: 'Build your personalized training schedule',
   step1_heading: 'How many days per week?',
   step1_body: 'Choose how often you want to train each week.',
-  training_day_singular: 'training day',
-  training_days_plural: 'training days',
+  summary_trainings_per_week: 'Workouts per week',
+  summary_rest_days: 'Rest days',
+  weeks_1: 'week',
+  weeks_2_4: 'weeks',
+  weeks_5plus: 'weeks',
   next_btn: 'Next',
 
   step2_heading: 'For how many months?',
   step2_body: 'Determines the total duration of the plan.',
   months_abbr: 'mo.',
   weeks_abbr: 'wks.',
-  training_sessions: 'training sessions',
   back_btn: 'Back',
 
   step3_heading: 'Configure your plan',
