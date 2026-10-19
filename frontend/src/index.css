@@ -220,6 +220,13 @@ a { text-decoration: none; color: inherit; }
 .step-item.done .step-name { color: var(--success); }
 .step-connector { flex: 1; height: 1.5px; background: var(--border); margin: 0 10px; min-width: 20px; }
 .step-connector.done { background: var(--success); }
+.step-current { display: none; }
+@media (max-width: 600px) {
+  .steps { margin-bottom: 12px; }
+  .step-name { display: none; }
+  .step-connector { margin: 0 8px; min-width: 0; }
+  .step-current { display: block; font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 24px; }
+}
 
 /* ── AUTH ── */
 .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(135deg, #f0f0ff 0%, var(--bg) 50%, #f0fff8 100%); }
@@ -313,8 +320,6 @@ a { text-decoration: none; color: inherit; }
   .card { padding: 16px; }
   .exercise-card { padding: 14px; }
   .sets-header span { font-size: 10px; letter-spacing: 0.02em; }
-  .steps { flex-wrap: wrap; gap: 6px; }
-  .step-connector { display: none; }
   .modal-actions { flex-direction: column-reverse; }
 }
 

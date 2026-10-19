@@ -12,23 +12,27 @@ type Step = 1 | 2 | 3 | 4;
 interface ExDraft { name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
 interface DayDraft { day_name: string; exercises: ExDraft[]; }
 
-function StepIndicator({ step, labels }: { step: Step; labels: string[] }) {
+function StepIndicator({ step, labels, current }: { step: Step; labels: string[]; current: string }) {
   return (
-    <div className="steps">
-      {labels.map((label, i) => {
-        const n = (i + 1) as Step;
-        const state = step > n ? 'done' : step === n ? 'active' : 'todo';
-        return (
-          <div key={n} className={`step-item ${state}`} style={{ flex: i < labels.length - 1 ? 1 : 'none', display:'flex', alignItems:'center', minWidth: 0 }}>
-            <div className={`step-bubble ${state}`}>
-              {state === 'done' ? '✓' : n}
+    <>
+      <div className="steps">
+        {labels.map((label, i) => {
+          const n = (i + 1) as Step;
+          const state = step > n ? 'done' : step === n ? 'active' : 'todo';
+          return (
+            <div key={n} className={`step-item ${state}`} style={{ flex: i < labels.length - 1 ? 1 : 'none', display:'flex', alignItems:'center', minWidth: 0 }}>
+              <div className={`step-bubble ${state}`}>
+                {state === 'done' ? '✓' : n}
+              </div>
+              <span className="step-name" style={{ whiteSpace:'nowrap', marginRight:6 }}>{label}</span>
+              {i < labels.length - 1 && <div className={`step-connector ${state === 'done' ? 'done' : ''}`} />}
             </div>
-            <span className="step-name" style={{ whiteSpace:'nowrap', marginRight:6 }}>{label}</span>
-            {i < labels.length - 1 && <div className={`step-connector ${state === 'done' ? 'done' : ''}`} />}
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+      {/* Narrow screens show only the circles plus this full label of the current step */}
+      <div className="step-current">{current}</div>
+    </>
   );
 }
 
@@ -49,6 +53,14 @@ export default function CreatePlan() {
     t('default_day_push'), t('default_day_pull'), t('default_day_legs'),
     t('default_day_upper'), t('default_day_lower'), t('default_day_full'), t('default_day_cardio'),
   ];
+
+  const stepFullLabels = [
+    t('step_full_days_per_week'),
+    t('step_full_duration'),
+    t('step_full_day_names'),
+    t('step_full_exercises'),
+  ];
+  const stepCurrent = `${t('step_counter').replace('{n}', String(step)).replace('{total}', '4')}: ${stepFullLabels[step - 1]}`;
 
   const stepLabels = [
     t('step_days_per_week'),
@@ -135,7 +147,7 @@ export default function CreatePlan() {
         </div>
       </div>
 
-      <StepIndicator step={step} labels={stepLabels} />
+      <StepIndicator step={step} labels={stepLabels} current={stepCurrent} />
 
       <div className="card">
 

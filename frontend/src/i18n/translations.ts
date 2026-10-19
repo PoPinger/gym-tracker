@@ -131,6 +131,11 @@ export interface TranslationMap {
   step_duration: string;
   step_day_names: string;
   step_exercises: string;
+  step_full_days_per_week: string;
+  step_full_duration: string;
+  step_full_day_names: string;
+  step_full_exercises: string;
+  step_counter: string;
 
   // Create Plan – step 1
   create_plan_title: string;
@@ -431,6 +436,11 @@ const pl: TranslationMap = {
   step_duration: 'Czas',
   step_day_names: 'Nazwy dni',
   step_exercises: 'Ćwiczenia',
+  step_full_days_per_week: 'Dni w tygodniu',
+  step_full_duration: 'Czas trwania',
+  step_full_day_names: 'Nazwy dni',
+  step_full_exercises: 'Ćwiczenia',
+  step_counter: 'Krok {n} z {total}',
 
   create_plan_title: 'Utwórz plan treningowy',
   create_plan_subtitle: 'Zbuduj swój spersonalizowany harmonogram treningów',
@@ -714,6 +724,11 @@ const en: TranslationMap = {
   step_duration: 'Duration',
   step_day_names: 'Day names',
   step_exercises: 'Exercises',
+  step_full_days_per_week: 'Days per week',
+  step_full_duration: 'Duration',
+  step_full_day_names: 'Day names',
+  step_full_exercises: 'Exercises',
+  step_counter: 'Step {n} of {total}',
 
   create_plan_title: 'Create training plan',
   create_plan_subtitle: 'Build your personalized training schedule',
