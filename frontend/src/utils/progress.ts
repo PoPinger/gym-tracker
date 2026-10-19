@@ -10,6 +10,10 @@ export const exerciseScore = (sets?: SetData[] | null): number | null => {
   return total / sets.length;
 };
 
+// Double progression: every previous-week set reached the top of the rep range
+export const shouldAddWeight = (prevSets?: SetData[] | null, repMax?: number | null): boolean =>
+  repMax != null && !!prevSets?.length && prevSets.every(s => isNum(s.reps) && s.reps >= repMax);
+
 export const progressPct = (current: number | null, reference: number | null): number | null => {
   if (current == null || reference == null || reference <= 0) return null;
   return Math.round(((current - reference) / reference) * 1000) / 10;

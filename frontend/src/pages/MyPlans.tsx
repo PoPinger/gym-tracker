@@ -5,7 +5,7 @@ import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { useLanguage } from '../i18n/LanguageContext';
 import { isValidRepRange, repRangePayload, formatRepRange } from '../utils/repRange';
-import { exerciseScore, progressPct, formatPct, formatKg, firstWeight } from '../utils/progress';
+import { exerciseScore, progressPct, formatPct, formatKg, firstWeight, shouldAddWeight } from '../utils/progress';
 import { todayIso } from '../utils/date';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog, SetLog } from '../types';
 import {
@@ -838,12 +838,16 @@ export default function MyPlans() {
                   paddingTop:10, borderTop:'1px solid var(--border)' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                     <span style={{ fontSize:13, fontWeight:600, color:'var(--text-muted)' }}>{t('weight_field_label')}</span>
-                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
                       <input type="number" className="set-input" placeholder="0" step={0.5} min={0}
                         style={{ width:80 }}
                         value={exerciseWeights[el.id] ?? ''}
                         onChange={e => editExerciseWeight(el.id, e.target.value)} />
                       <span style={{ fontSize:13, color:'var(--text-muted)' }}>kg</span>
+                      {weekNum > 1 && !dayLog.prev_week_skipped?.includes(el.exercise_id)
+                        && shouldAddWeight(prevSets, el.rep_max) && (
+                        <span className="add-weight-hint">{t('add_weight_hint')}</span>
+                      )}
                     </div>
                   </div>
 

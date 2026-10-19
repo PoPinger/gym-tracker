@@ -256,6 +256,7 @@ def get_day_log(log_id: int, db: Session = Depends(get_db), user: User = Depends
 
     # Fetch previous week data for comparison
     prev_week_data = {}
+    prev_week_skipped = []
     if week and week.week_number > 1:
         prev_week = db.query(TrainingWeek).filter(
             TrainingWeek.plan_id == week.plan_id,
@@ -272,6 +273,8 @@ def get_day_log(log_id: int, db: Session = Depends(get_db), user: User = Depends
                     sets = [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg}
                             for s in ex_log.set_logs]
                     prev_week_data[ex_log.exercise_id] = sets
+                    if prev_log.skipped or ex_log.skipped:
+                        prev_week_skipped.append(ex_log.exercise_id)
 
     # Fetch week 1 data for comparison
     week1_data = {}
@@ -294,6 +297,7 @@ def get_day_log(log_id: int, db: Session = Depends(get_db), user: User = Depends
 
     result = _serialize_day_log(log)
     result["prev_week_data"] = prev_week_data
+    result["prev_week_skipped"] = prev_week_skipped
     result["week1_data"] = week1_data
     result["week_number"] = week.week_number if week else None
     result["plan_name"] = plan.name if plan else None

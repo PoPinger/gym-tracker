@@ -75,6 +75,7 @@ export interface DayLog {
   skipped: boolean;
   exercise_logs: ExerciseLog[];
   prev_week_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null }>>;
+  prev_week_skipped?: number[];
   week1_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null }>>;
   week_number?: number;
   plan_name?: string;
