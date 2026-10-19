@@ -7,6 +7,7 @@ import AppLoader from '../components/AppLoader';
 import PlansEmptyState from '../components/PlansEmptyState';
 import PlanCard from '../components/PlanCard';
 import DayList from '../components/DayList';
+import ExerciseEditor from '../components/ExerciseEditor';
 import { resolveDayColor, type DayColor } from '../utils/dayColors';
 import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -17,7 +18,6 @@ import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog, SetLog } from '.
 import {
   ChevronRight, CheckCircle2, XCircle, ArrowLeft,
   Dumbbell, Trophy, Plus, Check,
-  Trash2, ChevronUp, ChevronDown,
 } from 'lucide-react';
 
 type View = 'list' | 'weeks' | 'days' | 'workout' | 'edit-plan' | 'edit-exercises';
@@ -514,92 +514,9 @@ export default function MyPlans() {
   if (view === 'edit-exercises' && editPlan) {
     const activeEditDay = editDays[editActiveDayIdx];
     return (
-      <div style={{ maxWidth: 720 }}>
-        <button className="back-btn" onClick={() => setView('edit-plan')}>
-          <ArrowLeft size={15} /> {t('back_to_days')}
-        </button>
-        <div className="page-header">
-          <div>
-            <h1 className="page-title">{activeEditDay?.day_name}</h1>
-            <p className="page-subtitle">{t('edit_exercises_subtitle')}</p>
-          </div>
-        </div>
-
-        <div className="card">
-          {(!activeEditDay || activeEditDay.exercises.length === 0) && (
-            <div style={{ textAlign:'center', padding:'32px 0', color:'var(--text-muted)', fontSize:14 }}>
-              {t('no_exercises_empty')}
-            </div>
-          )}
-
-          <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:16 }}>
-            {activeEditDay?.exercises.map((ex, ei) => (
-              <div key={ei} style={{ background:'var(--bg-subtle)', border:'1.5px solid var(--border)',
-                borderRadius:'var(--radius-lg)', padding:14 }}>
-                <div style={{ display:'flex', gap:10, alignItems:'flex-start', marginBottom:10 }}>
-                  <div style={{ width:26, height:26, background:'white', border:'1.5px solid var(--border)',
-                    borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:9 }}>
-                    <span style={{ fontSize:11, fontWeight:800, color:'var(--text-subtle)' }}>{ei+1}</span>
-                  </div>
-                  <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr auto', gap:8 }}>
-                    <input className="form-input" placeholder={t('exercise_name_edit_placeholder')}
-                      value={ex.name} onChange={e => setEditEx(ei, 'name', e.target.value)} />
-                    <select className="form-select" style={{ width:'auto', minWidth:130 }}
-                      value={ex.muscle_group} onChange={e => setEditEx(ei, 'muscle_group', e.target.value)}>
-                      {MUSCLE_GROUPS.map(g => (
-                        <option key={g} value={g}>{t(MUSCLE_GROUP_TO_KEY[g] ?? 'muscle_chest')}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingLeft:36 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
-                    <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>{t('sets_label')}</span>
-                    <div style={{ display:'flex', alignItems:'center', gap:6, background:'white',
-                      border:'1.5px solid var(--border)', borderRadius:8, padding:'4px 8px' }}>
-                      <button style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)',
-                        padding:'2px 4px', fontSize:18, lineHeight:1 }}
-                        onClick={() => setEditEx(ei, 'sets', Math.max(1, ex.sets - 1))}>−</button>
-                      <span style={{ fontWeight:800, fontSize:15, color:'var(--text-heading)', minWidth:16, textAlign:'center' }}>{ex.sets}</span>
-                      <button style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)',
-                        padding:'2px 4px', fontSize:18, lineHeight:1 }}
-                        onClick={() => setEditEx(ei, 'sets', Math.min(10, ex.sets + 1))}>+</button>
-                    </div>
-                    <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>{t('rep_range_label')}</span>
-                    <div style={{ display:'flex', alignItems:'center', gap:4, background:'white',
-                      border:'1.5px solid var(--border)', borderRadius:8, padding:'4px 8px' }}>
-                      <input type="number" min={1} max={100} step={1} className="rep-range-input" placeholder="min"
-                        value={ex.rep_min} onChange={e => setEditEx(ei, 'rep_min', e.target.value)} />
-                      <span style={{ color:'var(--text-muted)' }}>–</span>
-                      <input type="number" min={1} max={100} step={1} className="rep-range-input" placeholder="max"
-                        value={ex.rep_max} onChange={e => setEditEx(ei, 'rep_max', e.target.value)} />
-                    </div>
-                  </div>
-
-                  <div style={{ display:'flex', gap:4 }}>
-                    <button className="btn-icon" onClick={() => moveEditEx(ei, -1)} disabled={ei === 0}
-                      style={{ opacity: ei === 0 ? 0.3 : 1 }}><ChevronUp size={15} /></button>
-                    <button className="btn-icon" onClick={() => moveEditEx(ei, 1)}
-                      disabled={ei === (activeEditDay?.exercises.length ?? 0) - 1}
-                      style={{ opacity: ei === (activeEditDay?.exercises.length ?? 0) - 1 ? 0.3 : 1 }}><ChevronDown size={15} /></button>
-                    <button className="btn-icon" onClick={() => removeEditEx(ei)}
-                      style={{ color:'var(--danger)' }}><Trash2 size={15} /></button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button className="btn btn-outline btn-full" onClick={addEditEx} style={{ marginBottom:20 }}>
-            <Plus size={16} /> {t('add_exercise_btn')}
-          </button>
-
-          <button className="btn btn-primary" onClick={() => setView('edit-plan')}>
-            <CheckCircle2 size={15} /> {t('done_label')}
-          </button>
-        </div>
-      </div>
+      <ExerciseEditor dayName={activeEditDay?.day_name ?? ''} color={activeEditDay?.color ?? resolveDayColor(null, editActiveDayIdx)}
+        exercises={activeEditDay?.exercises ?? []} onChange={setEditEx} onMove={moveEditEx} onRemove={removeEditEx}
+        onAdd={addEditEx} onDone={() => setView('edit-plan')} onBack={() => setView('edit-plan')} />
     );
   }
 

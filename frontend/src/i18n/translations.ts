@@ -232,6 +232,19 @@ export interface TranslationMap {
   // My Plans – edit exercises
   edit_exercises_subtitle: string;
   exercise_name_edit_placeholder: string;
+  ex_col_muscle: string;
+  ex_col_sets: string;
+  ex_col_range: string;
+  sets_1: string;
+  sets_2_4: string;
+  sets_5plus: string;
+  ex_unnamed: string;
+  move_up: string;
+  move_down: string;
+  sets_decrease: string;
+  sets_increase: string;
+  rep_min_label: string;
+  rep_max_label: string;
   done_label: string;
   skipped_label: string;
   exercise_skipped_checkbox: string;
@@ -552,6 +565,19 @@ const pl: TranslationMap = {
 
   edit_exercises_subtitle: 'Edytuj ćwiczenia dnia treningowego',
   exercise_name_edit_placeholder: 'Nazwa ćwiczenia',
+  ex_col_muscle: 'Partia',
+  ex_col_sets: 'Serie',
+  ex_col_range: 'Zakres',
+  sets_1: 'seria',
+  sets_2_4: 'serie',
+  sets_5plus: 'serii',
+  ex_unnamed: 'Bez nazwy',
+  move_up: 'Przesuń wyżej',
+  move_down: 'Przesuń niżej',
+  sets_decrease: 'Mniej serii',
+  sets_increase: 'Więcej serii',
+  rep_min_label: 'Min. powtórzeń',
+  rep_max_label: 'Maks. powtórzeń',
   done_label: 'Gotowe',
   skipped_label: 'Pominięty',
   exercise_skipped_checkbox: 'Ćwiczenie pominięte',
@@ -864,6 +890,19 @@ const en: TranslationMap = {
 
   edit_exercises_subtitle: 'Edit training day exercises',
   exercise_name_edit_placeholder: 'Exercise name',
+  ex_col_muscle: 'Muscle group',
+  ex_col_sets: 'Sets',
+  ex_col_range: 'Range',
+  sets_1: 'set',
+  sets_2_4: 'sets',
+  sets_5plus: 'sets',
+  ex_unnamed: 'Untitled',
+  move_up: 'Move up',
+  move_down: 'Move down',
+  sets_decrease: 'Fewer sets',
+  sets_increase: 'More sets',
+  rep_min_label: 'Min reps',
+  rep_max_label: 'Max reps',
   done_label: 'Done',
   skipped_label: 'Skipped',
   exercise_skipped_checkbox: 'Exercise skipped',
