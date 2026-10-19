@@ -179,11 +179,11 @@ a { text-decoration: none; color: inherit; }
 /* ── MISC ── */
 .divider { height: 1px; background: var(--border); }
 
-/* Branded full-screen loader: logo icon (left square of logo.png), shimmering wordmark */
+/* Branded full-screen loader: logo icon (left square of icons/logo.png), shimmering wordmark */
 .app-loader { position: fixed; inset: 0; z-index: 1000; min-height: 100vh; min-height: 100dvh; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; }
-/* Crop logo.png (920x225) to its icon square (~x18-227, y12-219) so none of the image's off-white background shows */
+/* Crop icons/logo.png (896x212) to its icon square (x0-214, y0-211), a few px inside the edge so no rim shows */
 .app-loader-logo { position: relative; width: 72px; height: 72px; border-radius: 15px; overflow: hidden; flex-shrink: 0; }
-.app-loader-logo img { position: absolute; height: calc(72px * 225 / 210); width: auto; max-width: none; left: calc(-72px * 18 / 210); top: calc(-72px * 12 / 210); }
+.app-loader-logo img { position: absolute; height: calc(72px * 212 / 206); width: auto; max-width: none; left: calc(-72px * 3 / 206); top: calc(-72px * 3 / 206); }
 .app-loader-name { position: relative; font-size: 34px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; color: var(--text-heading); }
 .app-loader-name span { color: var(--primary); }
 .app-loader-name::after { content: attr(data-text); position: absolute; inset: 0; color: transparent; pointer-events: none;
