@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../i18n/LanguageContext';
-import {
-  LayoutDashboard, PlusCircle, ClipboardList, Scale,
-  LogOut, Menu, X, Dumbbell
-} from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -15,10 +12,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { lang, setLang, t } = useLanguage();
 
   const NAV = [
-    { path: '/',            label: t('nav_panel'),       icon: LayoutDashboard },
-    { path: '/create-plan', label: t('nav_create_plan'), icon: PlusCircle },
-    { path: '/plans',       label: t('nav_my_plans'),    icon: ClipboardList },
-    { path: '/weight',      label: t('nav_my_weight'),   icon: Scale },
+    { path: '/',            label: t('nav_panel'),       icon: '/panel.png' },
+    { path: '/create-plan', label: t('nav_create_plan'), icon: '/create-plan.png' },
+    { path: '/plans',       label: t('nav_my_plans'),    icon: '/my-plans.png' },
+    { path: '/weight',      label: t('nav_my_weight'),   icon: '/my-weight.png' },
   ];
 
   const go = (path: string) => { navigate(path); setOpen(false); };
@@ -30,20 +27,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const sidebarContent = (
     <>
       <div className="sidebar-logo">
-        <div className="logo-mark">
-          <Dumbbell size={18} color="white" strokeWidth={2.5} />
-        </div>
-        <span className="logo-text">Gym<span>Tracker</span></span>
+        <img className="logo-img" src="/logo.png" alt="GymTracker" />
       </div>
 
       <nav className="sidebar-nav">
-        {NAV.map(({ path, label, icon: Icon }) => (
+        {NAV.map(({ path, label, icon }) => (
           <button
             key={path}
             className={`nav-link${location.pathname === path ? ' active' : ''}`}
             onClick={() => go(path)}
           >
-            <Icon size={18} strokeWidth={2} />
+            <img className="nav-icon" src={icon} alt="" />
             {label}
           </button>
         ))}

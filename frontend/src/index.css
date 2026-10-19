@@ -55,15 +55,13 @@ a { text-decoration: none; color: inherit; }
 
 .sidebar { width: var(--sidebar-w); background: var(--bg-white); border-right: 1px solid var(--border); position: fixed; top: 0; left: 0; height: 100vh; display: flex; flex-direction: column; z-index: 200; transition: transform 0.25s ease; }
 .sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-.logo-mark { width: 34px; height: 34px; background: linear-gradient(135deg, var(--primary), #818cf8); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.logo-text { font-size: 17px; font-weight: 800; color: var(--text-heading); letter-spacing: -0.3px; }
-.logo-text span { color: var(--primary); }
+.logo-img { height: 34px; width: auto; max-width: 100%; object-fit: contain; mix-blend-mode: multiply; }
 
 .sidebar-nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
 .nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: var(--t); min-height: 44px; background: none; border: none; width: 100%; text-align: left; }
 .nav-link:hover { background: var(--bg-subtle); color: var(--text-body); }
 .nav-link.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
-.nav-link svg { flex-shrink: 0; }
+.nav-icon { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; mix-blend-mode: multiply; }
 
 .sidebar-footer { padding: 12px 8px; border-top: 1px solid var(--border); }
 .user-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-sm); }
