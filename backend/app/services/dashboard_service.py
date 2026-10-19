@@ -88,7 +88,7 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
 
     # ── Quick stats ──────────────────────────────────────────────────────────
     now = datetime.utcnow()
-    week_start = now - timedelta(days=now.weekday())
+    week_start = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     all_completed = (
