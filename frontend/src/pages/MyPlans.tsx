@@ -262,8 +262,8 @@ export default function MyPlans() {
 
   const finishDay = async () => {
     if (!dayLog || dateInvalid) return;
-    // Auto-filled (or reverted) values of a skipped day would otherwise be lost (sets are saved per exercise)
-    if (skipped || dayLog.skipped) await Promise.all(dayLog.exercise_logs.map(el => logsApi.saveSets(el.id, el.set_logs, workoutDate, skipped, el.skipped)));
+    // Save every exercise first so typed but unsaved values are never lost (sets are saved per exercise)
+    await Promise.all(dayLog.exercise_logs.map(el => logsApi.saveSets(el.id, el.set_logs, workoutDate, skipped, el.skipped)));
     await logsApi.completeDay(dayLog.id, workoutDate, skipped);
     if (weekInfo) { const r = await logsApi.getWeekDays(weekInfo.week_id); setWeekInfo(r.data); }
     setView('days');
