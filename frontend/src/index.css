@@ -324,3 +324,8 @@ a { text-decoration: none; color: inherit; }
 .cal-tip-right { left: auto; right: 0; transform: none; }
 .cal-active .cal-tip { display: flex; }
 @media (hover: hover) { .cal-cell:not(.cal-empty):hover .cal-tip { display: flex; } }
+@media (min-width: 769px) {
+  .cal-grid { max-width: 520px; gap: 8px; }
+  .cal-cell { border-radius: 7px; }
+  .cal-weekday { font-size: 12px; }
+}
