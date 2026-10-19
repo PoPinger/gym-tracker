@@ -285,6 +285,11 @@ export interface TranslationMap {
   save_sets_saving: string;
   save_sets_saved: string;
   finish_day_btn: string;
+  wl_status_empty: string;
+  wl_status_unsaved: string;
+  wl_prev_short: string;
+  wl_saved_count: string;
+  wl_weight_label: string;
   workout_date_label: string;
   workout_date_future: string;
   skipped_checkbox_label: string;
@@ -615,6 +620,11 @@ const pl: TranslationMap = {
   save_sets_saving: 'Zapisywanie…',
   save_sets_saved: 'Zapisano',
   finish_day_btn: 'Zakończ dzień',
+  wl_status_empty: 'Nie rozpoczęto',
+  wl_status_unsaved: 'Niezapisane',
+  wl_prev_short: 'poprz.',
+  wl_saved_count: '{n}/{total} zapisane',
+  wl_weight_label: 'Ciężar',
   workout_date_label: 'Data treningu:',
   workout_date_future: 'Data treningu nie może być z przyszłości.',
   skipped_checkbox_label: 'Trening pominięty',
@@ -940,6 +950,11 @@ const en: TranslationMap = {
   save_sets_saving: 'Saving…',
   save_sets_saved: 'Saved',
   finish_day_btn: 'Finish day',
+  wl_status_empty: 'Not started',
+  wl_status_unsaved: 'Unsaved',
+  wl_prev_short: 'prev.',
+  wl_saved_count: '{n}/{total} saved',
+  wl_weight_label: 'Weight',
   workout_date_label: 'Workout date:',
   workout_date_future: 'Workout date cannot be in the future.',
   skipped_checkbox_label: 'Workout skipped',

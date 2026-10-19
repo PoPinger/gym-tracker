@@ -2,17 +2,17 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { plansApi, logsApi, apiErrorDetail } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
-import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import AppLoader from '../components/AppLoader';
 import PlansEmptyState from '../components/PlansEmptyState';
 import PlanCard from '../components/PlanCard';
 import DayList from '../components/DayList';
 import ExerciseEditor from '../components/ExerciseEditor';
+import WorkoutLogger from '../components/WorkoutLogger';
 import { resolveDayColor, type DayColor } from '../utils/dayColors';
 import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
-import { isValidRepRange, repRangePayload, formatRepRange } from '../utils/repRange';
-import { exerciseScore, progressPct, formatPct, formatKg, firstWeight, shouldAddWeight } from '../utils/progress';
+import { isValidRepRange, repRangePayload } from '../utils/repRange';
+import { firstWeight } from '../utils/progress';
 import { todayIso } from '../utils/date';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog, SetLog } from '../types';
 import {
@@ -26,30 +26,6 @@ interface EditExDraft { id?: number; name: string; muscle_group: string; sets: n
 interface EditDayDraft { id: number; day_name: string; color: DayColor; exercises: EditExDraft[]; }
 // Field values captured before a "skipped" auto-fill, keyed by exercise log id
 type FillSnapshot = Record<number, { set_logs: SetLog[]; weight: string }>;
-
-function RefBlock({ title, weightLabel, progressLabel, weight, pct, lang }: {
-  title: string; weightLabel: string; progressLabel: string;
-  weight: number | null; pct: number | null; lang: string;
-}) {
-  const pctColor = pct == null || pct === 0 ? 'var(--text-muted)' : pct > 0 ? 'var(--success)' : 'var(--danger)';
-  const label = { fontSize:11, color:'var(--text-subtle)' } as const;
-  const value = { fontSize:15, fontWeight:600, color:'var(--text-heading)' } as const;
-  return (
-    <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
-      <span style={{ ...label, fontWeight:600 }}>{title}</span>
-      <div style={{ display:'flex', alignItems:'baseline', gap:'2px 12px', flexWrap:'wrap' }}>
-        <span style={{ display:'flex', alignItems:'baseline', gap:4 }}>
-          <span style={label}>{weightLabel}</span>
-          <span style={value}>{weight != null ? formatKg(weight, lang) : '—'}</span>
-        </span>
-        <span style={{ display:'flex', alignItems:'baseline', gap:4 }}>
-          <span style={label}>{progressLabel}</span>
-          <span style={{ ...value, color: pctColor }}>{pct != null ? formatPct(pct, lang) : '—'}</span>
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function ConfirmDialog({ title, body, onOk, onCancel, okLabel, cancelLabel, okClass = 'btn-primary' }: {
   title: string; body: string; onOk: () => void; onCancel: () => void;
@@ -72,7 +48,7 @@ function ConfirmDialog({ title, body, onOk, onCancel, okLabel, cancelLabel, okCl
 export default function MyPlans() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
 
   const [view, setView]             = useState<View>('list');
   const [plans, setPlans]           = useState<PlanSummary[]>([]);
@@ -84,7 +60,6 @@ export default function MyPlans() {
   const [confirm, setConfirm]       = useState<null | 'day' | 'week' | 'plan' | 'shorten'>(null);
 
   const [saving,  setSaving]  = useState<Record<number, boolean>>({});
-  const [saved,   setSaved]   = useState<Record<number, boolean>>({});
   const [exerciseWeights, setExerciseWeights] = useState<Record<number, string>>({});
   const [workoutDate, setWorkoutDate] = useState('');
   const [skipped, setSkipped]         = useState(false);
@@ -261,8 +236,6 @@ export default function MyPlans() {
     setSaving(p => ({ ...p, [exLogId]: true }));
     try {
       await logsApi.saveSets(exLogId, el.set_logs, workoutDate, skipped, el.skipped);
-      setSaved(p => ({ ...p, [exLogId]: true }));
-      setTimeout(() => setSaved(p => ({ ...p, [exLogId]: false })), 2500);
     } finally { setSaving(p => ({ ...p, [exLogId]: false })); }
   };
 
@@ -387,9 +360,6 @@ export default function MyPlans() {
     setPlanToDelete(null);
     await loadPlans();
   };
-
-  const prevR = (exId: number, setNum: number) =>
-    dayLog?.prev_week_data?.[exId]?.find(s => s.set_number === setNum)?.reps ?? null;
 
   const allDaysComplete  = weekInfo?.days.every(d => d.status === 'completed') ?? false;
   const allWeeksComplete = weeks.length > 0 && weeks.every(w => w.status === 'completed');
@@ -632,136 +602,16 @@ export default function MyPlans() {
 
   /* ═══ WORKOUT LOGGER ═══ */
   if (view === 'workout' && dayLog && weekInfo) {
-    const dayName = weekInfo.days.find(d => d.plan_day_id === dayLog.plan_day_id)?.day_name ?? t('training_fallback');
+    const dayIdx  = weekInfo.days.findIndex(d => d.plan_day_id === dayLog.plan_day_id);
+    const day     = weekInfo.days[dayIdx];
     return (
-      <div style={{ maxWidth: 700 }}>
-        <button className="back-btn" onClick={() => setView('days')}>
-          <ArrowLeft size={15} /> {t('week_tile_label')} {weekInfo.week_number}
-        </button>
-        <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:16 }}>
-          <label className="form-label" htmlFor="workout-date">{t('workout_date_label')}</label>
-          <input id="workout-date" type="date" className="form-input" style={{ width:'auto' }}
-            value={workoutDate} max={todayIso()} onChange={e => setWorkoutDate(e.target.value)} />
-          <label className="form-label" style={{ display:'flex', alignItems:'center', gap:6, cursor:'pointer' }}>
-            <input type="checkbox" checked={skipped} onChange={e => toggleSkipped(e.target.checked)}
-              style={{ width:18, height:18, accentColor:'var(--danger)' }} />
-            {t('skipped_checkbox_label')}
-          </label>
-        </div>
-        {dateInvalid && <div className="alert alert-error" style={{ marginBottom:16 }}>{t('workout_date_future')}</div>}
-        <div className="page-header">
-          <div>
-            <h1 className="page-title">{dayName}</h1>
-            <p className="page-subtitle">
-              {dayLog.plan_name} · {t('week_tile_label')} {dayLog.week_number}
-              {dayLog.status === 'completed' && (
-                <span style={{ marginLeft:8 }}>
-                  <span className="badge badge-completed"><CheckCircle2 size={10} /> {t('badge_completed')}</span>
-                </span>
-              )}
-            </p>
-          </div>
-        </div>
-
-        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-          {dayLog.exercise_logs.map(el => {
-            const weekNum   = dayLog.week_number ?? 1;
-            const prevSets  = dayLog.prev_week_data?.[el.exercise_id];
-            const w1Sets    = dayLog.week1_data?.[el.exercise_id];
-            const curScore  = exerciseScore(el.set_logs);
-            const muscleKey = MUSCLE_GROUP_TO_KEY[el.muscle_group];
-            const repRange  = formatRepRange(el.rep_min, el.rep_max);
-
-            return (
-              <div key={el.id} className={`exercise-card${el.skipped ? ' skipped' : ''}`}>
-                <div className="ex-header">
-                  <div>
-                    <div className="ex-name">
-                      {el.exercise_name}
-                      {el.skipped && <span className="ex-skipped-badge">{t('exercise_skipped_label')}</span>}
-                    </div>
-                    <div className="ex-meta">
-                      {muscleKey ? t(muscleKey) : el.muscle_group} · {el.sets} {t('sets_unit')}
-                      {repRange && ` · ${t('rep_range_label')} ${repRange}`}
-                    </div>
-                  </div>
-                  <div className="ex-actions">
-                    <label className="ex-skip">
-                      <input type="checkbox" checked={el.skipped} onChange={e => toggleExerciseSkipped(el.id, e.target.checked)} />
-                      {t('exercise_skipped_checkbox')}
-                    </label>
-                    <button
-                      className={`btn btn-sm ${saved[el.id] ? 'btn-success' : 'btn-outline'}`}
-                      disabled={saving[el.id] || dateInvalid}
-                      onClick={() => saveSets(el.id)}
-                      style={{ flexShrink:0 }}
-                    >
-                      {saving[el.id] ? t('save_sets_saving') : saved[el.id] ? <><CheckCircle2 size={14} /> {t('save_sets_saved')}</> : t('save_sets_btn')}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="sets-header" style={{ gridTemplateColumns:'40px minmax(0, 1fr) minmax(0, 1fr)' }}>
-                  <span>{t('sets_header')}</span>
-                  <span>{t('reps_header')}</span>
-                  <span>{t('prev_week_abbr')}</span>
-                </div>
-
-                {el.set_logs.map(s => {
-                  const prevReps = prevR(el.exercise_id, s.set_number);
-                  return (
-                    <div key={s.set_number} className="set-row" style={{ gridTemplateColumns:'40px minmax(0, 1fr) minmax(0, 1fr)' }}>
-                      <span className="set-num">{s.set_number}</span>
-                      <input type="number" className="set-input" placeholder={t('reps_placeholder')} min={0}
-                        value={s.reps ?? ''}
-                        onChange={e => editSet(el.id, s.set_number, e.target.value)} />
-                      {prevReps !== null ? (
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
-                          {prevReps}
-                        </span>
-                      ) : (
-                        <span />
-                      )}
-                    </div>
-                  );
-                })}
-
-                <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:'12px 24px', flexWrap:'wrap',
-                  paddingTop:10, borderTop:'1px solid var(--border)' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <span style={{ fontSize:13, fontWeight:600, color:'var(--text-muted)' }}>{t('weight_field_label')}</span>
-                    <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
-                      <input type="number" className="set-input" placeholder="0" step={0.5} min={0}
-                        style={{ width:80 }}
-                        value={exerciseWeights[el.id] ?? ''}
-                        onChange={e => editExerciseWeight(el.id, e.target.value)} />
-                      <span style={{ fontSize:13, color:'var(--text-muted)' }}>kg</span>
-                      {weekNum > 1 && !dayLog.prev_week_skipped?.includes(el.exercise_id)
-                        && shouldAddWeight(prevSets, el.rep_max) && (
-                        <span className="add-weight-hint">{t('add_weight_hint')}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {weekNum > 1 && (
-                    <RefBlock title={t('prev_week_label')} weightLabel={t('weight_field_label')} progressLabel={t('progress_label')}
-                      weight={firstWeight(prevSets)} pct={el.skipped ? null : progressPct(curScore, exerciseScore(prevSets))} lang={lang} />
-                  )}
-                  {weekNum > 2 && (
-                    <RefBlock title={t('first_week_label')} weightLabel={t('weight_field_label')} progressLabel={t('progress_label')}
-                      weight={firstWeight(w1Sets)} pct={el.skipped ? null : progressPct(curScore, exerciseScore(w1Sets))} lang={lang} />
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid var(--border)' }}>
-          <button className="btn btn-success btn-full btn-lg" disabled={dateInvalid} onClick={() => setConfirm('day')}>
-            <CheckCircle2 size={18} /> {t('finish_day_btn')}
-          </button>
-        </div>
+      <>
+        <WorkoutLogger key={dayLog.id} dayLog={dayLog} dayName={day?.day_name ?? t('training_fallback')} color={resolveDayColor(day?.color, Math.max(dayIdx, 0))}
+          backLabel={`${t('week_tile_label')} ${weekInfo.week_number}`} onBack={() => setView('days')}
+          workoutDate={workoutDate} onDateChange={setWorkoutDate} dateInvalid={dateInvalid}
+          skipped={skipped} onToggleSkipped={toggleSkipped} onToggleExerciseSkipped={toggleExerciseSkipped}
+          weights={exerciseWeights} onEditSet={editSet} onEditWeight={editExerciseWeight}
+          onSave={saveSets} saving={saving} onFinish={() => setConfirm('day')} />
 
         {confirm === 'day' && (
           <ConfirmDialog
@@ -772,7 +622,7 @@ export default function MyPlans() {
             onOk={() => { finishDay(); setConfirm(null); }} onCancel={() => setConfirm(null)}
           />
         )}
-      </div>
+      </>
     );
   }
 
