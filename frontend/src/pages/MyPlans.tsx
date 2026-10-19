@@ -441,7 +441,6 @@ export default function MyPlans() {
 
   /* ═══ EDIT PLAN – DAY LIST ═══ */
   if (view === 'edit-plan' && editPlan) {
-    const activeEditDay = editDays[editActiveDayIdx];
     return (
       <div style={{ maxWidth: 720 }}>
         <button className="back-btn" onClick={() => setView('list')}>
@@ -463,17 +462,24 @@ export default function MyPlans() {
               onChange={e => setEditName(e.target.value)} />
           </div>
 
-          <div className="form-group" style={{ marginBottom:24 }}>
+          <div className="form-group">
             <label className="form-label">{t('edit_duration_label')}</label>
-            <div className="num-picker" style={{ marginBottom:8 }}>
+            <div className="seg-control seg-control-12" role="radiogroup" aria-label={t('edit_duration_label')}>
               {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
-                <button key={n} className={`num-pill ${editMonths === n ? 'selected' : ''}`}
-                  onClick={() => setEditMonths(n)}>{n}</button>
+                <button key={n} role="radio" aria-checked={editMonths === n}
+                  className={editMonths === n ? 'selected' : ''} onClick={() => setEditMonths(n)}>{n}</button>
               ))}
             </div>
-            <span style={{ fontSize:13, color:'var(--text-muted)' }}>
-              {editMonths} {t('months_abbr')} · {editMonths * 4} {t('weeks_abbr')}
-            </span>
+            <div className="plan-stats">
+              <div>
+                <span className="plan-stat">{editMonths * 4}</span>
+                <span className="day-list-label">{plural(editMonths * 4, t('weeks_1'), t('weeks_2_4'), t('weeks_5plus'))}</span>
+              </div>
+              <div>
+                <span className="plan-stat">{editMonths * 4 * editPlan.days_per_week}</span>
+                <span className="day-list-label">{plural(editMonths * 4 * editPlan.days_per_week, t('workouts_1'), t('workouts_2_4'), t('workouts_5plus'))}</span>
+              </div>
+            </div>
           </div>
 
           <DayList days={editDays}
@@ -499,12 +505,6 @@ export default function MyPlans() {
             onOk={() => { setConfirm(null); void saveEdit(); }}
             onCancel={() => setConfirm(null)}
           />
-        )}
-
-        {activeEditDay && activeEditDay.exercises.length > 0 && (
-          <div style={{ marginTop:12, padding:'12px 16px', background:'var(--bg-subtle)', borderRadius:'var(--radius)', fontSize:13, color:'var(--text-muted)' }}>
-            <strong style={{ color:'var(--text-body)' }}>{activeEditDay.day_name}</strong> · {activeEditDay.exercises.length} {plural(activeEditDay.exercises.length, t('exercise_singular'), t('exercises_2_4'), t('exercises_plural'))}
-          </div>
         )}
       </div>
     );
