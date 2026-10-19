@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { plansApi, logsApi } from '../services/api';
+import { plansApi, logsApi, apiErrorDetail } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -330,8 +330,8 @@ export default function MyPlans() {
       }
       await loadPlans();
       setView('list');
-    } catch (e: any) {
-      setEditError(e.response?.data?.detail || t('save_changes_error'));
+    } catch (e) {
+      setEditError(apiErrorDetail(e) || t('save_changes_error'));
     } finally { setEditSaving(false); }
   };
 

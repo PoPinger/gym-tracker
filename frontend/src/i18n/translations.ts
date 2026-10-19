@@ -516,7 +516,7 @@ const pl: TranslationMap = {
   skipped_label: 'Pominięty',
   exercise_skipped_checkbox: 'Ćwiczenie pominięte',
   exercise_skipped_label: 'Pominięte',
-  add_weight_hint: 'Dodaj ciężar',
+  add_weight_hint: 'Zwiększ ciężar',
 
   all_weeks: 'Wszystkie tygodnie',
   finish_plan_btn: 'Zakończ plan',
@@ -801,7 +801,7 @@ const en: TranslationMap = {
   skipped_label: 'Skipped',
   exercise_skipped_checkbox: 'Exercise skipped',
   exercise_skipped_label: 'Skipped',
-  add_weight_hint: 'Add weight',
+  add_weight_hint: 'Increase weight',
 
   all_weeks: 'All weeks',
   finish_plan_btn: 'Finish plan',

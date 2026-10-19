@@ -36,6 +36,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Hook lives next to its provider on purpose; only affects fast refresh of this file in dev
+// eslint-disable-next-line react-refresh/only-export-components
 export function useLanguage() {
   return useContext(LanguageContext);
 }

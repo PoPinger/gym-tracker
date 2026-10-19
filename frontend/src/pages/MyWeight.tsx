@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { weightApi } from '../services/api';
+import { weightApi, apiErrorDetail } from '../services/api';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { WeightCycle, WeightWeek } from '../types';
 import { Scale, ArrowLeft, CheckCircle2, RotateCcw, TrendingDown, TrendingUp, Plus } from 'lucide-react';
@@ -90,8 +90,8 @@ export default function MyWeight() {
     try {
       const res = await weightApi.createCycle(w, months);
       setCycle(res.data); setView('weeks');
-    } catch (err: any) {
-      setSetupError(err.response?.data?.detail || t('setup_error_default'));
+    } catch (err) {
+      setSetupError(apiErrorDetail(err) || t('setup_error_default'));
     } finally { setSetupLoading(false); }
   };
 

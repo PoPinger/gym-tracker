@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { plansApi } from '../services/api';
+import { plansApi, apiErrorDetail } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -117,8 +117,8 @@ export default function CreatePlan() {
         })),
       });
       navigate('/plans');
-    } catch (e: any) {
-      setError(e.response?.data?.detail || t('save_plan_error'));
+    } catch (e) {
+      setError(apiErrorDetail(e) || t('save_plan_error'));
     } finally {
       setSaving(false);
     }

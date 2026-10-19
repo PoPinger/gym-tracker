@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { User } from '../types';
-import { authApi } from '../services/api';
+import { authApi, apiErrorDetail } from '../services/api';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(() => {
@@ -25,8 +25,8 @@ export function useAuth() {
       setToken(access_token);
       setUser(userData);
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.response?.data?.detail || 'Logowanie nieudane' };
+    } catch (err) {
+      return { success: false, error: apiErrorDetail(err) || 'Logowanie nieudane' };
     } finally {
       setLoading(false);
     }
@@ -43,8 +43,8 @@ export function useAuth() {
       setToken(access_token);
       setUser(userData);
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.response?.data?.detail || 'Rejestracja nieudana' };
+    } catch (err) {
+      return { success: false, error: apiErrorDetail(err) || 'Rejestracja nieudana' };
     } finally {
       setLoading(false);
     }
