@@ -163,6 +163,9 @@ a { text-decoration: none; color: inherit; }
 .tile-label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
 .tile.completed .tile-num { color: var(--success); }
 .tile.completed .tile-label { color: var(--success); }
+.tile.skipped { background: var(--danger-light); border-color: var(--danger-border); }
+.tile.skipped:hover { border-color: var(--danger); }
+.tile.skipped .tile-num, .tile.skipped .tile-label { color: var(--danger); }
 
 /* ── GRIDS ── */
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }

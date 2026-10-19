@@ -201,6 +201,7 @@ class DayLogCreate(BaseModel):
 
 class DayCompleteIn(BaseModel):
     workout_date: Optional[date] = None
+    skipped: Optional[bool] = None
 
 
 class DayLogOut(BaseModel):
@@ -210,6 +211,7 @@ class DayLogOut(BaseModel):
     status: str
     completed_at: Optional[datetime]
     workout_date: Optional[date] = None
+    skipped: bool = False
     exercise_logs: List[ExerciseLogOut] = []
 
     class Config:

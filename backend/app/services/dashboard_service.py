@@ -68,7 +68,7 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
     # ── Last workout ─────────────────────────────────────────────────────────
     last_log = (
         db.query(TrainingDayLog)
-        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.status == "completed")
+        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.status == "completed", TrainingDayLog.skipped.is_(False))
         .order_by(TrainingDayLog.completed_at.desc())
         .first()
     )
@@ -93,7 +93,7 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
 
     all_completed = (
         db.query(TrainingDayLog)
-        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.status == "completed")
+        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.status == "completed", TrainingDayLog.skipped.is_(False))
         .all()
     )
     workouts_this_week = sum(
@@ -157,7 +157,7 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
     # ── Recent workouts ──────────────────────────────────────────────────────
     recent_logs = (
         db.query(TrainingDayLog)
-        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.status == "completed")
+        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.status == "completed", TrainingDayLog.skipped.is_(False))
         .order_by(TrainingDayLog.completed_at.desc())
         .limit(3)
         .all()
@@ -179,7 +179,11 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
         db.query(TrainingDayLog, PlanDay, TrainingWeek)
         .join(PlanDay, PlanDay.id == TrainingDayLog.plan_day_id)
         .join(TrainingWeek, TrainingWeek.id == TrainingDayLog.training_week_id)
-        .filter(TrainingDayLog.user_id == user_id, TrainingDayLog.workout_date.isnot(None))
+        .filter(
+            TrainingDayLog.user_id == user_id,
+            TrainingDayLog.workout_date.isnot(None),
+            TrainingDayLog.skipped.is_(False),
+        )
         .order_by(TrainingDayLog.workout_date, PlanDay.day_order)
         .all()
     )

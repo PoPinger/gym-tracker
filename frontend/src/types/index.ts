@@ -71,6 +71,7 @@ export interface DayLog {
   status: string;
   completed_at: string | null;
   workout_date: string | null;
+  skipped: boolean;
   exercise_logs: ExerciseLog[];
   prev_week_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null }>>;
   week1_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null }>>;
@@ -84,6 +85,7 @@ export interface WeekDay {
   day_order: number;
   log_id: number | null;
   status: string;
+  skipped: boolean;
 }
 
 export interface WeekInfo {

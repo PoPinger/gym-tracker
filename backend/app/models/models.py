@@ -4,6 +4,7 @@ from sqlalchemy import (
     Text, Boolean, UniqueConstraint, Index
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import false
 from app.database import Base
 
 
@@ -93,6 +94,7 @@ class TrainingDayLog(Base):
     status = Column(String(20), default="active")  # active, completed
     completed_at = Column(DateTime, nullable=True)
     workout_date = Column(Date, nullable=True)
+    skipped = Column(Boolean, nullable=False, default=False, server_default=false())
 
     training_week = relationship("TrainingWeek", back_populates="day_logs")
     plan_day = relationship("PlanDay", back_populates="day_logs")

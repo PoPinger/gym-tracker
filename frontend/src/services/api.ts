@@ -70,10 +70,10 @@ export const logsApi = {
   createDayLog: (planDayId: number, trainingWeekId: number) =>
     api.post('/day-logs', { plan_day_id: planDayId, training_week_id: trainingWeekId }),
   getDayLog: (logId: number) => api.get(`/day-logs/${logId}`),
-  saveSets: (exerciseLogId: number, sets: object[], workoutDate?: string) =>
-    api.put(`/exercise-logs/${exerciseLogId}/sets`, sets, { params: { workout_date: workoutDate } }),
-  completeDay: (logId: number, workoutDate?: string) =>
-    api.post(`/day-logs/${logId}/complete`, { workout_date: workoutDate }),
+  saveSets: (exerciseLogId: number, sets: object[], workoutDate?: string, skipped?: boolean) =>
+    api.put(`/exercise-logs/${exerciseLogId}/sets`, sets, { params: { workout_date: workoutDate, skipped } }),
+  completeDay: (logId: number, workoutDate?: string, skipped?: boolean) =>
+    api.post(`/day-logs/${logId}/complete`, { workout_date: workoutDate, skipped }),
   completeWeek: (weekId: number) => api.post(`/weeks/${weekId}/complete`),
 };
 

@@ -221,6 +221,7 @@ def get_week_days(week_id: int, db: Session = Depends(get_db), user: User = Depe
             "day_order": day.day_order,
             "log_id": log.id if log else None,
             "status": log.status if log else "not_started",
+            "skipped": bool(log.skipped) if log else False,
         })
 
     return {
@@ -307,9 +308,9 @@ def _check_workout_date(workout_date: Optional[date]) -> None:
 
 @router.put("/exercise-logs/{log_id}/sets")
 def save_sets(log_id: int, sets: List[SetLogIn], workout_date: Optional[date] = None,
-              db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+              skipped: Optional[bool] = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     _check_workout_date(workout_date)
-    result = plan_service.save_exercise_sets(db, log_id, sets, user.id, workout_date)
+    result = plan_service.save_exercise_sets(db, log_id, sets, user.id, workout_date, skipped)
     if not result:
         raise HTTPException(404, "Dziennik ćwiczenia nie został znaleziony")
     return {"ok": True, "exercise_log_id": log_id}
@@ -320,7 +321,7 @@ def complete_day(log_id: int, data: Optional[DayCompleteIn] = None,
                  db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     workout_date = data.workout_date if data else None
     _check_workout_date(workout_date)
-    log = plan_service.complete_day_log(db, log_id, user.id, workout_date)
+    log = plan_service.complete_day_log(db, log_id, user.id, workout_date, data.skipped if data else None)
     if not log:
         raise HTTPException(404, "Dziennik nie został znaleziony")
     return {"ok": True, "status": log.status}
@@ -359,5 +360,6 @@ def _serialize_day_log(log) -> dict:
         "status": log.status,
         "completed_at": log.completed_at.isoformat() if log.completed_at else None,
         "workout_date": log.workout_date.isoformat() if log.workout_date else None,
+        "skipped": bool(log.skipped),
         "exercise_logs": exercise_logs,
     }

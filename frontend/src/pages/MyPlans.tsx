@@ -9,7 +9,7 @@ import { exerciseScore, progressPct, formatPct, formatKg, firstWeight } from '..
 import { todayIso } from '../utils/date';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog } from '../types';
 import {
-  ChevronRight, Copy, CheckCircle2, ArrowLeft,
+  ChevronRight, Copy, CheckCircle2, XCircle, ArrowLeft,
   Dumbbell, Trophy, Plus,
   Pencil, Trash2, ChevronUp, ChevronDown,
 } from 'lucide-react';
@@ -79,6 +79,7 @@ export default function MyPlans() {
   const [saved,   setSaved]   = useState<Record<number, boolean>>({});
   const [exerciseWeights, setExerciseWeights] = useState<Record<number, string>>({});
   const [workoutDate, setWorkoutDate] = useState('');
+  const [skipped, setSkipped]         = useState(false);
 
   const [editPlan, setEditPlan]               = useState<Plan | null>(null);
   const [editName, setEditName]               = useState('');
@@ -124,6 +125,7 @@ export default function MyPlans() {
     }
     setExerciseWeights(weights);
     setWorkoutDate(log.workout_date ?? todayIso());
+    setSkipped(log.skipped);
     setDayLog(log);
     setView('workout');
   };
@@ -174,13 +176,36 @@ export default function MyPlans() {
 
   const dateInvalid = !workoutDate || workoutDate > todayIso();
 
+  // Skipped workout: copy reps/weight from the previous week's same day; unchecking keeps the data
+  const toggleSkipped = (checked: boolean) => {
+    setSkipped(checked);
+    if (!checked || !dayLog) return;
+    const weights: Record<number, string> = {};
+    const exercise_logs = dayLog.exercise_logs.map(el => {
+      const prev = dayLog.prev_week_data?.[el.exercise_id];
+      if (!prev?.length) return el;
+      const w = firstWeight(prev);
+      if (w != null) weights[el.id] = String(w);
+      return {
+        ...el,
+        set_logs: el.set_logs.map(s => ({
+          ...s,
+          reps: prev.find(p => p.set_number === s.set_number)?.reps ?? s.reps,
+          weight_kg: w ?? s.weight_kg,
+        })),
+      };
+    });
+    setExerciseWeights(prev => ({ ...prev, ...weights }));
+    setDayLog({ ...dayLog, exercise_logs });
+  };
+
   const saveSets = async (exLogId: number) => {
     if (!dayLog || dateInvalid) return;
     const el = dayLog.exercise_logs.find(e => e.id === exLogId);
     if (!el) return;
     setSaving(p => ({ ...p, [exLogId]: true }));
     try {
-      await logsApi.saveSets(exLogId, el.set_logs, workoutDate);
+      await logsApi.saveSets(exLogId, el.set_logs, workoutDate, skipped);
       setSaved(p => ({ ...p, [exLogId]: true }));
       setTimeout(() => setSaved(p => ({ ...p, [exLogId]: false })), 2500);
     } finally { setSaving(p => ({ ...p, [exLogId]: false })); }
@@ -188,7 +213,9 @@ export default function MyPlans() {
 
   const finishDay = async () => {
     if (!dayLog || dateInvalid) return;
-    await logsApi.completeDay(dayLog.id, workoutDate);
+    // Auto-filled values of a skipped day would otherwise be lost (sets are saved per exercise)
+    if (skipped) await Promise.all(dayLog.exercise_logs.map(el => logsApi.saveSets(el.id, el.set_logs, workoutDate, skipped)));
+    await logsApi.completeDay(dayLog.id, workoutDate, skipped);
     if (weekInfo) { const r = await logsApi.getWeekDays(weekInfo.week_id); setWeekInfo(r.data); }
     setView('days');
   };
@@ -631,17 +658,23 @@ export default function MyPlans() {
       </div>
 
       <div className="tiles-grid">
-        {weekInfo.days.map(d => (
-          <div key={d.plan_day_id}
-            className={`tile ${d.status === 'completed' ? 'completed' : ''}`}
-            onClick={() => openDay(weekInfo.week_id, d.plan_day_id, d.log_id)}>
-            {d.status === 'completed'
-              ? <CheckCircle2 size={24} color="var(--success)" />
-              : <Dumbbell size={24} color="var(--text-subtle)" />}
-            <span className="tile-num" style={{ fontSize:15 }}>{d.day_name}</span>
-            <span className="tile-label">{d.status === 'completed' ? t('done_label') : t('tap_to_train')}</span>
-          </div>
-        ))}
+        {weekInfo.days.map(d => {
+          const done = d.status === 'completed';
+          const skip = done && d.skipped;
+          return (
+            <div key={d.plan_day_id}
+              className={`tile ${skip ? 'skipped' : done ? 'completed' : ''}`}
+              onClick={() => openDay(weekInfo.week_id, d.plan_day_id, d.log_id)}>
+              {skip
+                ? <XCircle size={24} color="var(--danger)" />
+                : done
+                  ? <CheckCircle2 size={24} color="var(--success)" />
+                  : <Dumbbell size={24} color="var(--text-subtle)" />}
+              <span className="tile-num" style={{ fontSize:15 }}>{d.day_name}</span>
+              <span className="tile-label">{skip ? t('skipped_label') : done ? t('done_label') : t('tap_to_train')}</span>
+            </div>
+          );
+        })}
       </div>
 
       {confirm === 'week' && (
@@ -668,6 +701,11 @@ export default function MyPlans() {
           <label className="form-label" htmlFor="workout-date">{t('workout_date_label')}</label>
           <input id="workout-date" type="date" className="form-input" style={{ width:'auto' }}
             value={workoutDate} max={todayIso()} onChange={e => setWorkoutDate(e.target.value)} />
+          <label className="form-label" style={{ display:'flex', alignItems:'center', gap:6, cursor:'pointer' }}>
+            <input type="checkbox" checked={skipped} onChange={e => toggleSkipped(e.target.checked)}
+              style={{ width:18, height:18, accentColor:'var(--danger)' }} />
+            {t('skipped_checkbox_label')}
+          </label>
         </div>
         {dateInvalid && <div className="alert alert-error" style={{ marginBottom:16 }}>{t('workout_date_future')}</div>}
         <div className="page-header">

@@ -220,6 +220,7 @@ export interface TranslationMap {
   edit_exercises_subtitle: string;
   exercise_name_edit_placeholder: string;
   done_label: string;
+  skipped_label: string;
 
   // My Plans – weeks view
   all_weeks: string;
@@ -251,6 +252,7 @@ export interface TranslationMap {
   finish_day_btn: string;
   workout_date_label: string;
   workout_date_future: string;
+  skipped_checkbox_label: string;
   finish_day_title: string;
   finish_day_body: string;
   confirm_btn: string;
@@ -508,6 +510,7 @@ const pl: TranslationMap = {
   edit_exercises_subtitle: 'Edytuj ćwiczenia dnia treningowego',
   exercise_name_edit_placeholder: 'Nazwa ćwiczenia',
   done_label: 'Gotowe',
+  skipped_label: 'Pominięty',
 
   all_weeks: 'Wszystkie tygodnie',
   finish_plan_btn: 'Zakończ plan',
@@ -536,6 +539,7 @@ const pl: TranslationMap = {
   finish_day_btn: 'Zakończ dzień',
   workout_date_label: 'Data treningu:',
   workout_date_future: 'Data treningu nie może być z przyszłości.',
+  skipped_checkbox_label: 'Trening pominięty',
   finish_day_title: 'Zakończyć trening?',
   finish_day_body: 'Oznacz dzień jako ukończony. Możesz edytować wpisy później.',
   confirm_btn: 'Potwierdź',
@@ -788,6 +792,7 @@ const en: TranslationMap = {
   edit_exercises_subtitle: 'Edit training day exercises',
   exercise_name_edit_placeholder: 'Exercise name',
   done_label: 'Done',
+  skipped_label: 'Skipped',
 
   all_weeks: 'All weeks',
   finish_plan_btn: 'Finish plan',
@@ -816,6 +821,7 @@ const en: TranslationMap = {
   finish_day_btn: 'Finish day',
   workout_date_label: 'Workout date:',
   workout_date_future: 'Workout date cannot be in the future.',
+  skipped_checkbox_label: 'Workout skipped',
   finish_day_title: 'Finish workout?',
   finish_day_body: 'Mark day as completed. You can edit entries later.',
   confirm_btn: 'Confirm',
