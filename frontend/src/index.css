@@ -297,6 +297,12 @@ a { text-decoration: none; color: inherit; }
 .plan-card-name { font-size: 16px; font-weight: 700; color: var(--text-heading); margin-bottom: 4px; }
 .plan-card-meta { font-size: 13px; color: var(--text-muted); }
 .plan-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+/* Narrow screens: "Otwórz" full width on top, then Kopiuj / Edytuj / Usuń in 3 equal columns */
+@media (max-width: 600px) {
+  .plan-card-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; flex-shrink: 1; }
+  .plan-card-actions .btn { justify-content: center; min-width: 0; padding-left: 6px; padding-right: 6px; }
+  .plan-card-actions .btn-primary { grid-column: 1 / -1; order: -1; }
+}
 
 /* ── EXERCISE BUILDER CARD ── */
 .ex-builder { background: var(--bg-subtle); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
