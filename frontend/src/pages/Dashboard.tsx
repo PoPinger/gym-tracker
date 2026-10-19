@@ -19,7 +19,7 @@ function StatCard({ icon, iconClass, label, value, sub }: {
       <div className={`stat-icon ${iconClass}`}>{icon}</div>
       <div className="card-label">{label}</div>
       <div className="card-value">{value}</div>
-      {sub && <div style={{ fontSize:12, color:'var(--text-muted)', marginTop:2 }}>{sub}</div>}
+      {sub && <div className="stat-sub">{sub}</div>}
     </div>
   );
 }
