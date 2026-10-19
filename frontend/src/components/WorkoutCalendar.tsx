@@ -5,8 +5,9 @@ import { useLanguage } from '../i18n/LanguageContext';
 import type { TranslationMap } from '../i18n/translations';
 import type { CalendarWorkout } from '../types';
 import { toIsoDate, todayIso } from '../utils/date';
+import { plural } from '../utils/plural';
 
-export default function WorkoutCalendar({ workouts }: { workouts: CalendarWorkout[] }) {
+export default function WorkoutCalendar({ workouts, className = '' }: { workouts: CalendarWorkout[]; className?: string }) {
   const navigate = useNavigate();
   const { lang, t } = useLanguage();
   const [month, setMonth]   = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
@@ -29,6 +30,9 @@ export default function WorkoutCalendar({ workouts }: { workouts: CalendarWorkou
   while (cells.length % 7) cells.push(null);
 
   const today = todayIso();
+  const monthWorkouts = cells.reduce((n, d) => n + (d ? byDate[toIsoDate(d)]?.length ?? 0 : 0), 0);
+  const activeWeeks = Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7))
+    .filter(week => week.some(d => d && byDate[toIsoDate(d)])).length;
   const canHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
 
   const shift = (delta: number) => { setActive(null); setMonth(new Date(year, m + delta, 1)); };
@@ -45,7 +49,7 @@ export default function WorkoutCalendar({ workouts }: { workouts: CalendarWorkou
   };
 
   return (
-    <div className="card">
+    <div className={`card cal-card ${className}`}>
       <div className="cal-header">
         <div className="card-label" style={{ marginBottom:0 }}>{t('calendar_title')}</div>
         <div className="cal-nav">
@@ -57,6 +61,12 @@ export default function WorkoutCalendar({ workouts }: { workouts: CalendarWorkou
             <ChevronRight size={16} />
           </button>
         </div>
+      </div>
+
+      {/* Totals of the shown month: workouts and weeks with at least one workout */}
+      <div className="cal-summary">
+        <span><strong>{monthWorkouts}</strong> {plural(monthWorkouts, t('workouts_1'), t('workouts_2_4'), t('workouts_5plus'))}</span>
+        <span><strong>{activeWeeks}</strong> {plural(activeWeeks, t('active_weeks_1'), t('active_weeks_2_4'), t('active_weeks_5plus'))}</span>
       </div>
 
       <div className="cal-grid">

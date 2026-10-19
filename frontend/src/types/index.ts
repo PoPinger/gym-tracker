@@ -155,6 +155,7 @@ export interface DashboardData {
     week1_avg: number | null;
     current_week_avg: number | null;
     change: number | null;
+    weekly_avgs: number[];  // weeks with readings, in order (sparkline)
   } | null;
   workout_calendar: CalendarWorkout[];
   streak: number;

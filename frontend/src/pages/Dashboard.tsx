@@ -8,9 +8,9 @@ import WorkoutCalendar from '../components/WorkoutCalendar';
 import AppLoader from '../components/AppLoader';
 import type { DashboardData } from '../types';
 
-function StatCard({ icon, iconClass, label, value, sub, valueClass, onClick }: {
+function StatCard({ icon, iconClass, label, value, sub, valueClass, onClick, extra, className = '' }: {
   icon: string; iconClass: string; label: string; value: string | number; sub: string;
-  valueClass?: string; onClick?: () => void;
+  valueClass?: string; onClick?: () => void; extra?: React.ReactNode; className?: string;
 }) {
   const body = (
     <>
@@ -18,11 +18,25 @@ function StatCard({ icon, iconClass, label, value, sub, valueClass, onClick }: {
       <div className="card-label">{label}</div>
       <div className={`card-value${valueClass ? ` ${valueClass}` : ''}`}>{value}</div>
       <div className="stat-sub">{sub}</div>
+      {extra}
     </>
   );
   return onClick
-    ? <button type="button" className="card stat-card stat-card-link" onClick={onClick}>{body}</button>
-    : <div className="card stat-card">{body}</div>;
+    ? <button type="button" className={`card stat-card stat-card-link ${className}`} onClick={onClick}>{body}</button>
+    : <div className={`card stat-card ${className}`}>{body}</div>;
+}
+
+// Weekly averages as a tiny line; the last point marked
+function Sparkline({ values, tone }: { values: number[]; tone: string }) {
+  if (values.length < 2) return null;
+  const min = Math.min(...values), max = Math.max(...values), span = max - min || 1;
+  const pts = values.map((v, i) => [i / (values.length - 1) * 100, 4 + (1 - (v - min) / span) * 32]);
+  return (
+    <svg className={`stat-spark tone-${tone}`} viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+      <polyline points={pts.map(p => p.join(',')).join(' ')} />
+      <circle cx={pts.at(-1)![0]} cy={pts.at(-1)![1]} r="3" />
+    </svg>
+  );
 }
 
 // Weights use a Polish decimal comma without a trailing ",0" (94,3 / 91), like "Moja waga"
@@ -48,6 +62,32 @@ export default function Dashboard() {
   const hasAnything = d.has_plan || d.quick_stats.this_year > 0 || d.workout_calendar.length > 0 || d.weight_panel;
   const w = d.weight_panel;
   const goalLabel = w?.goal === 'cut' ? t('goal_cut') : w?.goal === 'bulk' ? t('goal_bulk') : null;
+  const weightTone = w?.change != null ? trendTone(w.change, w.goal) : 'neutral';
+  // Streak progress towards the next multiple of 4 weeks
+  const streakGoal = Math.max(4, Math.ceil((d.streak + 1) / 4) * 4);
+
+  const month = <StatCard icon="/icons/stat-month.png" iconClass="green"
+    label={t('stat_this_month')} value={d.quick_stats.this_month} sub={workoutLabel(d.quick_stats.this_month)} />;
+  const year = <StatCard icon="/icons/stat-year.png" iconClass="amber"
+    label={t('stat_this_year')} value={d.quick_stats.this_year} sub={workoutLabel(d.quick_stats.this_year)} />;
+  const streak = <StatCard icon="/icons/stat-streak.png" iconClass="red" className="stat-streak"
+    label={t('stat_streak')} value={d.streak} sub={weekLabel(d.streak)}
+    extra={(
+      <div className="stat-flame">
+        <span className="plan-progress-bar"><span style={{ width: `${(d.streak / streakGoal) * 100}%` }} /></span>
+        <small>{t('streak_goal').replace('{n}', String(streakGoal))}</small>
+      </div>
+    )} />;
+  // Total change since the start of the cycle: current week average − week 1 average
+  const weight = <StatCard icon="/icons/stat-weight-transparent.png" iconClass="indigo" className="stat-weight"
+    label={goalLabel ? `${t('weight_label')} · ${goalLabel}` : t('weight_label')}
+    value={w?.change != null ? fmtChange(w.change) : '—'}
+    valueClass={w?.change != null ? `tone-${weightTone}` : undefined}
+    sub={w?.current_week_avg != null
+      ? t('weight_tile_current_avg').replace('{kg}', `${fmtNum(w.current_week_avg)} kg`)
+      : t('weight_tile_empty')}
+    extra={<Sparkline values={w?.weekly_avgs ?? []} tone={weightTone} />}
+    onClick={() => navigate('/weight')} />;
 
   return (
     <div style={{ maxWidth: 1100 }}>
@@ -71,27 +111,14 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Mosaic: calendar as the big card, weight (sparkline) and streak beside it, month/year below */}
       {hasAnything && (
-        <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-          <WorkoutCalendar workouts={d.workout_calendar} />
-
-          <div className="stats-grid">
-            <StatCard icon="/icons/stat-month.png" iconClass="green"
-              label={t('stat_this_month')} value={d.quick_stats.this_month} sub={workoutLabel(d.quick_stats.this_month)} />
-            <StatCard icon="/icons/stat-year.png" iconClass="amber"
-              label={t('stat_this_year')} value={d.quick_stats.this_year} sub={workoutLabel(d.quick_stats.this_year)} />
-            <StatCard icon="/icons/stat-streak.png" iconClass="red"
-              label={t('stat_streak')} value={d.streak} sub={weekLabel(d.streak)} />
-            {/* Total change since the start of the cycle: current week average − week 1 average */}
-            <StatCard icon="/icons/stat-weight-transparent.png" iconClass="indigo"
-              label={goalLabel ? `${t('weight_label')} · ${goalLabel}` : t('weight_label')}
-              value={w?.change != null ? fmtChange(w.change) : '—'}
-              valueClass={w?.change != null ? `tone-${trendTone(w.change, w.goal)}` : undefined}
-              sub={w?.current_week_avg != null
-                ? t('weight_tile_current_avg').replace('{kg}', `${fmtNum(w.current_week_avg)} kg`)
-                : t('weight_tile_empty')}
-              onClick={() => navigate('/weight')} />
-          </div>
+        <div className="stats-mosaic">
+          <WorkoutCalendar workouts={d.workout_calendar} className="stats-cal" />
+          {weight}
+          {streak}
+          {month}
+          {year}
         </div>
       )}
     </div>

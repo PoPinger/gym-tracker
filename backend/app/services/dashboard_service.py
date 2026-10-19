@@ -48,6 +48,8 @@ def get_dashboard_data(db: Session, user_id: int) -> dict:
             "week1_avg": week1_avg,
             "current_week_avg": current_avg,
             "change": change,
+            # Averages of the weeks that have readings, in order (sparkline on the weight tile)
+            "weekly_avgs": [a for a in (_week_average(w) for w in weeks) if a is not None],
         }
 
     # ── Workout calendar ─────────────────────────────────────────────────────

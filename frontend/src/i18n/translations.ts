@@ -46,6 +46,10 @@ export interface TranslationMap {
   loading_app: string;
   dashboard_title: string;
   dashboard_subtitle: string;
+  active_weeks_1: string;
+  active_weeks_2_4: string;
+  active_weeks_5plus: string;
+  streak_goal: string;
   dashboard_welcome_title: string;
   dashboard_welcome_body: string;
   dashboard_create_first_plan: string;
@@ -339,7 +343,7 @@ const pl: TranslationMap = {
   lang_polish: '🇵🇱 Polski',
   lang_english: '🇬🇧 English',
 
-  nav_panel: 'Panel',
+  nav_panel: 'Statystyki',
   nav_create_plan: 'Utwórz plan',
   nav_my_plans: 'Moje plany',
   nav_my_weight: 'Moja waga',
@@ -374,8 +378,12 @@ const pl: TranslationMap = {
   register_login: 'Zaloguj się',
 
   loading_app: 'Ładowanie aplikacji…',
-  dashboard_title: 'Panel',
-  dashboard_subtitle: 'Oto co dzieje się z Twoim treningiem',
+  dashboard_title: 'Statystyki',
+  dashboard_subtitle: 'Twoje treningi i postępy w jednym miejscu',
+  active_weeks_1: 'aktywny tydzień',
+  active_weeks_2_4: 'aktywne tygodnie',
+  active_weeks_5plus: 'aktywnych tygodni',
+  streak_goal: 'Cel: {n} tyg.',
   dashboard_welcome_title: 'Witaj w GymTracker!',
   dashboard_welcome_body: 'Utwórz pierwszy plan treningowy i zacznij logować treningi, aby zobaczyć postępy.',
   dashboard_create_first_plan: 'Utwórz pierwszy plan',
@@ -644,7 +652,7 @@ const en: TranslationMap = {
   lang_polish: '🇵🇱 Polski',
   lang_english: '🇬🇧 English',
 
-  nav_panel: 'Dashboard',
+  nav_panel: 'Statistics',
   nav_create_plan: 'Create Plan',
   nav_my_plans: 'My Plans',
   nav_my_weight: 'My Weight',
@@ -679,8 +687,12 @@ const en: TranslationMap = {
   register_login: 'Sign in',
 
   loading_app: 'Loading app…',
-  dashboard_title: 'Dashboard',
-  dashboard_subtitle: "Here's what's happening with your training",
+  dashboard_title: 'Statistics',
+  dashboard_subtitle: 'Your workouts and progress in one place',
+  active_weeks_1: 'active week',
+  active_weeks_2_4: 'active weeks',
+  active_weeks_5plus: 'active weeks',
+  streak_goal: 'Goal: {n} wks',
   dashboard_welcome_title: 'Welcome to GymTracker!',
   dashboard_welcome_body: 'Create your first training plan and start logging workouts to see your progress.',
   dashboard_create_first_plan: 'Create first plan',

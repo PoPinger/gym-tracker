@@ -164,7 +164,6 @@ a { text-decoration: none; color: inherit; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 16px; }
 .stat-card { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .stat-card-link { width: 100%; font: inherit; text-align: left; cursor: pointer; transition: var(--t); }
 .stat-card-link:hover { border-color: var(--primary-muted); box-shadow: var(--shadow-md); }
@@ -174,16 +173,16 @@ a { text-decoration: none; color: inherit; }
 .stat-card .card-value.tone-bad { color: var(--danger); }
 .stat-card .card-value.tone-neutral { color: var(--text-muted); }
 .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-/* Narrow screens: keep 3 tiles in one row, compact; long words wrap instead of overflowing */
+/* Narrow screens: compact 2×2 tiles; long words wrap instead of overflowing */
 @media (max-width: 600px) {
-  .stats-grid { gap: 8px; }
-  .stats-grid .card { padding: 12px 10px; min-width: 0; }
-  .stats-grid .stat-icon { width: 32px; height: 32px; margin-bottom: 8px; }
-  .stats-grid .stat-icon-img { width: 20px; height: 20px; }
-  .stats-grid .card-label { font-size: 11px; letter-spacing: 0.03em; margin-bottom: 4px; line-height: 1.3; min-height: 2.6em; } /* 2 lines, so numbers align */
-  .stats-grid .card-value { font-size: 26px; }
-  .stats-grid .stat-sub { font-size: 11px; line-height: 1.3; }
-  .stats-grid .card-label, .stats-grid .stat-sub { overflow-wrap: break-word; }
+  .stats-mosaic { gap: 8px; }
+  .stats-mosaic .stat-card { padding: 12px 10px; }
+  .stats-mosaic .stat-icon { width: 32px; height: 32px; margin-bottom: 8px; }
+  .stats-mosaic .stat-icon-img { width: 20px; height: 20px; }
+  .stats-mosaic .card-label { font-size: 11px; letter-spacing: 0.03em; margin-bottom: 4px; line-height: 1.3; min-height: 2.6em; } /* 2 lines, so numbers align */
+  .stats-mosaic .card-value { font-size: 26px; }
+  .stats-mosaic .stat-sub { font-size: 11px; line-height: 1.3; }
+  .stats-mosaic .card-label, .stats-mosaic .stat-sub { overflow-wrap: break-word; }
 }
 
 /* ── ALERTS ── */
@@ -667,4 +666,37 @@ a { text-decoration: none; color: inherit; }
   .wl-set { grid-template-columns: 58px minmax(0, 1fr) 64px; gap: 8px; }
   .wl-weight label { grid-template-columns: 58px auto; gap: 8px; }
   .wl-save { flex: 1; }
+}
+
+/* Statystyki mosaic (pages/Dashboard.tsx): calendar as the big card, weight + streak beside it, month/year below.
+   Mobile: calendar on top, then the four tiles as an equal-height 2×2 grid. */
+.stats-mosaic { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; grid-auto-rows: 1fr; gap: 12px; }
+.stats-mosaic .stats-cal { grid-column: 1 / -1; }
+.stats-cal .cal-grid { max-width: none; }
+.stats-cal .cal-cell { aspect-ratio: auto; height: 34px; }
+.cal-summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 14px; font-size: 13px; color: var(--text-muted); }
+.cal-summary strong { font-size: 18px; font-weight: 800; color: var(--text-heading); margin-right: 2px; }
+.stat-spark { width: 100%; height: 40px; margin-top: 8px; overflow: visible; }
+.stat-spark polyline { fill: none; stroke: currentColor; stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.stat-spark circle { fill: currentColor; }
+.stat-spark.tone-neutral { color: var(--primary); }
+.stat-flame { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.stat-flame .plan-progress-bar > span { background: linear-gradient(90deg, #f59e0b, var(--danger)); }
+.stat-flame small { font-size: 11px; color: var(--text-subtle); font-weight: 600; }
+.stats-mosaic .stat-weight { background: linear-gradient(150deg, var(--primary-light), var(--bg-white) 60%); }
+.stats-mosaic .stat-streak { background: linear-gradient(150deg, #fff1f2, var(--bg-white) 60%); }
+@media (min-width: 900px) {
+  .stats-mosaic { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: auto; gap: 16px; }
+  .stats-mosaic .stats-cal { grid-column: 1 / 5; grid-row: 1 / 3; display: flex; flex-direction: column; }
+  .stats-cal .cal-grid { flex: 1; width: 100%; grid-template-rows: auto; grid-auto-rows: minmax(34px, 1fr); }
+  .stats-cal .cal-cell { height: auto; }
+  .stats-mosaic .stat-weight { grid-column: 5 / 7; grid-row: 1; }
+  .stats-mosaic .stat-weight .card-value { font-size: 38px; }
+  .stats-mosaic .stat-streak { grid-column: 5 / 7; grid-row: 2; }
+  /* Month / year: wide, short tiles — icon, label over value, unit on the right */
+  .stats-mosaic .stat-card:not(.stat-weight):not(.stat-streak) { grid-column: span 3; display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; column-gap: 14px; padding: 14px 18px; }
+  .stats-mosaic .stat-card:not(.stat-weight):not(.stat-streak) .stat-icon { grid-row: 1 / 3; margin: 0; }
+  .stats-mosaic .stat-card:not(.stat-weight):not(.stat-streak) .card-label { grid-column: 2; grid-row: 1; margin: 0; }
+  .stats-mosaic .stat-card:not(.stat-weight):not(.stat-streak) .card-value { grid-column: 2; grid-row: 2; }
+  .stats-mosaic .stat-card:not(.stat-weight):not(.stat-streak) .stat-sub { grid-column: 3; grid-row: 1 / 3; justify-self: end; }
 }
