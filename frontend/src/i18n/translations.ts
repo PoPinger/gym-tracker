@@ -323,10 +323,12 @@ export interface TranslationMap {
   muscle_shoulders: string;
   muscle_biceps: string;
   muscle_triceps: string;
+  muscle_forearms: string;
   muscle_abs: string;
   muscle_quads: string;
   muscle_hamstrings: string;
   muscle_glutes: string;
+  muscle_adductors: string;
   muscle_calves: string;
 
   // Short day names (used in weight tracker)
@@ -633,10 +635,12 @@ const pl: TranslationMap = {
   muscle_shoulders: 'Barki',
   muscle_biceps: 'Biceps',
   muscle_triceps: 'Triceps',
+  muscle_forearms: 'Przedramiona',
   muscle_abs: 'Brzuch',
   muscle_quads: 'Czworogłowy',
   muscle_hamstrings: 'Dwugłowy',
   muscle_glutes: 'Pośladki',
+  muscle_adductors: 'Przywodziciele',
   muscle_calves: 'Łydki',
 
   day_mon: 'Pon',
@@ -942,10 +946,12 @@ const en: TranslationMap = {
   muscle_shoulders: 'Shoulders',
   muscle_biceps: 'Biceps',
   muscle_triceps: 'Triceps',
+  muscle_forearms: 'Forearms',
   muscle_abs: 'Abs',
   muscle_quads: 'Quadriceps',
   muscle_hamstrings: 'Hamstrings',
   muscle_glutes: 'Glutes',
+  muscle_adductors: 'Adductors',
   muscle_calves: 'Calves',
 
   day_mon: 'Mon',
@@ -966,9 +972,11 @@ export const MUSCLE_GROUP_TO_KEY: Record<string, keyof TranslationMap> = {
   'Barki':            'muscle_shoulders',
   'Biceps':           'muscle_biceps',
   'Triceps':          'muscle_triceps',
+  'Przedramiona':     'muscle_forearms',
   'Brzuch':           'muscle_abs',
   'Czworogłowy':      'muscle_quads',
   'Dwugłowy':         'muscle_hamstrings',
   'Pośladki':         'muscle_glutes',
+  'Przywodziciele':   'muscle_adductors',
   'Łydki':            'muscle_calves',
 };

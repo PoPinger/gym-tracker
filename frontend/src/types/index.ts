@@ -162,8 +162,8 @@ export interface DashboardData {
 }
 
 export const MUSCLE_GROUPS = [
-  'Klatka piersiowa', 'Plecy', 'Barki', 'Biceps', 'Triceps',
-  'Brzuch', 'Czworogłowy', 'Dwugłowy', 'Pośladki', 'Łydki'
+  'Klatka piersiowa', 'Plecy', 'Barki', 'Biceps', 'Triceps', 'Przedramiona',
+  'Brzuch', 'Czworogłowy', 'Dwugłowy', 'Pośladki', 'Przywodziciele', 'Łydki'
 ];
 
 export const DAY_NAMES = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'];
