@@ -86,6 +86,8 @@ class AdminUserOut(BaseModel):
     email: str
     display_name: Optional[str]
     created_at: datetime
+    last_active_at: Optional[datetime]
+    last_login_at: Optional[datetime]
 
     class Config:
         from_attributes = True

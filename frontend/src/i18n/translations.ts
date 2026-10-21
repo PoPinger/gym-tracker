@@ -87,6 +87,13 @@ export interface TranslationMap {
   admin_copy: string;
   admin_copied: string;
   admin_generate_error: string;
+  admin_last_active: string;
+  admin_last_login: string;
+  admin_never: string;
+  rel_just_now: string;
+  rel_minutes_ago: string;
+  rel_hours_ago: string;
+  rel_yesterday: string;
 
   // Dashboard – loading / header
   loading_app: string;
@@ -469,6 +476,13 @@ const pl: TranslationMap = {
   admin_copy: 'Kopiuj',
   admin_copied: 'Skopiowano',
   admin_generate_error: 'Nie udało się wygenerować kodu',
+  admin_last_active: 'Ostatnia aktywność',
+  admin_last_login: 'Ostatnie logowanie',
+  admin_never: 'nigdy',
+  rel_just_now: 'przed chwilą',
+  rel_minutes_ago: '{n} min temu',
+  rel_hours_ago: '{n} godz. temu',
+  rel_yesterday: 'wczoraj',
 
   loading_app: 'Ładowanie aplikacji…',
   dashboard_title: 'Statystyki',
@@ -825,6 +839,13 @@ const en: TranslationMap = {
   admin_copy: 'Copy',
   admin_copied: 'Copied',
   admin_generate_error: 'Could not generate the code',
+  admin_last_active: 'Last activity',
+  admin_last_login: 'Last login',
+  admin_never: 'never',
+  rel_just_now: 'just now',
+  rel_minutes_ago: '{n} min ago',
+  rel_hours_ago: '{n} h ago',
+  rel_yesterday: 'yesterday',
 
   loading_app: 'Loading app…',
   dashboard_title: 'Statistics',

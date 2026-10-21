@@ -4,12 +4,15 @@ import bcrypt
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models.models import User
 
 bearer_scheme = HTTPBearer()
+
+ACTIVITY_THROTTLE = timedelta(minutes=5)
 
 
 def hash_password(password: str) -> str:
@@ -58,7 +61,26 @@ def get_current_user(
     # Tokens issued before token_version existed carry no "tv" and count as version 0
     if payload.get("tv", 0) != (user.token_version or 0):
         raise HTTPException(status_code=401, detail="Sesja wygasła. Zaloguj się ponownie")
+    _touch_last_active(db, user)
     return user
+
+
+def _touch_last_active(db: Session, user: User) -> None:
+    """Record activity, but write at most once per ACTIVITY_THROTTLE per user."""
+    now = datetime.utcnow()
+    if user.last_active_at is not None and now - user.last_active_at < ACTIVITY_THROTTLE:
+        return
+    # Re-checked in the WHERE so concurrent requests don't both write
+    updated = (
+        db.query(User)
+        .filter(
+            User.id == user.id,
+            or_(User.last_active_at.is_(None), User.last_active_at < now - ACTIVITY_THROTTLE),
+        )
+        .update({User.last_active_at: now}, synchronize_session=False)
+    )
+    if updated:
+        db.commit()
 
 
 def get_current_admin(current_user: User = Depends(get_current_user)) -> User:

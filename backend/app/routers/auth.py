@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -11,6 +12,10 @@ from app.auth.auth import hash_password, verify_password, create_user_token, get
 from app.services import password_reset_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _mark_login(user: User) -> None:
+    user.last_login_at = user.last_active_at = datetime.utcnow()
 
 
 def _token_response(user: User) -> TokenResponse:
@@ -33,6 +38,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         display_name=data.display_name,
         is_admin=bool(settings.ADMIN_EMAIL.strip()) and data.email.lower() == settings.ADMIN_EMAIL.strip().lower(),
     )
+    _mark_login(user)  # registration counts as a login
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -44,6 +50,8 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Nieprawidłowy e-mail lub hasło")
+    _mark_login(user)
+    db.commit()
     return _token_response(user)
 
 

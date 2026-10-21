@@ -12,7 +12,8 @@ router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(get_cu
 
 @router.get("/users", response_model=List[AdminUserOut])
 def list_users(db: Session = Depends(get_db)):
-    return db.query(User).order_by(User.created_at.desc()).all()
+    # Most recently active first; never-active users last
+    return db.query(User).order_by(User.last_active_at.desc().nulls_last(), User.created_at.desc()).all()
 
 
 @router.post("/users/{user_id}/reset-code", response_model=ResetCodeOut)

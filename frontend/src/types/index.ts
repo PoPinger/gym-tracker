@@ -11,6 +11,8 @@ export interface AdminUser {
   email: string;
   display_name?: string | null;
   created_at: string;
+  last_active_at?: string | null;
+  last_login_at?: string | null;
 }
 
 export interface ResetCode {

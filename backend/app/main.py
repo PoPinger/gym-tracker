@@ -20,6 +20,8 @@ with engine.begin() as conn:
     conn.execute(text("ALTER TABLE weight_cycles ALTER COLUMN start_weight DROP NOT NULL"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE"))
     conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP"))
     # ADMIN_EMAIL is the single source of truth for the admin role
     conn.execute(
         text("UPDATE users SET is_admin = (LOWER(email) = LOWER(:email) AND :email <> '')"),

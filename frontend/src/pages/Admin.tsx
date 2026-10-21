@@ -4,6 +4,7 @@ import { adminApi } from '../services/api';
 import AppLoader from '../components/AppLoader';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { AdminUser, ResetCode } from '../types';
+import { parseApiDate, formatDateTime, relativeTime } from '../utils/relativeTime';
 import { KeyRound, Copy, Check } from 'lucide-react';
 
 export default function Admin() {
@@ -16,10 +17,9 @@ export default function Admin() {
   const { lang, t }             = useLanguage();
 
   const locale = lang === 'pl' ? 'pl-PL' : 'en-US';
-  // Backend sends naive UTC timestamps
-  const parse = (s: string) => new Date(/[zZ]|[+-]\d\d:\d\d$/.test(s) ? s : `${s}Z`);
-  const fmtDate = (s: string) => parse(s).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
-  const fmtDateTime = (s: string) => parse(s).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const now = new Date();
+  const fmtDate = (s: string) => parseApiDate(s).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+  const fmtDateTime = (s: string) => parseApiDate(s).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
   useEffect(() => {
     adminApi.listUsers()
@@ -74,6 +74,12 @@ export default function Admin() {
                 <div className="admin-user-info">
                   <div className="admin-user-name">{u.display_name || t('admin_no_name')}</div>
                   <div className="admin-user-email">{u.email}</div>
+                  <div className="admin-user-date">
+                    {t('admin_last_active')}: {u.last_active_at ? relativeTime(parseApiDate(u.last_active_at), now, lang, t) : t('admin_never')}
+                  </div>
+                  <div className="admin-user-date">
+                    {t('admin_last_login')}: {u.last_login_at ? formatDateTime(parseApiDate(u.last_login_at), lang) : t('admin_never')}
+                  </div>
                   <div className="admin-user-date">{t('admin_created')}: {fmtDate(u.created_at)}</div>
                 </div>
                 <button className="btn btn-outline btn-sm" onClick={() => generate(u)} disabled={busyId !== null}>
