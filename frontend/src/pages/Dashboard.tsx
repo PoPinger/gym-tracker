@@ -6,10 +6,12 @@ import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
 import WorkoutCalendar from '../components/WorkoutCalendar';
 import AppLoader from '../components/AppLoader';
+import AnimatedValue from '../components/AnimatedValue';
+import { useDrawOnView } from '../hooks/useDrawOnView';
 import type { DashboardData } from '../types';
 
 function StatCard({ icon, iconClass, label, value, sub, valueClass, onClick, extra, className = '' }: {
-  icon: string; iconClass: string; label: string; value: string | number; sub: string;
+  icon: string; iconClass: string; label: string; value: React.ReactNode; sub: string;
   valueClass?: string; onClick?: () => void; extra?: React.ReactNode; className?: string;
 }) {
   const body = (
@@ -28,13 +30,14 @@ function StatCard({ icon, iconClass, label, value, sub, valueClass, onClick, ext
 
 // Weekly averages as a tiny line; the last point marked
 function Sparkline({ values, tone }: { values: number[]; tone: string }) {
+  const [ref, pending] = useDrawOnView<SVGSVGElement>();
   if (values.length < 2) return null;
   const min = Math.min(...values), max = Math.max(...values), span = max - min || 1;
   const pts = values.map((v, i) => [i / (values.length - 1) * 100, 4 + (1 - (v - min) / span) * 32]);
   return (
-    <svg className={`stat-spark tone-${tone}`} viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
-      <polyline points={pts.map(p => p.join(',')).join(' ')} />
-      <circle cx={pts.at(-1)![0]} cy={pts.at(-1)![1]} r="3" />
+    <svg ref={ref} className={`stat-spark tone-${tone}${pending ? ' draw-pending' : ''}`} viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+      <polyline data-draw points={pts.map(p => p.join(',')).join(' ')} />
+      <circle data-draw-dot cx={pts.at(-1)![0]} cy={pts.at(-1)![1]} r="3" />
     </svg>
   );
 }
@@ -67,11 +70,11 @@ export default function Dashboard() {
   const streakGoal = Math.max(4, Math.ceil((d.streak + 1) / 4) * 4);
 
   const month = <StatCard icon="/icons/stat-month.png" iconClass="green"
-    label={t('stat_this_month')} value={d.quick_stats.this_month} sub={workoutLabel(d.quick_stats.this_month)} />;
+    label={t('stat_this_month')} value={<AnimatedValue value={d.quick_stats.this_month} format={String} decimals={0} />} sub={workoutLabel(d.quick_stats.this_month)} />;
   const year = <StatCard icon="/icons/stat-year.png" iconClass="amber"
-    label={t('stat_this_year')} value={d.quick_stats.this_year} sub={workoutLabel(d.quick_stats.this_year)} />;
+    label={t('stat_this_year')} value={<AnimatedValue value={d.quick_stats.this_year} format={String} decimals={0} />} sub={workoutLabel(d.quick_stats.this_year)} />;
   const streak = <StatCard icon="/icons/stat-streak.png" iconClass="red" className="stat-streak"
-    label={t('stat_streak')} value={d.streak} sub={weekLabel(d.streak)}
+    label={t('stat_streak')} value={<AnimatedValue value={d.streak} format={String} decimals={0} />} sub={weekLabel(d.streak)}
     extra={(
       <div className="stat-flame">
         <span className="plan-progress-bar"><span style={{ width: `${(d.streak / streakGoal) * 100}%` }} /></span>
@@ -81,7 +84,7 @@ export default function Dashboard() {
   // Total change since the start of the cycle: current week average − week 1 average
   const weight = <StatCard icon="/icons/stat-weight-transparent.png" iconClass="indigo" className="stat-weight"
     label={goalLabel ? `${t('weight_label')} · ${goalLabel}` : t('weight_label')}
-    value={w?.change != null ? fmtChange(w.change) : '—'}
+    value={<AnimatedValue value={w?.change ?? null} format={fmtChange} />}
     valueClass={w?.change != null ? `tone-${weightTone}` : undefined}
     sub={w?.current_week_avg != null
       ? t('weight_tile_current_avg').replace('{kg}', `${fmtNum(w.current_week_avg)} kg`)

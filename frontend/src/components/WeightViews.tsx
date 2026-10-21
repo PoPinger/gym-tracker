@@ -2,6 +2,8 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft, CalendarDays, Check, CheckCircle2, ChevronRight, Minus, Pencil, Plus, RotateCcw, TrendingDown, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useDrawOnView } from '../hooks/useDrawOnView';
+import AnimatedValue from './AnimatedValue';
 import { plural } from '../utils/plural';
 import { trendTone, type WeightGoal } from '../utils/weightTrend';
 import type { WeightCycle, WeightWeek } from '../types';
@@ -14,7 +16,7 @@ const fmtDiff = (d: number | null) => d == null ? '—' : `${d > 0 ? '+' : d < 0
 // Weight change with arrow, coloured by the cycle goal (see utils/weightTrend)
 function Diff({ d, goal, big }: { d: number | null; goal: string | null; big?: boolean }) {
   const icon = d == null || d === 0 ? <Minus size={big ? 16 : 13} /> : d > 0 ? <TrendingUp size={big ? 16 : 13} /> : <TrendingDown size={big ? 16 : 13} />;
-  return <span className={`w-diff tone-${trendTone(d, goal)}${big ? ' big' : ''}`}>{icon}{fmtDiff(d)}</span>;
+  return <span className={`w-diff tone-${trendTone(d, goal)}${big ? ' big' : ''}`}>{icon}<AnimatedValue value={d} format={fmtDiff} /></span>;
 }
 
 /* ─────────── SETUP ─────────── */
@@ -60,6 +62,7 @@ export function SetupView({ months, setMonths, goal, setGoal, error, loading, on
 // Lines are SVG stretched to the box (non-scaling strokes); dots and labels are HTML so they stay round and readable
 function WeeklyChart({ weeks, avg, goal }: { weeks: WeightWeek[]; avg: (w: WeightWeek) => number | null; goal: string | null }) {
   const { t } = useLanguage();
+  const [plotRef, pending] = useDrawOnView<HTMLDivElement>();
   const pts = weeks.map((w, i) => ({ n: w.week_number, i, a: avg(w) })).filter((p): p is { n: number; i: number; a: number } => p.a != null);
   if (pts.length < 2) return <div className="card w-chart"><div className="day-list-label">{t('weight_chart_title')}</div><div className="w-chart-empty">{t('weight_chart_empty')}</div></div>;
 
@@ -74,16 +77,16 @@ function WeeklyChart({ weeks, avg, goal }: { weeks: WeightWeek[]; avg: (w: Weigh
       <div className="day-list-label">{t('weight_chart_title')}</div>
       <div className="w-chart-body">
         <div className="w-chart-y"><span>{fmtNum(hi)}</span><span>{fmtNum((hi + lo) / 2)}</span><span>{fmtNum(lo)}</span></div>
-        <div className="w-chart-plot">
+        <div ref={plotRef} className={`w-chart-plot${pending ? ' draw-pending' : ''}`}>
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             {[0, 50, 100].map(g => <line key={g} x1="0" x2="100" y1={g} y2={g} className="w-chart-grid" />)}
             {pts.slice(1).map((p, k) => (
-              <line key={p.n} x1={x(pts[k].i)} y1={y(pts[k].a)} x2={x(p.i)} y2={y(p.a)}
+              <line key={p.n} data-draw x1={x(pts[k].i)} y1={y(pts[k].a)} x2={x(p.i)} y2={y(p.a)}
                 className={`w-chart-seg tone-${trendTone(+(p.a - pts[k].a).toFixed(1), goal)}`} />
             ))}
           </svg>
           {pts.map((p, k) => (
-            <span key={p.n} className={`w-chart-dot tone-${k ? trendTone(+(p.a - pts[k - 1].a).toFixed(1), goal) : 'neutral'}`}
+            <span key={p.n} data-draw-dot className={`w-chart-dot tone-${k ? trendTone(+(p.a - pts[k - 1].a).toFixed(1), goal) : 'neutral'}`}
               style={{ left: `${x(p.i)}%`, top: `${y(p.a)}%` }} title={`${t('week_tile_label')} ${p.n}: ${fmtKg(p.a)}`} />
           ))}
         </div>

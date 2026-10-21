@@ -8,6 +8,7 @@ import { exerciseScore, firstWeight, formatKg, formatPct, progressPct, shouldAdd
 import { formatRepRange } from '../utils/repRange';
 import { todayIso } from '../utils/date';
 import type { DayColor } from '../utils/dayColors';
+import AnimatedValue from './AnimatedValue';
 import type { DayLog, ExerciseLog } from '../types';
 
 type Status = 'empty' | 'unsaved' | 'saved' | 'skipped';
@@ -41,7 +42,7 @@ function Pill({ label, d }: { label: string; d: Ref }) {
     <span className="wl-pill">
       <small>{label}</small>
       <span>{d.weight != null ? formatKg(d.weight, lang) : '—'}</span>
-      <strong className={`tone-${pctTone(d.pct)}`}>{d.pct != null ? formatPct(d.pct, lang) : '—'}</strong>
+      <strong className={`tone-${pctTone(d.pct)}`}><AnimatedValue value={d.pct} format={v => formatPct(v, lang)} /></strong>
     </span>
   );
 }
