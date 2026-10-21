@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { prefersReducedMotion, useFirstInView } from './useFirstInView';
 
-const DRAW_MS = 900;
+const DRAW_MS = 1800;
 const CAP_PAD = 4; // keeps the round line cap hidden before a line starts drawing
 // Inverse of ease-out cubic: when (ms) the drawing front reaches a horizontal position p (0–1)
 const reachAt = (p: number) => (1 - Math.cbrt(1 - Math.min(1, Math.max(0, p)))) * DRAW_MS;
@@ -50,7 +50,7 @@ function draw(root: Element) {
   root.querySelectorAll<Element>('[data-draw-dot]').forEach(el => {
     if (!el.animate) return;
     const r = el.getBoundingClientRect();
-    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: Math.max(0, at(r.left + r.width / 2) - 80), fill: 'backwards', easing: 'ease-out' });
+    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: Math.max(0, at(r.left + r.width / 2) - 160), fill: 'backwards', easing: 'ease-out' });
   });
 }
 
