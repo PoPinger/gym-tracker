@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { prefersReducedMotion, useFirstInView } from './useFirstInView';
 
-const DRAW_MS = 1800;
+const DRAW_MS = 3600;
 const CAP_PAD = 4; // keeps the round line cap hidden before a line starts drawing
 // Inverse of ease-out cubic: when (ms) the drawing front reaches a horizontal position p (0–1)
 const reachAt = (p: number) => (1 - Math.cbrt(1 - Math.min(1, Math.max(0, p)))) * DRAW_MS;
@@ -26,12 +26,15 @@ function screenPoints(el: SVGGeometryElement): DOMPoint[] {
 }
 
 function draw(root: Element) {
-  const box = root.getBoundingClientRect();
-  const at = (x: number) => reachAt((x - box.left) / (box.width || 1));
+  const lines = [...root.querySelectorAll<SVGGeometryElement>('[data-draw]')]
+    .map(el => ({ el, pts: screenPoints(el) })).filter(l => l.pts.length >= 2);
+  if (!lines.length) return;
+  // One timeline from the first to the last drawn point (not the plot width, which includes weeks without data)
+  const x0 = Math.min(...lines.map(l => l.pts[0].x)), x1 = Math.max(...lines.map(l => l.pts.at(-1)!.x));
+  const at = (x: number) => reachAt((x - x0) / (x1 - x0 || 1));
 
-  root.querySelectorAll<SVGGeometryElement>('[data-draw]').forEach(el => {
-    const pts = screenPoints(el);
-    if (pts.length < 2 || !el.animate) return;
+  lines.forEach(({ el, pts }) => {
+    if (!el.animate) return;
     const cum = [0];
     for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
     const len = cum.at(-1)!;
@@ -50,7 +53,7 @@ function draw(root: Element) {
   root.querySelectorAll<Element>('[data-draw-dot]').forEach(el => {
     if (!el.animate) return;
     const r = el.getBoundingClientRect();
-    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: Math.max(0, at(r.left + r.width / 2) - 160), fill: 'backwards', easing: 'ease-out' });
+    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 800, delay: Math.max(0, at(r.left + r.width / 2) - 320), fill: 'backwards', easing: 'ease-out' });
   });
 }
 

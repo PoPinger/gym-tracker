@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { prefersReducedMotion, useFirstInView } from '../hooks/useFirstInView';
 
-const DURATION = 1400;
+const DURATION = 2800;
 const easeOut = (p: number) => 1 - (1 - p) ** 3;
 
 type Phase = 'wait' | 'run' | 'done';

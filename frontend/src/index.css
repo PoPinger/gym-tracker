@@ -714,7 +714,7 @@ a { text-decoration: none; color: inherit; }
 .av-live { position: absolute; left: 0; top: 0; }
 .wl-pill .av, .wl-pill .av span { font: inherit; color: inherit; }
 .av-wait .av-live { opacity: 0; }
-.av-run .av-live { animation: av-fade 1400ms cubic-bezier(0.33, 1, 0.68, 1) both; }
+.av-run .av-live { animation: av-fade 2800ms cubic-bezier(0.33, 1, 0.68, 1) both; }
 .av-run.av-up .av-live { animation-name: av-up; }
 .av-run.av-down .av-live { animation-name: av-down; }
 @keyframes av-fade { from { opacity: 0; } }
