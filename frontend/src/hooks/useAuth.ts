@@ -14,16 +14,35 @@ export function useAuth() {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
   const [loading, setLoading] = useState(false);
 
+  // Store a TokenResponse from login / register / change-password
+  const saveSession = (data: { access_token: string; user_id: number; email: string; display_name?: string; is_admin?: boolean }) => {
+    const userData: User = {
+      id: data.user_id, email: data.email, display_name: data.display_name,
+      is_admin: data.is_admin, created_at: new Date().toISOString(),
+    };
+    localStorage.setItem('token', data.access_token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setToken(data.access_token);
+    setUser(userData);
+  };
+
+  // Refresh the stored user (e.g. is_admin) from the server
+  const refreshUser = async () => {
+    try {
+      const res = await authApi.me();
+      const userData: User = res.data;
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+    } catch {
+      // 401 is handled by the API interceptor; ignore other errors
+    }
+  };
+
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
       const res = await authApi.login(email, password);
-      const { access_token, user_id, email: userEmail, display_name } = res.data;
-      const userData: User = { id: user_id, email: userEmail, display_name, created_at: new Date().toISOString() };
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setToken(access_token);
-      setUser(userData);
+      saveSession(res.data);
       return { success: true };
     } catch (err) {
       return { success: false, error: apiErrorDetail(err) || 'Logowanie nieudane' };
@@ -36,12 +55,7 @@ export function useAuth() {
     setLoading(true);
     try {
       const res = await authApi.register(email, password, displayName);
-      const { access_token, user_id, email: userEmail, display_name } = res.data;
-      const userData: User = { id: user_id, email: userEmail, display_name, created_at: new Date().toISOString() };
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setToken(access_token);
-      setUser(userData);
+      saveSession(res.data);
       return { success: true };
     } catch (err) {
       return { success: false, error: apiErrorDetail(err) || 'Rejestracja nieudana' };
@@ -57,5 +71,5 @@ export function useAuth() {
     setUser(null);
   };
 
-  return { user, token, loading, login, register, logout, isAuthenticated: !!token };
+  return { user, token, loading, login, register, logout, saveSession, refreshUser, isAuthenticated: !!token };
 }

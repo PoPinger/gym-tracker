@@ -257,6 +257,8 @@ a { text-decoration: none; color: inherit; }
 .auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-muted); }
 .auth-link { color: var(--primary); font-weight: 600; }
 .auth-link:hover { text-decoration: underline; }
+.auth-forgot { align-self: flex-end; font-size: 13px; margin-top: 2px; }
+.auth-back { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ── SECTION ── */
 .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-subtle); margin-bottom: 12px; }
@@ -352,6 +354,21 @@ a { text-decoration: none; color: inherit; }
 /* ── EXERCISE BUILDER CARD ── */
 .ex-builder { background: var(--bg-subtle); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
 .ex-builder-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: start; }
+
+/* ── ADMIN ── */
+.admin-users { display: flex; flex-direction: column; gap: 10px; }
+.admin-user { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.admin-user-info { min-width: 0; }
+.admin-user-name { font-size: 15px; font-weight: 700; color: var(--text-heading); }
+.admin-user-email { font-size: 13px; color: var(--text-muted); overflow-wrap: anywhere; }
+.admin-user-date { font-size: 12px; color: var(--text-subtle); margin-top: 2px; }
+.admin-code { margin: 16px 0 8px; padding: 14px; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 28px; font-weight: 800; letter-spacing: 0.14em; color: var(--primary); background: var(--primary-light); border: 1.5px dashed var(--primary-muted); border-radius: var(--radius-sm); user-select: all; }
+.user-actions { display: flex; gap: 2px; }
+.pwd-btn:hover { background: var(--primary-light); color: var(--primary); }
+@media (max-width: 480px) {
+  .admin-user { flex-direction: column; align-items: stretch; }
+  .admin-code { font-size: 24px; }
+}
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) { .main-content { padding: 24px; } }

@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     FRONTEND_URL: str = ""          # set to production Vercel URL on Render
+    ADMIN_EMAIL: str = ""           # user with this e-mail is made admin on startup
 
     class Config:
         env_file = ".env"

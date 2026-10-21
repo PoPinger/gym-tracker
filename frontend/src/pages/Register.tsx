@@ -80,7 +80,7 @@ export default function Register() {
                 style={{ paddingLeft:38 }}
                 placeholder={t('register_password_placeholder')}
                 value={password} onChange={e => setPassword(e.target.value)}
-                required minLength={6} autoComplete="new-password"
+                required minLength={8} autoComplete="new-password"
               />
             </div>
           </div>

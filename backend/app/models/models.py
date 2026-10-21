@@ -16,11 +16,33 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     display_name = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    is_admin = Column(Boolean, nullable=False, default=False, server_default=false())
+    token_version = Column(Integer, nullable=False, default=0, server_default="0")  # bump to revoke all JWTs
 
     plans = relationship("TrainingPlan", back_populates="user", cascade="all, delete-orphan")
     weight_cycles = relationship("WeightCycle", back_populates="user", cascade="all, delete-orphan")
     day_logs = relationship("TrainingDayLog", back_populates="user", passive_deletes=True)
     exercise_logs = relationship("ExerciseLog", back_populates="user", passive_deletes=True)
+
+
+class PasswordResetCode(Base):
+    __tablename__ = "password_reset_codes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    code_hash = Column(String(64), nullable=False)  # HMAC-SHA256 hex; the plain code is never stored
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)       # set when used or superseded by a newer code
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class PasswordResetAttempt(Base):
+    """A failed reset-code verification, for rate limiting per e-mail."""
+    __tablename__ = "password_reset_attempts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), nullable=False, index=True)
+    attempted_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
 
 
 class TrainingPlan(Base):

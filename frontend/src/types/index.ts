@@ -3,6 +3,19 @@ export interface User {
   email: string;
   display_name?: string;
   created_at: string;
+  is_admin?: boolean;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  display_name?: string | null;
+  created_at: string;
+}
+
+export interface ResetCode {
+  code: string;
+  expires_at: string;
 }
 
 export interface AuthState {

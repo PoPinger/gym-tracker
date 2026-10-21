@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../i18n/LanguageContext';
-import { LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X, ShieldCheck, KeyRound } from 'lucide-react';
+import ChangePasswordModal from './ChangePasswordModal';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const [pwdOpen, setPwdOpen] = useState(false);
+  const { user, logout, saveSession, refreshUser } = useAuth();
   const { lang, setLang, t } = useLanguage();
+
+  // Stored user may predate is_admin (or the role may have changed): refresh once
+  useEffect(() => { refreshUser(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const NAV = [
     { path: '/',            label: t('nav_panel'),       icon: '/icons/panel.png' },
@@ -41,6 +46,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {label}
           </button>
         ))}
+        {user?.is_admin && (
+          <button
+            className={`nav-link${location.pathname === '/admin' ? ' active' : ''}`}
+            onClick={() => go('/admin')}
+          >
+            <ShieldCheck className="nav-icon" size={22} strokeWidth={2} color="var(--primary)" />
+            {t('nav_admin')}
+          </button>
+        )}
       </nav>
 
       <div className="sidebar-footer">
@@ -83,9 +97,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="user-name">{user?.display_name || t('nav_user_fallback')}</div>
             <div className="user-email">{user?.email}</div>
           </div>
-          <button className="logout-btn" onClick={handleLogout} title={t('nav_logout')}>
-            <LogOut size={16} />
-          </button>
+          <div className="user-actions">
+            <button className="logout-btn pwd-btn" onClick={() => { setPwdOpen(true); setOpen(false); }}
+              title={t('nav_change_password')} aria-label={t('nav_change_password')}>
+              <KeyRound size={16} />
+            </button>
+            <button className="logout-btn" onClick={handleLogout} title={t('nav_logout')} aria-label={t('nav_logout')}>
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </>
@@ -115,6 +135,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="main-content">
         {children}
       </main>
+
+      {pwdOpen && <ChangePasswordModal onClose={() => setPwdOpen(false)} onChanged={saveSession} />}
     </div>
   );
 }

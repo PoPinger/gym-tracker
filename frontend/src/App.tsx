@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard';
 import CreatePlan from './pages/CreatePlan';
 import MyPlans from './pages/MyPlans';
 import MyWeight from './pages/MyWeight';
+import ForgotPassword from './pages/ForgotPassword';
+import Admin from './pages/Admin';
 import './index.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -29,10 +31,12 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/create-plan" element={<ProtectedRoute><CreatePlan /></ProtectedRoute>} />
           <Route path="/plans" element={<ProtectedRoute><MyPlans /></ProtectedRoute>} />
           <Route path="/weight" element={<ProtectedRoute><MyWeight /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

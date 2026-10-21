@@ -5,6 +5,15 @@ from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
+PASSWORD_MIN_LENGTH = 8
+
+
+def _check_password_length(v: str) -> str:
+    if len(v) < PASSWORD_MIN_LENGTH:
+        raise ValueError(f"Hasło musi mieć co najmniej {PASSWORD_MIN_LENGTH} znaków")
+    return v
+
+
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
@@ -13,9 +22,7 @@ class RegisterRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def password_min_length(cls, v):
-        if len(v) < 6:
-            raise ValueError("Hasło musi mieć co najmniej 6 znaków")
-        return v
+        return _check_password_length(v)
 
 
 class LoginRequest(BaseModel):
@@ -29,6 +36,7 @@ class TokenResponse(BaseModel):
     user_id: int
     email: str
     display_name: Optional[str]
+    is_admin: bool = False
 
 
 class UserOut(BaseModel):
@@ -36,9 +44,56 @@ class UserOut(BaseModel):
     email: str
     display_name: Optional[str]
     created_at: datetime
+    is_admin: bool = False
 
     class Config:
         from_attributes = True
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def password_min_length(cls, v):
+        return _check_password_length(v)
+
+
+class ResetVerifyRequest(BaseModel):
+    email: str          # plain str: a malformed e-mail must get the same generic error
+    code: str
+
+
+class ResetVerifyResponse(BaseModel):
+    reset_token: str
+
+
+class ResetCompleteRequest(BaseModel):
+    reset_token: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def password_min_length(cls, v):
+        return _check_password_length(v)
+
+
+# ── Admin ─────────────────────────────────────────────────────────────────────
+
+class AdminUserOut(BaseModel):
+    id: int
+    email: str
+    display_name: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ResetCodeOut(BaseModel):
+    code: str
+    expires_at: datetime
 
 
 # ── Plans ─────────────────────────────────────────────────────────────────────

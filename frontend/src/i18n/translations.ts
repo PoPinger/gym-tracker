@@ -42,6 +42,52 @@ export interface TranslationMap {
   register_has_account: string;
   register_login: string;
 
+  // Password reset / admin
+  nav_admin: string;
+  nav_change_password: string;
+  login_forgot_password: string;
+  login_password_changed: string;
+  pwd_min_hint: string;
+  pwd_new_label: string;
+  pwd_repeat_label: string;
+  pwd_current_label: string;
+  pwd_error_min: string;
+  pwd_error_mismatch: string;
+  pwd_error_current: string;
+  pwd_error_generic: string;
+  pwd_saving: string;
+  pwd_save: string;
+  pwd_cancel: string;
+  pwd_change_success: string;
+  pwd_close: string;
+  reset_title: string;
+  reset_info: string;
+  reset_code_label: string;
+  reset_next: string;
+  reset_checking: string;
+  reset_error_invalid: string;
+  reset_error_limit: string;
+  reset_error_session: string;
+  reset_new_title: string;
+  reset_new_sub: string;
+  reset_back_to_login: string;
+  admin_title: string;
+  admin_sub: string;
+  admin_no_access: string;
+  admin_load_error: string;
+  admin_users_count: string;
+  admin_created: string;
+  admin_no_name: string;
+  admin_generate_code: string;
+  admin_generating: string;
+  admin_code_title: string;
+  admin_code_for: string;
+  admin_code_note: string;
+  admin_code_valid_until: string;
+  admin_copy: string;
+  admin_copied: string;
+  admin_generate_error: string;
+
   // Dashboard – loading / header
   loading_app: string;
   dashboard_title: string;
@@ -373,11 +419,56 @@ const pl: TranslationMap = {
   register_optional: '(opcjonalnie)',
   register_name_placeholder: 'Twoje imię',
   register_email_placeholder: 'ty@przykład.pl',
-  register_password_placeholder: 'Min. 6 znaków',
+  register_password_placeholder: 'Min. 8 znaków',
   register_loading: 'Tworzenie konta…',
   register_submit: 'Rozpocznij',
   register_has_account: 'Masz już konto?',
   register_login: 'Zaloguj się',
+
+  nav_admin: 'Administracja',
+  nav_change_password: 'Zmień hasło',
+  login_forgot_password: 'Zapomniałeś hasła?',
+  login_password_changed: 'Hasło zostało zmienione. Zaloguj się nowym hasłem.',
+  pwd_min_hint: 'Min. 8 znaków',
+  pwd_new_label: 'Nowe hasło',
+  pwd_repeat_label: 'Powtórz hasło',
+  pwd_current_label: 'Obecne hasło',
+  pwd_error_min: 'Hasło musi mieć co najmniej 8 znaków',
+  pwd_error_mismatch: 'Hasła nie są takie same',
+  pwd_error_current: 'Nieprawidłowe obecne hasło',
+  pwd_error_generic: 'Coś poszło nie tak. Spróbuj ponownie.',
+  pwd_saving: 'Zapisywanie…',
+  pwd_save: 'Zapisz',
+  pwd_cancel: 'Anuluj',
+  pwd_change_success: 'Hasło zostało zmienione. Inne urządzenia zostały wylogowane.',
+  pwd_close: 'Zamknij',
+  reset_title: 'Odzyskiwanie hasła',
+  reset_info: 'Poproś administratora o kod resetu, a następnie wpisz go poniżej razem ze swoim adresem e-mail.',
+  reset_code_label: 'Kod resetu',
+  reset_next: 'Dalej',
+  reset_checking: 'Sprawdzanie…',
+  reset_error_invalid: 'Nieprawidłowy lub wygasły kod',
+  reset_error_limit: 'Zbyt wiele prób. Spróbuj ponownie za 15 minut.',
+  reset_error_session: 'Sesja resetu hasła wygasła. Zacznij od nowa.',
+  reset_new_title: 'Ustaw nowe hasło',
+  reset_new_sub: 'Wybierz nowe hasło do swojego konta.',
+  reset_back_to_login: 'Wróć do logowania',
+  admin_title: 'Administracja',
+  admin_sub: 'Użytkownicy aplikacji i kody resetu hasła',
+  admin_no_access: 'Brak dostępu. Ta strona jest dostępna tylko dla administratora.',
+  admin_load_error: 'Nie udało się wczytać użytkowników',
+  admin_users_count: 'Użytkownicy',
+  admin_created: 'Utworzono',
+  admin_no_name: 'Bez nazwy',
+  admin_generate_code: 'Wygeneruj kod resetu',
+  admin_generating: 'Generowanie…',
+  admin_code_title: 'Kod resetu hasła',
+  admin_code_for: 'Kod dla',
+  admin_code_note: 'Kod jest jednorazowy i ważny 24 godziny. Zostanie pokazany tylko teraz — przekaż go użytkownikowi. Jeśli wcześniej wygenerowano kod, przestał on działać.',
+  admin_code_valid_until: 'Ważny do',
+  admin_copy: 'Kopiuj',
+  admin_copied: 'Skopiowano',
+  admin_generate_error: 'Nie udało się wygenerować kodu',
 
   loading_app: 'Ładowanie aplikacji…',
   dashboard_title: 'Statystyki',
@@ -684,11 +775,56 @@ const en: TranslationMap = {
   register_optional: '(optional)',
   register_name_placeholder: 'Your name',
   register_email_placeholder: 'you@example.com',
-  register_password_placeholder: 'Min. 6 characters',
+  register_password_placeholder: 'Min. 8 characters',
   register_loading: 'Creating account…',
   register_submit: 'Get started',
   register_has_account: 'Already have an account?',
   register_login: 'Sign in',
+
+  nav_admin: 'Administration',
+  nav_change_password: 'Change password',
+  login_forgot_password: 'Forgot password?',
+  login_password_changed: 'Your password has been changed. Sign in with your new password.',
+  pwd_min_hint: 'Min. 8 characters',
+  pwd_new_label: 'New password',
+  pwd_repeat_label: 'Repeat password',
+  pwd_current_label: 'Current password',
+  pwd_error_min: 'Password must be at least 8 characters',
+  pwd_error_mismatch: 'Passwords do not match',
+  pwd_error_current: 'Current password is incorrect',
+  pwd_error_generic: 'Something went wrong. Please try again.',
+  pwd_saving: 'Saving…',
+  pwd_save: 'Save',
+  pwd_cancel: 'Cancel',
+  pwd_change_success: 'Password changed. Other devices have been signed out.',
+  pwd_close: 'Close',
+  reset_title: 'Password recovery',
+  reset_info: 'Ask the administrator for a reset code, then enter it below together with your email address.',
+  reset_code_label: 'Reset code',
+  reset_next: 'Next',
+  reset_checking: 'Checking…',
+  reset_error_invalid: 'Invalid or expired code',
+  reset_error_limit: 'Too many attempts. Try again in 15 minutes.',
+  reset_error_session: 'The password reset session has expired. Please start again.',
+  reset_new_title: 'Set a new password',
+  reset_new_sub: 'Choose a new password for your account.',
+  reset_back_to_login: 'Back to sign in',
+  admin_title: 'Administration',
+  admin_sub: 'App users and password reset codes',
+  admin_no_access: 'Access denied. This page is available to the administrator only.',
+  admin_load_error: 'Could not load users',
+  admin_users_count: 'Users',
+  admin_created: 'Created',
+  admin_no_name: 'No name',
+  admin_generate_code: 'Generate reset code',
+  admin_generating: 'Generating…',
+  admin_code_title: 'Password reset code',
+  admin_code_for: 'Code for',
+  admin_code_note: 'The code is single-use and valid for 24 hours. It is shown only now — pass it to the user. Any code generated earlier no longer works.',
+  admin_code_valid_until: 'Valid until',
+  admin_copy: 'Copy',
+  admin_copied: 'Copied',
+  admin_generate_error: 'Could not generate the code',
 
   loading_app: 'Loading app…',
   dashboard_title: 'Statistics',

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../i18n/LanguageContext';
 import { Dumbbell, Mail, Lock, ArrowRight } from 'lucide-react';
@@ -11,6 +11,8 @@ export default function Login() {
   const { login, loading }      = useAuth();
   const { t }                   = useLanguage();
   const navigate                = useNavigate();
+  // Set by ForgotPassword after a successful reset
+  const passwordChanged         = (useLocation().state as { passwordChanged?: boolean } | null)?.passwordChanged;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +37,12 @@ export default function Login() {
 
         <h1 className="auth-heading">{t('login_heading')}</h1>
         <p className="auth-sub">{t('login_sub')}</p>
+
+        {passwordChanged && !error && (
+          <div className="alert alert-success">
+            <span>{t('login_password_changed')}</span>
+          </div>
+        )}
 
         {error && (
           <div className="alert alert-error">
@@ -69,6 +77,7 @@ export default function Login() {
                 required autoComplete="current-password"
               />
             </div>
+            <Link to="/forgot-password" className="auth-link auth-forgot">{t('login_forgot_password')}</Link>
           </div>
 
           <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading} style={{ marginTop:4 }}>

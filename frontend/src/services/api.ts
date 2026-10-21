@@ -41,6 +41,18 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
   me: () => api.get('/auth/me'),
+  changePassword: (current_password: string, new_password: string) =>
+    api.post('/auth/change-password', { current_password, new_password }),
+  resetVerify: (email: string, code: string) =>
+    api.post('/auth/password-reset/verify', { email, code }),
+  resetComplete: (reset_token: string, new_password: string) =>
+    api.post('/auth/password-reset/complete', { reset_token, new_password }),
+};
+
+// Admin (backend enforces is_admin; 403 otherwise)
+export const adminApi = {
+  listUsers: () => api.get('/admin/users'),
+  createResetCode: (userId: number) => api.post(`/admin/users/${userId}/reset-code`),
 };
 
 // Plans
