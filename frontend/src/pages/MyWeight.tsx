@@ -32,6 +32,8 @@ export default function MyWeight() {
 
   const [showReset, setShowReset]       = useState(false);
   const [showComplete, setShowComplete] = useState(false);
+  // Week just finished on its detail view: stay there for Kulka's celebration
+  const [doneWeekId, setDoneWeekId]     = useState<number | null>(null);
 
   const loadCycle = useCallback(async () => {
     setLoading(true);
@@ -150,8 +152,10 @@ export default function MyWeight() {
   const completeWeek = async (weekId: number) => {
     await weightApi.completeWeek(weekId);
     setShowComplete(false);
-    setView('weeks');
-    await loadCycle();
+    setDoneWeekId(weekId);
+    // Refresh in place (no loader, no view change); keep the week marked done even if the refresh comes back empty
+    const res = await weightApi.getCurrentCycle().catch(() => null);
+    setCycle(prev => res?.data ?? (prev && { ...prev, weeks: prev.weeks.map(wk => wk.id === weekId ? { ...wk, status: 'completed' } : wk) }));
   };
 
   const computeAverage = (week: WeightWeek): number | null => {
@@ -191,7 +195,7 @@ export default function MyWeight() {
     <>
       <PanelView cycle={cycle} first={getWeek1Avg()} last={lastLoggedWeight(cycle)}
         avg={computeAverage} prevAvg={getPrevWeekAvg}
-        onOpenWeek={week => { setSelectedWeek(week); setView('week-detail'); }} onReset={() => setShowReset(true)}
+        onOpenWeek={week => { setSelectedWeek(week); setDoneWeekId(null); setView('week-detail'); }} onReset={() => setShowReset(true)}
         onEditDuration={() => { setEditMonths(cycle.months); setDurationError(''); setDurationIntro(true); }}
         goalSwitch={<GoalSwitch goal={cycle.goal} onChange={changeGoal} disabled={goalSaving} />} />
       {showReset && (
@@ -257,7 +261,7 @@ export default function MyWeight() {
         <WeekView week={week} goal={cycle.goal} avgVal={avg} diffPrev={diffPrev} diffW1={diffW1} dayNames={dayNames}
           inputs={dayInputs[week.id] ?? {}} onInput={(day, v) => handleDayInput(week.id, day, v)}
           onSave={(logId, day) => saveDayWeight(logId, week.id, day)} saving={daySaving} saved={daySaved}
-          onBack={() => setView('weeks')} onFinish={() => setShowComplete(true)} />
+          onBack={() => setView('weeks')} onFinish={() => setShowComplete(true)} celebrate={doneWeekId === week.id} />
         {showComplete && (
           <ConfirmDialog
             title={`${t('finish_week_question')} ${week.week_number}?`}

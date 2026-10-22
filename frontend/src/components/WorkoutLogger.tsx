@@ -10,6 +10,8 @@ import { todayIso } from '../utils/date';
 import type { DayColor } from '../utils/dayColors';
 import AnimatedValue from './AnimatedValue';
 import Mascot from './mascot/Mascot';
+import TowelThrow from './mascot/TowelThrow';
+import { prefersReducedMotion } from '../hooks/useFirstInView';
 import type { DayLog, ExerciseLog } from '../types';
 
 type Status = 'empty' | 'unsaved' | 'saved' | 'skipped';
@@ -30,7 +32,10 @@ const fingerprint = (el: ExerciseLog, weight: string) =>
 const hasData = (el: ExerciseLog, weight: string) => weight !== '' || el.set_logs.some(s => s.reps != null);
 const pctTone = (pct: number | null) => pct == null || pct === 0 ? 'neutral' : pct > 0 ? 'good' : 'bad';
 // How long Kulka reacts to a saved exercise's progress vs the previous week
-const REACTION_MS = { progressUp: 2200, progressDown: 2600 } as const;
+const REACTION_MS = { progressUp: 2200, progressDown: 2600, wag: 800 } as const;
+// Skipping the day: Kulka stomps, releases the towel at THROW_AT_MS (Mascot.tsx "annoyed"), sits bored at ANNOYED_MS
+const THROW_AT_MS = 920;
+const ANNOYED_MS = 1500;
 
 function StatusBadge({ s }: { s: Status }) {
   const { t } = useLanguage();
@@ -78,15 +83,42 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
   const [reaction, setReaction] = useState<keyof typeof REACTION_MS | null>(null);
   const reactionTimer = useRef<number>(undefined);
   useEffect(() => () => window.clearTimeout(reactionTimer.current), []);
+  const react = (r: keyof typeof REACTION_MS) => {
+    setReaction(r);
+    window.clearTimeout(reactionTimer.current);
+    reactionTimer.current = window.setTimeout(() => setReaction(null), REACTION_MS[r]);
+  };
+
+  // Only switching a toggle on here plays a reaction (an already skipped day just shows the bored pose)
+  const [reduced] = useState(prefersReducedMotion);
+  const [annoyed, setAnnoyed] = useState(false);
+  const [towelFrom, setTowelFrom] = useState<{ x: number; y: number; seq: number } | null>(null);
+  const slotRef = useRef<HTMLSpanElement>(null);
+  const throwTimers = useRef<number[]>([]);
+  useEffect(() => () => throwTimers.current.forEach(t => window.clearTimeout(t)), []);
+  const toggleSkipped = (v: boolean) => {
+    p.onToggleSkipped(v);
+    throwTimers.current.forEach(t => window.clearTimeout(t));
+    setAnnoyed(v && !reduced);
+    if (!v || reduced) return;
+    throwTimers.current = [
+      window.setTimeout(() => {
+        const r = slotRef.current?.querySelector('.mascot')?.getBoundingClientRect();
+        if (r) setTowelFrom(f => ({ x: r.left + r.width * 0.75, y: r.top + r.height * 0.45, seq: (f?.seq ?? 0) + 1 }));
+      }, THROW_AT_MS),
+      window.setTimeout(() => setAnnoyed(false), ANNOYED_MS),
+    ];
+  };
+  const toggleExerciseSkipped = (id: number, v: boolean) => {
+    p.onToggleExerciseSkipped(id, v);
+    if (v && !reduced) react('wag');
+  };
 
   const save = async (id: number, print: string, pct: number | null) => {
     await p.onSave(id);
     setSavedPrint(s => ({ ...s, [id]: print }));
     if (pct == null || pct === 0) return;
-    const r = pct > 0 ? 'progressUp' : 'progressDown';
-    setReaction(r);
-    window.clearTimeout(reactionTimer.current);
-    reactionTimer.current = window.setTimeout(() => setReaction(null), REACTION_MS[r]);
+    react(pct > 0 ? 'progressUp' : 'progressDown');
   };
 
   return (
@@ -109,7 +141,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
           <span>{t('workout_date_label').replace(':', '')}</span>
           <input type="date" value={p.workoutDate} max={todayIso()} onChange={e => p.onDateChange(e.target.value)} />
         </label>
-        <button type="button" role="switch" aria-checked={p.skipped} className={`wl-switch danger${p.skipped ? ' on' : ''}`} onClick={() => p.onToggleSkipped(!p.skipped)}>
+        <button type="button" role="switch" aria-checked={p.skipped} className={`wl-switch danger${p.skipped ? ' on' : ''}`} onClick={() => toggleSkipped(!p.skipped)}>
           <span className="wl-switch-track"><span /></span>{t('skipped_checkbox_label')}
         </button>
       </div>
@@ -166,7 +198,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
 
               <div className="wl-actions">
                 <button type="button" role="switch" aria-checked={el.skipped} className={`wl-switch${el.skipped ? ' on' : ''}`}
-                  onClick={() => p.onToggleExerciseSkipped(el.id, !el.skipped)}>
+                  onClick={() => toggleExerciseSkipped(el.id, !el.skipped)}>
                   <span className="wl-switch-track"><span /></span>{t('exercise_skipped_checkbox')}
                 </button>
                 <button type="button" disabled={p.saving[el.id] || p.dateInvalid} onClick={() => void save(el.id, fingerprint(el, it.w), it.prev?.pct ?? null)}
@@ -181,9 +213,10 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
 
       <div className="wl-finishbar">
         {/* Kulka jumps in from the bottom of the screen; the clip box hides it below the bar */}
-        <span className="wl-mascot-slot">
-          <span className="wl-mascot-clip"><Mascot entrance="trampoline" size={40} state={p.skipped ? 'skipped' : reaction ?? 'idle'} /></span>
+        <span ref={slotRef} className="wl-mascot-slot">
+          <span className="wl-mascot-clip"><Mascot entrance="trampoline" size={40} state={annoyed ? 'annoyed' : p.skipped ? 'skipped' : reaction ?? 'idle'} /></span>
         </span>
+        {towelFrom && <TowelThrow key={towelFrom.seq} from={towelFrom} onDone={() => setTowelFrom(null)} />}
         <span className="wl-finish-count">{t('wl_saved_count').replace('{n}', String(savedCount)).replace('{total}', String(items.length))}</span>
         <button className="btn btn-success btn-lg" disabled={p.dateInvalid} onClick={p.onFinish}><CheckCircle2 size={18} /> {t('finish_day_btn')}</button>
       </div>

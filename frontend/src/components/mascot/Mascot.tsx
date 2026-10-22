@@ -11,7 +11,8 @@ interface Clip { frames: [FrameName, number][]; loop?: boolean; bob?: boolean; c
 
 // Workout done: curls getting faster, then tired (panting, sweat), then sitting down to rest
 const curls = [520, 460, 400, 340, 280, 230, 190, 160, 135, 115, 100, 90].flatMap(ms => [['curlDown', ms], ['curlUp', ms]] as [FrameName, number][]);
-const writing = (ms: number, n: number) => Array.from({ length: n }, () => [['writeA', ms], ['writeB', ms]] as [FrameName, number][]).flat();
+const alternate = (a: FrameName, b: FrameName, ms: number, n: number) => Array.from({ length: n }, () => [[a, ms], [b, ms]] as [FrameName, number][]).flat();
+const writing = (ms: number, n: number) => alternate('writeA', 'writeB', ms, n);
 const panting = Array.from({ length: 4 }, () => [['tired1', 380], ['tired2', 380]] as [FrameName, number][]).flat();
 
 const CLIPS = {
@@ -59,13 +60,20 @@ const CLIPS = {
   // Masa / Redukcja: the body is inflated / stretched by CSS (index.css)
   puff: { frames: [['puff', 1000]] },
   stretch: { frames: [['stretch', 1000]] },
+  // Training day: annoyed stomps, then the towel throw (TowelThrow.tsx flies it at THROW_AT_MS); a finger wag
+  annoyed: { frames: [['stomp1', 170], ['stomp2', 170], ['stomp1', 170], ['stomp2', 170], ['windup', 240], ['throw', 1000]], cls: 'm-s-stomp' },
+  wag: { frames: [['wagL', 150], ['wagR', 150], ['wagL', 150], ['wagR', 150], ['wagL', 200]], cls: 'm-s-shake' },
+  // Weight week: notebook loop; stamping a day
+  notebook: { frames: [...alternate('note1', 'note2', 230, 6), ['pocket', 500], ['peekL', 600], ['peekR', 600], ['bare', 2200], ['bareBlink', 140], ['bare', 1400]], loop: true, bob: true },
+  dayStamp: { frames: [['dayStampUp', 220], ['dayStampDown', 1000]] },
 } satisfies Record<string, Clip>;
 
 type ClipName = keyof typeof CLIPS;
 export type MascotState = 'idle' | 'press' | 'done' | 'progressUp' | 'progressDown' | 'skipped' | 'slide' | 'climb' | 'walk' | 'run' | 'skid'
   | 'happy' | 'worry' | 'hide' | 'toss' | 'walkBar' | 'cheer' | 'jump'
   | 'build' | 'buildFast' | 'stamp' | 'shrug' | 'ride' | 'jumpH'
-  | 'harness' | 'tick' | 'runH' | 'carry' | 'pushUp' | 'pushDown' | 'kick' | 'wipe' | 'puff' | 'stretch';
+  | 'harness' | 'tick' | 'runH' | 'carry' | 'pushUp' | 'pushDown' | 'kick' | 'wipe' | 'puff' | 'stretch'
+  | 'annoyed' | 'wag' | 'notebook' | 'dayStamp';
 export type MascotEntrance = 'none' | 'rope' | 'run' | 'peek' | 'trampoline' | 'parachute';
 
 // Static pose per state for reduced motion
@@ -76,6 +84,7 @@ const STATIC: Record<MascotState, FrameName> = {
   build: 'writeA', buildFast: 'writeA', stamp: 'thumbsUp', shrug: 'tuck', ride: 'ride', jumpH: 'jumpH',
   harness: 'harness', tick: 'tick1', runH: 'runH1', carry: 'carry1', pushUp: 'pushUp', pushDown: 'pushDown', kick: 'kickFwd',
   wipe: 'thumbsUpH', puff: 'puff', stretch: 'stretch',
+  annoyed: 'bored', wag: 'wagL', notebook: 'note1', dayStamp: 'dayStampDown',
 };
 
 // Entrance = timed steps of (pose clip, CSS class that moves the mascot); durations match index.css

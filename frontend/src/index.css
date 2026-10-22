@@ -340,10 +340,34 @@ a { text-decoration: none; color: inherit; }
 .m-goal-cut svg { animation-name: m-thin; }
 @keyframes m-inflate { 0%, 100% { transform: none; } 33%, 67% { transform: scale(1.45, 1.25); } }
 @keyframes m-thin { 0%, 100% { transform: none; } 33%, 67% { transform: scale(0.6, 1.4); } }
+/* Training day skipped: stomps, then the towel (TowelThrow.tsx) flies at the screen, hits the glass, slides down;
+   one exercise skipped: head shake */
+.m-s-stomp { animation: m-stomp 0.34s ease-in 2; }
+@keyframes m-stomp { 0%, 100% { transform: none; } 40% { transform: translateY(-2px); } 70% { transform: translateY(1px); } }
+.m-s-shake svg { transform-origin: 50% 90%; animation: m-shake 0.3s ease-in-out 2; }
+@keyframes m-shake { 0%, 100% { transform: none; } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
+.m-towel { position: fixed; z-index: 1200; pointer-events: none; line-height: 0; animation: m-towel 1.2s both; }
+.m-towel svg { display: block; }
+@keyframes m-towel {
+  0% { transform: translate(0, 0) scale(0.6) rotate(-30deg); animation-timing-function: cubic-bezier(.4,0,.9,.6); }
+  50% { transform: translate(var(--tx), var(--ty)) scale(8) rotate(6deg); }
+  56% { transform: translate(var(--tx), var(--ty)) scale(9.2, 6.4); }
+  64% { transform: translate(var(--tx), var(--ty)) scale(8.2, 8.6); animation-timing-function: ease-in; }
+  72% { transform: translate(var(--tx), var(--ty)) scale(8.6, 8); opacity: 1; }
+  100% { transform: translate(var(--tx), calc(var(--ty) + 140px)) scale(8.6, 9.4); opacity: 0; } }
+/* Weight week: Kulka on the readings card's top-right corner (WeekStampKulka.tsx), the stamp mark on a tile */
+.card.has-stamper { position: relative; margin-top: 60px; }
+.m-stamper { position: absolute; left: 0; top: 0; z-index: 3; }
+.m-stamp-home { position: absolute; right: 14px; bottom: calc(100% - 1px); z-index: 3; }
+.m-stamp-mark { position: absolute; z-index: 2; pointer-events: none; line-height: 0; animation: m-stamp-mark 0.9s ease-out both; }
+.m-stamp-mark svg { display: block; }
+@keyframes m-stamp-mark { 0% { transform: scale(1.6); opacity: 0; } 15% { transform: scale(1); opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .m-trash-lid, .m-trash-paper, .m-weeks { animation: none !important; transition: none !important; }
   .m-confetti { display: none; }
   .m-crane { transition: none !important; }
+  .m-towel, .m-stamp-mark { display: none; }
+  .m-stamper { transition: none !important; }
 }
 
 

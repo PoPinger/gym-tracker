@@ -1,11 +1,14 @@
 // "Moja waga" views: setup, weight panel (summary, weekly-average chart, week list) and week detail
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, CalendarDays, Check, CheckCircle2, ChevronRight, Minus, Pencil, Plus, RotateCcw, TrendingDown, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useDrawOnView } from '../hooks/useDrawOnView';
 import AnimatedValue from './AnimatedValue';
 import WeightRider from './mascot/WeightRider';
 import GoalKulka from './mascot/GoalKulka';
+import WeekStampKulka, { type StampCue } from './mascot/WeekStampKulka';
+import CelebrateMascot from './mascot/CelebrateMascot';
+import Confetti from './mascot/Confetti';
 import { prefersReducedMotion } from '../hooks/useFirstInView';
 import { plural } from '../utils/plural';
 import { trendTone, type WeightGoal } from '../utils/weightTrend';
@@ -179,14 +182,24 @@ export function PanelView({ cycle, first, last, avg, prevAvg, onOpenWeek, onRese
 }
 
 /* ─────────── WEEK ─────────── */
-export function WeekView({ week, goal, avgVal, diffPrev, diffW1, dayNames, inputs, onInput, onSave, saving, saved, onBack, onFinish }: {
+// celebrate: the week was just finished here (Kulka jumps for joy with big confetti over the readings card)
+export function WeekView({ week, goal, avgVal, diffPrev, diffW1, dayNames, inputs, onInput, onSave, saving, saved, onBack, onFinish, celebrate }: {
   week: WeightWeek; goal: string | null; avgVal: number | null; diffPrev: number | null; diffW1: number | null; dayNames: string[];
   inputs: Record<number, string>; onInput: (day: number, v: string) => void; onSave: (logId: number, day: number) => void;
-  saving: Record<number, boolean>; saved: Record<number, boolean>; onBack: () => void; onFinish: () => void;
+  saving: Record<number, boolean>; saved: Record<number, boolean>; onBack: () => void; onFinish: () => void; celebrate: boolean;
 }) {
   const { t } = useLanguage();
   const days = [...week.day_logs].sort((a, b) => a.day_of_week - b.day_of_week);
   const logged = days.filter(d => d.weight_kg != null).length;
+
+  // A day whose save just succeeded: Kulka runs over and stamps its tile
+  const [stamp, setStamp] = useState<StampCue | null>(null);
+  const wasSaved = useRef(saved);
+  useEffect(() => {
+    const i = days.findIndex(d => saved[d.id] && !wasSaved.current[d.id]);
+    wasSaved.current = saved;
+    if (i >= 0) setStamp(s => ({ index: i, seq: (s?.seq ?? 0) + 1 }));
+  }, [saved]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div style={{ maxWidth: 760 }}>
@@ -202,7 +215,8 @@ export function WeekView({ week, goal, avgVal, diffPrev, diffW1, dayNames, input
         <div><span className="day-list-label">{t('vs_week1_label')}</span><Diff d={diffW1} goal={goal} big /></div>
       </div>
 
-      <div className="card">
+      <div className="card has-stamper">
+        {celebrate ? <><Confetti big /><span className="m-stamp-home"><CelebrateMascot week size={48} /></span></> : <WeekStampKulka cue={stamp} />}
         <div className="day-list-label">{t('daily_readings_label')}</div>
         <div className="w-day-grid">
           {days.map(d => (

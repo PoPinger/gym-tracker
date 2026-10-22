@@ -90,6 +90,7 @@ const FEET: Record<string, string> = {
   run2: '....PPPPPP......',
   skid: '.......PPP.PPP..',
   sit: '..PPPP....PPPP..',
+  stomp: '...PPP..........', // right foot raised (pose.stomp)
 };
 const BARBELL = ['yy..................yy', 'yy..................yy', 'yyKKKKKKKKKKKKKKKKKKyy', 'SS..................SS', 'SS..................SS'];
 const DUMBBELL = ['yyy', 'SSS', '.K.', '.K.', 'yyy', 'SSS'];
@@ -120,8 +121,12 @@ const PENCIL = ['..r', '.y.', 'K..'];
 const STAMP = ['KK', 'ee'];
 export const BRICK = ['OOOOOOOOOOOOOO', 'OOOdOOOOOOdOOO', 'OOOOOOOOOOOOOO'];
 const DROP = ['b', 'b'];
+export const TOWEL = ['wwwwwwww', 'bbbbbbbb', 'wwwwwwww', 'bbbbbbbb', 'wwwwwwww', 'w.w.w.w.'];
+const TOWEL_HAND = ['wwww', 'bbbb', 'wwww'];
+const NOTEBOOK = ['wwKww', 'wdKdw', 'wwKdw', 'wwKww'];
+export const STAMP_MARK = ['......e', '.....ee', 'e...ee.', 'ee.ee..', '.eee...', '..e....'];
 
-type Eyes = 'open' | 'blink' | 'happy' | 'effort' | 'half' | 'lookL' | 'lookR' | 'lookUp' | 'sad';
+type Eyes = 'open' | 'blink' | 'happy' | 'effort' | 'half' | 'lookL' | 'lookR' | 'lookUp' | 'sad' | 'angry';
 type Mouth = 'smile' | 'open' | 'grit' | 'frown' | 'flat' | 'pant';
 type Arms = { L: Pt[]; R: Pt[] };
 
@@ -137,6 +142,9 @@ interface Pose {
   pencil?: boolean; stamp?: boolean; brick?: boolean; // in the right hand (the brick in both)
   thumb?: 'L' | 'R';
   kick?: 'back' | 'fwd';
+  stomp?: boolean; // right foot lifted for a stomp
+  towel?: boolean; finger?: boolean; // towel in the right hand, raised index finger (right hand)
+  notebook?: boolean; // small notebook held in front of the belly
 }
 
 function face(c: Canvas, bx: number, by: number, eyes: Eyes, mouth: Mouth) {
@@ -153,6 +161,8 @@ function face(c: Canvas, bx: number, by: number, eyes: Eyes, mouth: Mouth) {
     if (eyes === 'lookR') { P(ex + 1, ey, 'k'); P(ex + 2, ey, 'w'); P(ex + 1, ey + 1, 'k'); P(ex + 2, ey + 1, 'k'); }
     if (eyes === 'lookUp') { P(ex, ey - 1, 'k'); P(ex + 1, ey - 1, 'w'); P(ex, ey, 'k'); P(ex + 1, ey, 'k'); P(ex, ey + 1, 'p'); P(ex + 1, ey + 1, 'p'); }
     if (eyes === 'sad') { P(ex === 3 ? ex + 1 : ex, ey, 'k'); P(ex, ey + 1, 'k'); P(ex + 1, ey + 1, 'k'); }
+    // Brows slanting down toward the nose
+    if (eyes === 'angry') { P(ex === 3 ? ex : ex + 1, ey - 1, 'k'); P(ex === 3 ? ex + 1 : ex, ey, 'k'); P(ex, ey + 1, 'k'); P(ex + 1, ey + 1, 'k'); }
   }
   if (eyes === 'sad') P(3, 8, 'b');
   if (mouth === 'smile') return;
@@ -191,6 +201,7 @@ function compose(pose: Pose): Canvas {
   if (pose.feetFwd) sprite(c, ['PP', 'PP'], bx + 15, by + 12);
   if (pose.kick === 'back') sprite(c, ['PP'], bx - 2, by + 13);
   if (pose.kick === 'fwd') sprite(c, ['PPP'], bx + 15, by + 12);
+  if (pose.stomp) sprite(c, ['PPP'], bx + 10, by + 13);
   face(c, bx, by, pose.eyes ?? 'open', pose.mouth ?? 'smile');
   if (pose.helmet) sprite(c, HELMET, bx, by - 2);
   const arms = pose.arms ?? { L: [[2, 22]], R: [[21, 22]] };
@@ -204,10 +215,13 @@ function compose(pose: Pose): Canvas {
     if (pose.paper) sprite(c, PAPER, ...pose.paper);
     if (pose.clip) sprite(c, pose.clipOk ? CLIPBOARD_OK : CLIPBOARD, ...pose.clip);
     if (pose.brick) sprite(c, BRICK, 5, hl[1] - 3);
+    if (pose.notebook) sprite(c, NOTEBOOK, 9, 22);
     sprite(c, ['pp', 'pp'], hl[0], hl[1] - 1);
     sprite(c, ['pp', 'pp'], hr[0], hr[1] - 1);
     if (pose.pencil) sprite(c, PENCIL, hr[0] - 2, hr[1] - 3);
     if (pose.stamp) sprite(c, STAMP, hr[0], hr[1] + 1);
+    if (pose.towel) sprite(c, TOWEL_HAND, hr[0] - 1, hr[1] - 4);
+    if (pose.finger) sprite(c, ['p', 'p', 'p'], hr[0], hr[1] - 4);
     if (pose.thumb) { const h = pose.thumb === 'L' ? hl : hr; sprite(c, ['p', 'p'], h[0], h[1] - 3); }
   }
   for (const [x, y] of pose.drops ?? []) sprite(c, DROP, x, y);
@@ -298,6 +312,21 @@ const POSES = {
   // Masa / Redukcja (the body is scaled by CSS)
   puff: { arms: { L: [[1, 21]], R: [[22, 21]] }, eyes: 'blink', mouth: 'flat' },
   stretch: { arms: { L: [[3, 23]], R: [[20, 23]] }, eyes: 'open', mouth: 'open' },
+  // Training day skipped: stomps (fists on the hips), winds up and throws the towel; one exercise skipped: wags a finger
+  stomp1: { stomp: true, feet: 'stomp', arms: { L: [[1, 19], [3, 23]], R: [[22, 19], [20, 23]] }, eyes: 'angry', mouth: 'frown' },
+  stomp2: { arms: { L: [[1, 19], [3, 23]], R: [[22, 19], [20, 23]] }, eyes: 'angry', mouth: 'frown', dust: true },
+  windup: { towel: true, arms: { L: [[1, 19], [3, 23]], R: [[22, 15], [21, 10]] }, eyes: 'angry', mouth: 'grit' },
+  throw: { feet: 'skid', arms: { L: [[1, 19], [3, 23]], R: [[21, 19], [17, 19]] }, eyes: 'angry', mouth: 'open' },
+  wagL: { finger: true, arms: { L: IDLE_ARMS.L, R: [[22, 18], [21, 15]] }, eyes: 'lookL', mouth: 'frown' },
+  wagR: { finger: true, arms: { L: IDLE_ARMS.L, R: [[22, 18], [23, 15]] }, eyes: 'lookR', mouth: 'frown' },
+  // Weight week: writes in a notebook, pockets it, looks around; stamps a confirmed day
+  note1: { notebook: true, pencil: true, arms: write([14, 23]), eyes: 'lookR' },
+  note2: { notebook: true, pencil: true, arms: write([15, 22]), eyes: 'lookR' },
+  pocket: { arms: { L: IDLE_ARMS.L, R: [[20, 24], [17, 25]] }, eyes: 'happy' },
+  bare: { arms: IDLE_ARMS },
+  bareBlink: { arms: IDLE_ARMS, eyes: 'blink' },
+  dayStampUp: { stamp: true, arms: { L: IDLE_ARMS.L, R: [[21, 16], [18, 12]] }, eyes: 'effort', mouth: 'grit' },
+  dayStampDown: { stamp: true, arms: { L: IDLE_ARMS.L, R: [[21, 22], [19, 24]] }, eyes: 'happy', mouth: 'open' },
 } satisfies Record<string, Pose>;
 
 export type FrameName = keyof typeof POSES;
