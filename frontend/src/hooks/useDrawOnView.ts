@@ -8,7 +8,7 @@ import { prefersReducedMotion, useFirstInView } from './useFirstInView';
 const DRAW_MS = 3600;
 const CAP_PAD = 4; // keeps the round line cap hidden before a line starts drawing
 // Inverse of ease-out cubic: when (ms) the drawing front reaches a horizontal position p (0–1)
-const reachAt = (p: number) => (1 - Math.cbrt(1 - Math.min(1, Math.max(0, p)))) * DRAW_MS;
+export const reachAt = (p: number) => (1 - Math.cbrt(1 - Math.min(1, Math.max(0, p)))) * DRAW_MS;
 
 function screenPoints(el: SVGGeometryElement): DOMPoint[] {
   const m = el.getScreenCTM();
@@ -57,19 +57,13 @@ function draw(root: Element) {
   });
 }
 
-// The last dot fades in by DRAW_MS + 480 ms (see draw); `drawn` turns true after that
-const DONE_MS = DRAW_MS + 500;
-
-// `pending` keeps lines and dots hidden (class draw-pending) until the chart has been seen;
-// `drawn` tells when the draw animation has fully finished
+// `pending` keeps lines and dots hidden (class draw-pending) until the chart has been seen
 export function useDrawOnView<T extends Element>() {
   const [pending, setPending] = useState(() => !prefersReducedMotion());
-  const [drawn, setDrawn] = useState(false);
   const ref = useFirstInView<T>(el => {
-    if (prefersReducedMotion()) { setPending(false); setDrawn(true); return; }
+    if (prefersReducedMotion()) { setPending(false); return; }
     draw(el);
     setPending(false);
-    window.setTimeout(() => setDrawn(true), DONE_MS);
   }, 0.3);
-  return [ref, pending, drawn] as const;
+  return [ref, pending] as const;
 }

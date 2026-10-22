@@ -1,20 +1,17 @@
-// Kulka on the "Moja waga" chart: once the line has finished drawing, appears on the first point and
-// follows the real trend point to point (slides down a drop, climbs a rise, walks a flat part),
-// then idles on the last point. Positions are in % of the plot box, like the chart's dots.
+// Kulka on the "Moja waga" chart: starts on the first point together with the line and rides the tip
+// of the line while it is drawn (same ease-out timeline as useDrawOnView), sliding down a drop,
+// climbing a rise, walking a flat part; ends on the last point as the line finishes, then idles.
+// Positions are in % of the plot box, like the chart's dots.
 import { useEffect, useRef, useState } from 'react';
 import Mascot, { type MascotState } from './Mascot';
 import { prefersReducedMotion } from '../../hooks/useFirstInView';
+import { reachAt } from '../../hooks/useDrawOnView';
 
 export interface RiderPoint { x: number; y: number; kg: number }
 
 const FLAT_KG = 0.2; // smaller weekly changes count as flat
-const MOVES = {
-  slide: { ms: 750, easing: 'ease-in' },
-  climb: { ms: 1300, easing: 'linear' },
-  walk: { ms: 900, easing: 'linear' },
-} as const;
 
-export default function WeightRider({ pts, drawn }: { pts: RiderPoint[]; drawn: boolean }) {
+export default function WeightRider({ pts, drawing }: { pts: RiderPoint[]; drawing: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<MascotState>('idle');
   const [reduced] = useState(prefersReducedMotion);
@@ -23,28 +20,33 @@ export default function WeightRider({ pts, drawn }: { pts: RiderPoint[]; drawn: 
   useEffect(() => {
     const el = ref.current;
     const route = ptsRef.current;
-    if (!drawn || reduced || !el?.animate || route.length < 2) return;
-    let cancelled = false;
-    const anims: Animation[] = [];
-    (async () => {
-      await new Promise(r => window.setTimeout(r, 450)); // a moment on the first point
-      for (let k = 1; k < route.length && !cancelled; k++) {
-        const a = route[k - 1], b = route[k], d = b.kg - a.kg;
-        const m = d <= -FLAT_KG ? 'slide' : d >= FLAT_KG ? 'climb' : 'walk';
-        setMode(m);
-        const anim = el.animate(
-          [{ left: `${a.x}%`, top: `${a.y}%` }, { left: `${b.x}%`, top: `${b.y}%` }],
-          { duration: MOVES[m].ms, easing: MOVES[m].easing, fill: 'forwards' });
-        anims.push(anim);
-        try { await anim.finished; } catch { return; }
-      }
-      if (!cancelled) setMode('idle');
-    })();
-    return () => { cancelled = true; anims.forEach(a => a.cancel()); };
-  }, [drawn, reduced]);
+    if (!drawing || reduced || !el || route.length < 2) return;
+    // When the line reaches each point: same timeline as the line (useDrawOnView), linear within a segment
+    const x0 = route[0].x, span = route[route.length - 1].x - x0 || 1;
+    const at = route.map(p => reachAt((p.x - x0) / span));
+    const end = at[at.length - 1];
+    const t0 = performance.now();
+    let raf = 0;
+    let k = 0; // current segment route[k] → route[k + 1]
+    let shown: MascotState | null = null;
+    const tick = (now: number) => {
+      const t = Math.min(end, now - t0);
+      while (k < route.length - 2 && t >= at[k + 1]) k++;
+      const a = route[k], b = route[k + 1];
+      const f = at[k + 1] > at[k] ? Math.min(1, (t - at[k]) / (at[k + 1] - at[k])) : 1;
+      el.style.left = `${a.x + (b.x - a.x) * f}%`;
+      el.style.top = `${a.y + (b.y - a.y) * f}%`;
+      const d = b.kg - a.kg;
+      const m: MascotState = t >= end ? 'idle' : d <= -FLAT_KG ? 'slide' : d >= FLAT_KG ? 'climb' : 'walk';
+      if (m !== shown) { shown = m; setMode(m); }
+      if (t < end) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [drawing, reduced]);
 
-  if (!drawn || pts.length < 2) return null;
-  // Reduced motion: no travel, Kulka simply stands on the last point
+  if (!drawing || pts.length < 2) return null;
+  // Reduced motion: no ride, Kulka simply stands on the last point
   const start = reduced ? pts[pts.length - 1] : pts[0];
   return (
     <div ref={ref} className="m-rider" style={{ left: `${start.x}%`, top: `${start.y}%` }}>
