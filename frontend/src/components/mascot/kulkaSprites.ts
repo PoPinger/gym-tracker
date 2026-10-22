@@ -311,7 +311,7 @@ const POSES = {
   thumbsUpH: { ...B, thumb: 'L', arms: { L: [[2, 16], [2, 13]], R: IDLE_ARMS.R }, eyes: 'happy', mouth: 'open' },
   // Masa / Redukcja (the body is scaled by CSS)
   puff: { arms: { L: [[1, 21]], R: [[22, 21]] }, eyes: 'blink', mouth: 'flat' },
-  stretch: { arms: { L: [[3, 23]], R: [[20, 23]] }, eyes: 'open', mouth: 'open' },
+  shrink: { arms: { L: [[3, 23]], R: [[20, 23]] }, eyes: 'open', mouth: 'open' },
   // Training day skipped: stomps (fists on the hips), winds up and throws the towel; one exercise skipped: wags a finger
   stomp1: { stomp: true, feet: 'stomp', arms: { L: [[1, 19], [3, 23]], R: [[22, 19], [20, 23]] }, eyes: 'angry', mouth: 'frown' },
   stomp2: { arms: { L: [[1, 19], [3, 23]], R: [[22, 19], [20, 23]] }, eyes: 'angry', mouth: 'frown', dust: true },

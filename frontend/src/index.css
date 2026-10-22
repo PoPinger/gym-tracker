@@ -331,15 +331,16 @@ a { text-decoration: none; color: inherit; }
 .m-crane-cable { position: absolute; left: 4px; bottom: 100%; width: 2px; height: var(--m-top, 400px); background: #334155; }
 .m-crane-brick, .m-crane-can { position: absolute; z-index: 3; pointer-events: none; line-height: 0; }
 .m-crane-can { transform: translateY(-100%); }
-/* Moja waga: Kulka on top of the Masa / Redukcja toggle (GoalKulka.tsx); inflated / stretched on a switch */
+/* Moja waga: Kulka on top of the Masa / Redukcja toggle (GoalKulka.tsx); grows / shrinks from his feet on a click */
 .w-panel-actions.has-mascot { padding-top: 40px; }
 .w-goal-wrap { position: relative; display: inline-flex; }
 .m-goal { position: absolute; right: 10px; bottom: calc(100% - 3px); z-index: 5; }
-.m-goal-bulk svg, .m-goal-cut svg { transform-origin: 50% 100%; animation: 1.8s ease-in-out both; }
-.m-goal-bulk svg { animation-name: m-inflate; }
-.m-goal-cut svg { animation-name: m-thin; }
-@keyframes m-inflate { 0%, 100% { transform: none; } 33%, 67% { transform: scale(1.45, 1.25); } }
-@keyframes m-thin { 0%, 100% { transform: none; } 33%, 67% { transform: scale(0.6, 1.4); } }
+/* While sizing: over everything but dialogs (also the mobile top bar, z-index 300), never blocks clicks */
+.m-goal.m-goal-sizing { z-index: 320; }
+.m-goal.m-goal-sizing, .m-goal.m-goal-sizing .mascot { pointer-events: none; }
+.m-goal-bulk svg, .m-goal-cut svg { transform-origin: 50% 100%; animation: m-goal-size 1.7s ease-in-out both; }
+/* 0.6 s there, 0.5 s hold, 0.6 s back; scale and shift set per click by GoalKulka.tsx */
+@keyframes m-goal-size { 0%, 100% { transform: none; } 35.3%, 64.7% { transform: translateX(var(--gdx, 0px)) scale(var(--gx, 1), var(--gy, 1)); } }
 /* Training day skipped: stomps, then the towel (TowelThrow.tsx) flies at the screen, hits the glass, slides down;
    one exercise skipped: head shake */
 .m-s-stomp { animation: m-stomp 0.34s ease-in 2; }

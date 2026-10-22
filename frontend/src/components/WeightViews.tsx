@@ -5,7 +5,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useDrawOnView } from '../hooks/useDrawOnView';
 import AnimatedValue from './AnimatedValue';
 import WeightRider from './mascot/WeightRider';
-import GoalKulka from './mascot/GoalKulka';
+import GoalKulka, { type GoalPick } from './mascot/GoalKulka';
 import WeekStampKulka, { type StampCue } from './mascot/WeekStampKulka';
 import CelebrateMascot from './mascot/CelebrateMascot';
 import Confetti from './mascot/Confetti';
@@ -110,10 +110,10 @@ function WeeklyChart({ weeks, avg, goal, onRiderArrive }: {
 }
 
 /* ─────────── PANEL ─────────── */
-export function PanelView({ cycle, first, last, avg, prevAvg, onOpenWeek, onReset, onEditDuration, goalSwitch }: {
+export function PanelView({ cycle, first, last, avg, prevAvg, onOpenWeek, onReset, onEditDuration, goalSwitch, goalPick }: {
   cycle: WeightCycle; first: number | null; last: number | null;
   avg: (w: WeightWeek) => number | null; prevAvg: (n: number) => number | null;
-  onOpenWeek: (w: WeightWeek) => void; onReset: () => void; onEditDuration: () => void; goalSwitch: ReactNode;
+  onOpenWeek: (w: WeightWeek) => void; onReset: () => void; onEditDuration: () => void; goalSwitch: ReactNode; goalPick: GoalPick | null;
 }) {
   const { t } = useLanguage();
   const goal = cycle.goal;
@@ -135,7 +135,7 @@ export function PanelView({ cycle, first, last, avg, prevAvg, onOpenWeek, onRese
         <div className="w-panel-actions has-mascot">
           <span className="w-goal-wrap">
             {goalSwitch}
-            {(!rides || riderAt) && <GoalKulka goal={goal} from={riderAt} />}
+            {(!rides || riderAt) && <GoalKulka pick={goalPick} from={riderAt} />}
           </span>
           <button className="btn btn-outline btn-sm" onClick={onEditDuration}><Pencil size={13} /> {t('edit_btn')}</button>
           <button className="btn btn-outline btn-sm btn-danger-outline" onClick={onReset}><RotateCcw size={13} /> {t('reset_btn')}</button>

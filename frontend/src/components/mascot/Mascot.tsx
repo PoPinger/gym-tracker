@@ -57,9 +57,9 @@ const CLIPS = {
   pushDown: { frames: [['pushDown', 1000]] },
   kick: { frames: [['kickBack', 220], ['kickFwd', 1000]] },
   wipe: { frames: [['wipe1', 120], ['wipe2', 120], ['wipe1', 120], ['wipe2', 120], ['thumbsUpH', 1000]] },
-  // Masa / Redukcja: the body is inflated / stretched by CSS (index.css)
+  // Masa / Redukcja: the body is scaled up / down by CSS (index.css)
   puff: { frames: [['puff', 1000]] },
-  stretch: { frames: [['stretch', 1000]] },
+  shrink: { frames: [['shrink', 1000]] },
   // Training day: annoyed stomps, then the towel throw (TowelThrow.tsx flies it at THROW_AT_MS); a finger wag
   annoyed: { frames: [['stomp1', 170], ['stomp2', 170], ['stomp1', 170], ['stomp2', 170], ['windup', 240], ['throw', 1000]], cls: 'm-s-stomp' },
   wag: { frames: [['wagL', 150], ['wagR', 150], ['wagL', 150], ['wagR', 150], ['wagL', 200]], cls: 'm-s-shake' },
@@ -72,7 +72,7 @@ type ClipName = keyof typeof CLIPS;
 export type MascotState = 'idle' | 'press' | 'done' | 'progressUp' | 'progressDown' | 'skipped' | 'slide' | 'climb' | 'walk' | 'run' | 'skid'
   | 'happy' | 'worry' | 'hide' | 'toss' | 'walkBar' | 'cheer' | 'jump'
   | 'build' | 'buildFast' | 'stamp' | 'shrug' | 'ride' | 'jumpH'
-  | 'harness' | 'tick' | 'runH' | 'carry' | 'pushUp' | 'pushDown' | 'kick' | 'wipe' | 'puff' | 'stretch'
+  | 'harness' | 'tick' | 'runH' | 'carry' | 'pushUp' | 'pushDown' | 'kick' | 'wipe' | 'puff' | 'shrink'
   | 'annoyed' | 'wag' | 'notebook' | 'dayStamp';
 export type MascotEntrance = 'none' | 'rope' | 'run' | 'peek' | 'trampoline' | 'parachute';
 
@@ -83,7 +83,7 @@ const STATIC: Record<MascotState, FrameName> = {
   happy: 'idleHappy', worry: 'paperWorry', hide: 'paperHide', toss: 'smile', walkBar: 'walkBar1', cheer: 'cheer', jump: 'jump',
   build: 'writeA', buildFast: 'writeA', stamp: 'thumbsUp', shrug: 'tuck', ride: 'ride', jumpH: 'jumpH',
   harness: 'harness', tick: 'tick1', runH: 'runH1', carry: 'carry1', pushUp: 'pushUp', pushDown: 'pushDown', kick: 'kickFwd',
-  wipe: 'thumbsUpH', puff: 'puff', stretch: 'stretch',
+  wipe: 'thumbsUpH', puff: 'puff', shrink: 'shrink',
   annoyed: 'bored', wag: 'wagL', notebook: 'note1', dayStamp: 'dayStampDown',
 };
 

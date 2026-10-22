@@ -7,6 +7,7 @@ import BuilderKulka, { type BuilderOutcome } from '../components/mascot/BuilderK
 import { useLanguage } from '../i18n/LanguageContext';
 import type { WeightCycle, WeightWeek } from '../types';
 import GoalSwitch from '../components/GoalSwitch';
+import type { GoalPick } from '../components/mascot/GoalKulka';
 import { SetupView, PanelView, WeekView } from '../components/WeightViews';
 import { lastLoggedWeight, type WeightGoal } from '../utils/weightTrend';
 import { plural } from '../utils/plural';
@@ -71,6 +72,8 @@ export default function MyWeight() {
   };
 
   const [goalSaving, setGoalSaving] = useState(false);
+  // Every click on Masa / Redukcja (also the selected one): Kulka on the toggle grows / shrinks
+  const [goalPick, setGoalPick]     = useState<GoalPick | null>(null);
   const changeGoal = async (goal: WeightGoal) => {
     if (!cycle) return;
     setGoalSaving(true);
@@ -197,7 +200,8 @@ export default function MyWeight() {
         avg={computeAverage} prevAvg={getPrevWeekAvg}
         onOpenWeek={week => { setSelectedWeek(week); setDoneWeekId(null); setView('week-detail'); }} onReset={() => setShowReset(true)}
         onEditDuration={() => { setEditMonths(cycle.months); setDurationError(''); setDurationIntro(true); }}
-        goalSwitch={<GoalSwitch goal={cycle.goal} onChange={changeGoal} disabled={goalSaving} />} />
+        goalSwitch={<GoalSwitch goal={cycle.goal} onChange={changeGoal} disabled={goalSaving}
+          onPick={g => setGoalPick(p => ({ goal: g, seq: (p?.seq ?? 0) + 1 }))} />} goalPick={goalPick} />
       {showReset && (
         <ConfirmDialog
           title={t('reset_weight_title')}
