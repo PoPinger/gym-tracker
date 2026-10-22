@@ -111,3 +111,7 @@ Implemented in `frontend/src/utils/progress.ts` and used in `pages/MyPlans.tsx`:
 - Progress is shown **only when every set has both weight and reps**. If any set is missing a value, the score is `null` and no progress is shown.
 - **Progress %** = `(current − reference) / reference × 100`, rounded to one decimal (`progressPct`). It is compared against the previous week and against week 1.
 - **Format** (`formatPct`): one decimal with a comma as the decimal separator (pl-PL locale), dropping a trailing `,0` (e.g. `+2,5%`, `+3%`, `−1,2%`). Uses the true minus sign `−` for negative values.
+
+## Mascot (Kulka) spec
+
+Planned mascot changes are specified page by page in `docs/mascot-spec.md`, split into Stage A (sections 1, 2, 6, 7), Stage B (3, 4, 5) and Stage C (8, 9). Read it before working on the mascot (`frontend/src/components/mascot/`) and implement one stage at a time.
