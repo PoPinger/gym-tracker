@@ -29,18 +29,28 @@ const CLIPS = {
   hang: { frames: [['hang', 1000]] },
   jump: { frames: [['jump', 1000]] },
   parachute: { frames: [['parachute', 1000]] },
+  paraFold: { frames: [['paraFold', 200], ['paraBundle', 220]] },
+  happy: { frames: [['idleHappy', 2600], ['blink', 140], ['idleHappy', 1500], ['blink', 140]], loop: true, bob: true },
+  // Delete dialogs: unsure look at the paper, hiding it (cancel), throwing it away (confirm)
+  worry: { frames: [['paperLook', 1400], ['paperWorry', 900]], loop: true },
+  hide: { frames: [['paperHide', 1000]] },
+  toss: { frames: [['toss', 450], ['smile', 600]] },
+  walkBar: { frames: [['walkBar1', 200], ['walkBar2', 200]], loop: true },
+  cheer: { frames: [['cheer', 1000]], cls: 'm-s-hop' },
   peekL: { frames: [['peekL', 1000]] },
   peekR: { frames: [['peekR', 1000]] },
 } satisfies Record<string, Clip>;
 
 type ClipName = keyof typeof CLIPS;
-export type MascotState = 'idle' | 'press' | 'done' | 'progressUp' | 'progressDown' | 'skipped' | 'slide' | 'climb' | 'walk' | 'run' | 'skid';
+export type MascotState = 'idle' | 'press' | 'done' | 'progressUp' | 'progressDown' | 'skipped' | 'slide' | 'climb' | 'walk' | 'run' | 'skid'
+  | 'happy' | 'worry' | 'hide' | 'toss' | 'walkBar' | 'cheer';
 export type MascotEntrance = 'none' | 'rope' | 'run' | 'peek' | 'trampoline' | 'parachute';
 
 // Static pose per state for reduced motion
 const STATIC: Record<MascotState, FrameName> = {
   idle: 'idle', press: 'press3', done: 'rest', progressUp: 'jump', progressDown: 'sad', skipped: 'bored',
   slide: 'slide', climb: 'climb1', walk: 'walk1', run: 'run1', skid: 'skid',
+  happy: 'idleHappy', worry: 'paperWorry', hide: 'paperHide', toss: 'smile', walkBar: 'walkBar1', cheer: 'cheer',
 };
 
 // Entrance = timed steps of (pose clip, CSS class that moves the mascot); durations match index.css
@@ -52,7 +62,7 @@ const ENTRANCES: Record<Exclude<MascotEntrance, 'none'>, { clip: ClipName; ms: n
     { clip: 'peekL', ms: 450, cls: 'm-e-peek-hold' }, { clip: 'jump', ms: 550, cls: 'm-e-peek-hop' },
   ],
   trampoline: [{ clip: 'jump', ms: 750, cls: 'm-e-tramp' }, { clip: 'idle', ms: 260, cls: 'm-e-land' }],
-  parachute: [{ clip: 'parachute', ms: 2400, cls: 'm-e-para' }, { clip: 'idle', ms: 260, cls: 'm-e-land' }],
+  parachute: [{ clip: 'parachute', ms: 2400, cls: 'm-e-para' }, { clip: 'paraFold', ms: 420, cls: 'm-e-land' }],
 };
 
 const WAVE_MS = 1200;
@@ -109,13 +119,14 @@ export default function Mascot({ state = 'idle', entrance = 'none', size = 48, c
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    // On mobile the fixed top bar covers the top of the screen: entrances from above start right below it
+    // On mobile the fixed top bar covers the top of the screen: entrances from above start right below it,
+    // except the rope, which hangs from the very top of the screen over the bar (index.css raises it)
     const bar = document.querySelector('.topbar')?.getBoundingClientRect();
-    const top = bar && bar.height > 0 ? Math.max(0, bar.bottom) : 0;
+    const top = entrance !== 'rope' && bar && bar.height > 0 ? Math.max(0, bar.bottom) : 0;
     el.style.setProperty('--m-top', `${Math.round(r.bottom - top)}px`);
     el.style.setProperty('--m-left', `${Math.round(r.right)}px`);
     el.style.setProperty('--m-below', `${Math.round(window.innerHeight - r.top)}px`);
-  }, []);
+  }, [entrance]);
 
   // Advance the entrance steps once, on mount
   useEffect(() => {

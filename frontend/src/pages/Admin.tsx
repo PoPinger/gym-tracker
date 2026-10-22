@@ -62,7 +62,7 @@ export default function Admin() {
           <h1 className="page-title">{t('admin_title')}</h1>
           <p className="page-subtitle">{t('admin_sub')}</p>
         </div>
-        <Mascot entrance="parachute" size={44} className="m-spot-admin" />
+        <Mascot entrance="rope" size={44} className="m-spot-admin" />
       </div>
 
       {error && <div className="alert alert-error"><span>{error}</span></div>}

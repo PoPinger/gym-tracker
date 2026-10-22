@@ -11,6 +11,7 @@ const PAL: Record<string, string> = {
   p: '#4f46e5', P: '#3730a3', l: '#c7d2fe',
   w: '#ffffff', r: '#fb7185', y: '#f59e0b', S: '#e9a979', b: '#38bdf8',
   d: '#cbd5e1', // dust (no outline)
+  g: '#94a3b8', G: '#64748b', // trash can
 };
 const NO_OUTLINE = new Set(['K', 'd']);
 
@@ -20,7 +21,7 @@ type Px = [number, number, string];
 type Pt = [number, number];
 
 const newCanvas = (): Canvas => Array.from({ length: GRID_H }, () => Array<Cell>(GRID_W).fill(null));
-const put = (c: Canvas, x: number, y: number, ch: string) => { if (x >= 0 && x < GRID_W && y >= 0 && y < GRID_H) c[y][x] = ch; };
+const put = (c: Canvas, x: number, y: number, ch: string) => { if (y >= 0 && y < c.length && x >= 0 && x < c[y].length) c[y][x] = ch; };
 
 // Fill-only pixels; the 4-neighbour ring not covered by the part itself is outlined first
 function layer(c: Canvas, px: Px[]) {
@@ -95,6 +96,13 @@ const CANOPY = [
   'yyyyyyyyyyyyyyyyyyyy',
   'y..yy..yy..yy..yy..y',
 ];
+const CANOPY_FOLD = [
+  '...yyyyyyyy...',
+  '.yyyyyyyyyyyy.',
+  'yy.yy.yy.yy.yy',
+];
+const CANOPY_BUNDLE = ['.yyyy.', 'yywwyy', '.yyyy.'];
+const PAPER = ['wwww', 'wddw', 'wwww'];
 const DROP = ['b', 'b'];
 
 type Eyes = 'open' | 'blink' | 'happy' | 'effort' | 'half' | 'lookL' | 'lookR' | 'sad';
@@ -103,8 +111,11 @@ type Arms = { L: Pt[]; R: Pt[] };
 
 interface Pose {
   sit?: boolean; feet?: keyof typeof FEET; eyes?: Eyes; mouth?: Mouth; arms?: Arms;
-  bar?: boolean; dumbbell?: boolean; feetFwd?: boolean; drops?: Pt[]; dust?: boolean; canopy?: boolean;
+  bar?: boolean; dumbbell?: boolean; feetFwd?: boolean; drops?: Pt[]; dust?: boolean;
+  canopy?: 'open' | 'fold' | 'bundle';
   lArmFrom?: Pt; // arm starting elsewhere than the shoulder (head-on-hand)
+  noArms?: boolean; // hands behind the back
+  paper?: Pt; paperBehind?: Pt; // sheet of paper (top-left), in front of or behind the body
 }
 
 function face(c: Canvas, bx: number, by: number, eyes: Eyes, mouth: Mouth) {
@@ -137,11 +148,18 @@ function compose(pose: Pose): Canvas {
   const c = newCanvas();
   const bx = 4, by = pose.sit ? 12 : 11;
   const dy = by - 11;
-  if (pose.canopy) {
+  if (pose.canopy === 'open') {
     sprite(c, CANOPY, 2, 0);
     limb(c, [[3, 5], [5, 12]], 1, 'K');
     limb(c, [[20, 5], [18, 12]], 1, 'K');
   }
+  if (pose.canopy === 'fold') {
+    sprite(c, CANOPY_FOLD, 5, 3);
+    limb(c, [[5, 6], [6, 12]], 1, 'K');
+    limb(c, [[18, 6], [17, 12]], 1, 'K');
+  }
+  if (pose.canopy === 'bundle') sprite(c, CANOPY_BUNDLE, 9, 7);
+  if (pose.paperBehind) sprite(c, PAPER, ...pose.paperBehind);
   sprite(c, BODY, bx, by);
   sprite(c, TAIL, bx + 16, by + 3);
   if (pose.sit) sprite(c, [FEET.sit], bx, by + 14);
@@ -150,13 +168,16 @@ function compose(pose: Pose): Canvas {
   face(c, bx, by, pose.eyes ?? 'open', pose.mouth ?? 'smile');
   const arms = pose.arms ?? { L: [[2, 22]], R: [[21, 22]] };
   const shL: Pt = pose.lArmFrom ?? [4, 20 + dy], shR: Pt = [19, 20 + dy];
-  limb(c, [shL, ...arms.L], 2, 'p');
-  limb(c, [shR, ...arms.R], 2, 'p');
-  const hl = last(arms.L), hr = last(arms.R);
-  if (pose.bar) sprite(c, BARBELL, 1, hl[1] - 2);
-  if (pose.dumbbell) sprite(c, DUMBBELL, hr[0] - 1, hr[1] - 2);
-  sprite(c, ['pp', 'pp'], hl[0], hl[1] - 1);
-  sprite(c, ['pp', 'pp'], hr[0], hr[1] - 1);
+  if (!pose.noArms) {
+    limb(c, [shL, ...arms.L], 2, 'p');
+    limb(c, [shR, ...arms.R], 2, 'p');
+    const hl = last(arms.L), hr = last(arms.R);
+    if (pose.bar) sprite(c, BARBELL, 1, hl[1] - 2);
+    if (pose.dumbbell) sprite(c, DUMBBELL, hr[0] - 1, hr[1] - 2);
+    if (pose.paper) sprite(c, PAPER, ...pose.paper);
+    sprite(c, ['pp', 'pp'], hl[0], hl[1] - 1);
+    sprite(c, ['pp', 'pp'], hr[0], hr[1] - 1);
+  }
   for (const [x, y] of pose.drops ?? []) sprite(c, DROP, x, y);
   if (pose.dust) { sprite(c, ['.dd', 'dddd'], 0, 25); sprite(c, ['d'], 3, 23); }
   return c;
@@ -165,6 +186,8 @@ function compose(pose: Pose): Canvas {
 /* ─────────── Frames ─────────── */
 const IDLE_ARMS: Arms = { L: [[2, 22]], R: [[21, 22]] };
 const PRESS_UP: Arms = { L: [[2, 12], [4, 4]], R: [[21, 12], [19, 4]] };
+const BAR_CHEST: Arms = { L: [[1, 23], [3, 21]], R: [[22, 23], [20, 21]] };
+const PAPER_UP: Arms = { L: [[2, 22]], R: [[22, 18], [21, 15]] };
 const POSES = {
   idle: { arms: IDLE_ARMS, dumbbell: true },
   blink: { arms: IDLE_ARMS, dumbbell: true, eyes: 'blink' },
@@ -193,7 +216,18 @@ const POSES = {
   run2: { feet: 'run2', arms: { L: [[2, 23]], R: [[22, 18]] }, mouth: 'open' },
   skid: { feet: 'skid', arms: { L: [[1, 17]], R: [[22, 17]] }, eyes: 'effort', mouth: 'grit', dust: true },
   hang: { arms: { L: [[7, 14], [11, 6]], R: [[16, 14], [12, 9]] }, eyes: 'happy' },
-  parachute: { canopy: true, arms: { L: [[5, 12]], R: [[18, 12]] }, eyes: 'happy' },
+  parachute: { canopy: 'open', arms: { L: [[5, 12]], R: [[18, 12]] }, eyes: 'happy' },
+  paraFold: { canopy: 'fold', arms: { L: [[6, 13]], R: [[17, 13]] }, eyes: 'happy' },
+  paraBundle: { canopy: 'bundle', arms: IDLE_ARMS, eyes: 'blink' },
+  idleHappy: { arms: IDLE_ARMS, dumbbell: true, eyes: 'happy' },
+  smile: { arms: IDLE_ARMS, eyes: 'happy' },
+  paperLook: { arms: PAPER_UP, paper: [20, 11], eyes: 'lookR', mouth: 'flat' },
+  paperWorry: { arms: PAPER_UP, paper: [20, 11], mouth: 'flat', drops: [[1, 12]] },
+  paperHide: { noArms: true, paperBehind: [19, 17], eyes: 'happy' },
+  toss: { arms: { L: [[2, 22]], R: [[22, 15], [23, 10]] }, eyes: 'happy', mouth: 'open' },
+  walkBar1: { feet: 'walk1', arms: BAR_CHEST, bar: true },
+  walkBar2: { feet: 'walk2', arms: BAR_CHEST, bar: true },
+  cheer: { feet: 'tuck', arms: PRESS_UP, bar: true, eyes: 'happy', mouth: 'open' },
   peekL: { arms: IDLE_ARMS, eyes: 'lookL' },
   peekR: { arms: IDLE_ARMS, eyes: 'lookR' },
 } satisfies Record<string, Pose>;
@@ -206,11 +240,11 @@ function toPaths(c: Canvas): FramePath[] {
   const byColor = new Map<string, string>();
   c.forEach((row, y) => {
     let x = 0;
-    while (x < GRID_W) {
+    while (x < row.length) {
       const ch = row[x];
       if (!ch) { x++; continue; }
       let e = x;
-      while (e + 1 < GRID_W && row[e + 1] === ch) e++;
+      while (e + 1 < row.length && row[e + 1] === ch) e++;
       byColor.set(ch, (byColor.get(ch) ?? '') + `M${x} ${y}h${e - x + 1}v1h${-(e - x + 1)}z`);
       x = e + 1;
     }
@@ -223,4 +257,12 @@ export function framePaths(name: FrameName): FramePath[] {
   let f = cache.get(name);
   if (!f) { f = toPaths(compose(POSES[name] as Pose)); cache.set(name, f); }
   return f;
+}
+
+// Standalone props drawn in Kulka's style (outlined, same palette), e.g. the trash can of the delete dialogs
+export function propPaths(rows: string[]): { w: number; h: number; paths: FramePath[] } {
+  const w = Math.max(...rows.map(r => r.length)) + 2, h = rows.length + 2;
+  const c: Canvas = Array.from({ length: h }, () => Array<Cell>(w).fill(null));
+  sprite(c, rows, 1, 1);
+  return { w, h, paths: toPaths(c) };
 }

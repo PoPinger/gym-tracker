@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { weightApi, apiErrorDetail } from '../services/api';
 import AppLoader from '../components/AppLoader';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { trashDelay } from '../components/mascot/trash';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { WeightCycle, WeightWeek } from '../types';
 import GoalSwitch from '../components/GoalSwitch';
@@ -9,24 +11,6 @@ import { lastLoggedWeight, type WeightGoal } from '../utils/weightTrend';
 import { plural } from '../utils/plural';
 
 type View = 'setup' | 'weeks' | 'week-detail';
-
-function ConfirmDialog({ title, body, onOk, onCancel, okLabel, cancelLabel, okClass = 'btn-primary' }: {
-  title: string; body: string; onOk: () => void; onCancel: () => void;
-  okLabel: string; cancelLabel: string; okClass?: string;
-}) {
-  return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <div className="modal-title">{title}</div>
-        <p className="modal-body">{body}</p>
-        <div className="modal-actions">
-          <button className="btn btn-outline btn-sm" onClick={onCancel}>{cancelLabel}</button>
-          <button className={`btn ${okClass} btn-sm`} onClick={onOk}>{okLabel}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function MyWeight() {
   const { t } = useLanguage();
@@ -99,17 +83,17 @@ export default function MyWeight() {
   const [durationError, setDurationError]   = useState('');
   const [showShorten, setShowShorten]       = useState(false);
 
-  const saveDuration = async () => {
+  // closing: the shorten dialog's trash animation, awaited with the request before the dialog closes
+  const saveDuration = async (closing: Promise<void> = Promise.resolve()) => {
     if (!cycle || editMonths == null) return;
-    setShowShorten(false);
-    if (editMonths === cycle.months) { setEditMonths(null); return; }
+    if (editMonths === cycle.months) { setShowShorten(false); setEditMonths(null); return; }
     setDurationSaving(true); setDurationError('');
     try {
-      const res = await weightApi.updateMonths(cycle.id, editMonths);
+      const [res] = await Promise.all([weightApi.updateMonths(cycle.id, editMonths), closing]);
       setCycle(res.data); setEditMonths(null);
     } catch (err) {
       setDurationError(apiErrorDetail(err) || t('save_changes_error'));
-    } finally { setDurationSaving(false); }
+    } finally { setDurationSaving(false); setShowShorten(false); }
   };
 
   const handleSaveDuration = () => {
@@ -119,7 +103,7 @@ export default function MyWeight() {
 
   const handleReset = async () => {
     if (!cycle) return;
-    await weightApi.deleteCycle(cycle.id);
+    await Promise.all([weightApi.deleteCycle(cycle.id), trashDelay()]);
     setCycle(null); setView('setup'); setShowReset(false);
   };
 
@@ -203,7 +187,7 @@ export default function MyWeight() {
         <ConfirmDialog
           title={t('reset_weight_title')}
           body={t('reset_weight_body')}
-          okLabel={t('reset_btn')} okClass="btn-danger"
+          okLabel={t('reset_btn')} okClass="btn-danger" trash
           cancelLabel={t('cancel_btn')}
           onOk={handleReset} onCancel={() => setShowReset(false)}
         />
@@ -239,9 +223,9 @@ export default function MyWeight() {
         <ConfirmDialog
           title={t('shorten_cycle_title')}
           body={t('shorten_cycle_body').replace('{from}', String(editMonths * 4 + 1)).replace('{to}', String(cycle.months * 4))}
-          okLabel={t('shorten_cycle_confirm')} okClass="btn-danger"
+          okLabel={t('shorten_cycle_confirm')} okClass="btn-danger" trash
           cancelLabel={t('cancel_btn')}
-          onOk={saveDuration} onCancel={() => setShowShorten(false)}
+          onOk={() => void saveDuration(trashDelay())} onCancel={() => setShowShorten(false)}
         />
       )}
     </>

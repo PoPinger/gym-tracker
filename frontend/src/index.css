@@ -227,6 +227,7 @@ a { text-decoration: none; color: inherit; }
 /* Rope: hangs from Kulka's hands up past the top of the screen, pulled up after the landing */
 .m-rope { position: absolute; left: calc(50% - 1px); bottom: 74%; width: 2px; height: calc(var(--m-top, 400px) + 40px); background: repeating-linear-gradient(#b45309 0 3px, #f59e0b 3px 6px); transform-origin: top; }
 .m-rope-up { animation: m-rope-up 0.3s ease-in forwards; }
+.mascot.m-e-rope, .mascot.m-e-hop { z-index: 310; } /* over the mobile top bar (z-index 300) while on the rope */
 @keyframes m-rope-up { to { transform: scaleY(0); } }
 .m-e-rope { animation: m-e-rope 1.6s cubic-bezier(.35,.05,.45,1) both; }
 @keyframes m-e-rope { from { transform: translate(6px, calc(-1 * var(--m-top, 400px) - 30px)); } to { transform: translate(6px, -14px); } }
@@ -281,6 +282,36 @@ a { text-decoration: none; color: inherit; }
 .wl-mascot-clip { position: absolute; left: -14px; right: -14px; top: -90px; bottom: calc(-10px - env(safe-area-inset-bottom)); padding-bottom: calc(10px + env(safe-area-inset-bottom));
   display: flex; align-items: flex-end; justify-content: center; overflow: hidden; overflow: clip; pointer-events: none; }
 .wl-mascot-clip .mascot { pointer-events: auto; }
+/* Delete dialogs: Kulka and the trash can stand on the dialog's top edge, right side, above the title */
+.modal.has-mascot { position: relative; }
+.m-trash { position: absolute; right: 22px; bottom: calc(100% - 3px); display: flex; align-items: flex-end; gap: 1px; }
+.m-trash-can { position: relative; display: flex; flex-direction: column; align-items: center; }
+.m-trash-can svg { display: block; }
+.m-trash-lid { margin-bottom: -2px; transform-origin: 90% 100%; transform: rotate(38deg) translate(-2px, -2px); }
+.m-trash-confirm .m-trash-lid { animation: m-trash-lid 0.32s 0.48s ease-out both; }
+@keyframes m-trash-lid { 0% { transform: rotate(38deg) translate(-2px, -2px); } 55% { transform: rotate(0) translateY(-4px); } 80% { transform: rotate(-4deg) translateY(1px); } 100% { transform: none; } }
+.m-trash-paper { position: absolute; left: 33px; top: 9px; animation: m-trash-paper 0.4s 0.1s cubic-bezier(.3,.2,.6,1) both; }
+@keyframes m-trash-paper { 0% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(14px, -18px) rotate(160deg); } 100% { transform: translate(22px, 12px) rotate(300deg) scale(0.6); opacity: 0; } }
+/* Plan weeks view: on top of the current week's tile (positioned by WeeksMascot.tsx), or on the progress card */
+.week-cards.has-mascot { position: relative; margin-top: 44px; }
+.m-weeks { position: absolute; left: 0; top: 0; z-index: 2; }
+.plan-summary-card.has-mascot { position: relative; margin-top: 68px; } /* room for the hop under the header button */
+.m-spot-summary { position: absolute; right: 18px; bottom: calc(100% - 1px); }
+/* Confetti: pixel squares, never blocks clicks */
+.day-cards { position: relative; }
+.m-celebrate { position: relative; display: block; }
+.m-confetti { position: absolute; pointer-events: none; z-index: 3; }
+.m-confetti > span { position: absolute; left: 0; top: 0; opacity: 0; animation-fill-mode: both; animation-timing-function: ease-out; }
+.m-confetti-small { left: 50%; top: 40%; }
+.m-confetti-small > span { animation-name: m-conf-burst; }
+@keyframes m-conf-burst { 0% { transform: translate(0, 0); opacity: 1; } 55% { transform: translate(var(--dx), var(--dy)); opacity: 1; } 100% { transform: translate(var(--dx), calc(var(--dy) + 22px)); opacity: 0; } }
+.m-confetti-big { inset: -8px 0 0; overflow: hidden; }
+.m-confetti-big > span { animation-name: m-conf-fall; animation-timing-function: linear; }
+@keyframes m-conf-fall { 0% { top: -8px; transform: none; opacity: 1; } 85% { opacity: 1; } 100% { top: 100%; transform: translateX(var(--dx)) rotate(var(--r)); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .m-trash-lid, .m-trash-paper, .m-weeks { animation: none !important; transition: none !important; }
+  .m-confetti { display: none; }
+}
 
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.4); backdrop-filter: blur(3px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }

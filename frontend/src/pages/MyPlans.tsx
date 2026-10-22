@@ -9,6 +9,11 @@ import DayList from '../components/DayList';
 import ExerciseEditor from '../components/ExerciseEditor';
 import WorkoutLogger from '../components/WorkoutLogger';
 import Mascot from '../components/mascot/Mascot';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { trashDelay } from '../components/mascot/trash';
+import WeeksMascot from '../components/mascot/WeeksMascot';
+import CelebrateMascot from '../components/mascot/CelebrateMascot';
+import Confetti from '../components/mascot/Confetti';
 import { resolveDayColor, type DayColor } from '../utils/dayColors';
 import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -27,24 +32,6 @@ interface EditExDraft { id?: number; name: string; muscle_group: string; sets: n
 interface EditDayDraft { id: number; day_name: string; color: DayColor; exercises: EditExDraft[]; }
 // Field values captured before a "skipped" auto-fill, keyed by exercise log id
 type FillSnapshot = Record<number, { set_logs: SetLog[]; weight: string }>;
-
-function ConfirmDialog({ title, body, onOk, onCancel, okLabel, cancelLabel, okClass = 'btn-primary' }: {
-  title: string; body: string; onOk: () => void; onCancel: () => void;
-  okLabel: string; cancelLabel: string; okClass?: string;
-}) {
-  return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <div className="modal-title">{title}</div>
-        <p className="modal-body">{body}</p>
-        <div className="modal-actions">
-          <button className="btn btn-outline btn-sm" onClick={onCancel}>{cancelLabel}</button>
-          <button className={`btn ${okClass} btn-sm`} onClick={onOk}>{okLabel}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function MyPlans() {
   const navigate = useNavigate();
@@ -66,6 +53,8 @@ export default function MyPlans() {
   const [skipped, setSkipped]         = useState(false);
   // Week whose day was just finished (not skipped): Kulka plays the "workout done" sequence under its days
   const [restWeekId, setRestWeekId]   = useState<number | null>(null);
+  // Week just finished as a whole: Kulka celebrates with big confetti over its days
+  const [doneWeekId, setDoneWeekId]   = useState<number | null>(null);
   const [daySnapshot, setDaySnapshot] = useState<FillSnapshot | null>(null);
   const [exSnapshots, setExSnapshots] = useState<FillSnapshot>({});
 
@@ -94,11 +83,11 @@ export default function MyPlans() {
 
   const openWeek = async (w: WeekSummary) => {
     const r = await logsApi.getWeekDays(w.id);
-    setRestWeekId(null); setWeekInfo(r.data); setView('days');
+    setRestWeekId(null); setDoneWeekId(null); setWeekInfo(r.data); setView('days');
   };
 
   const openDay = async (weekId: number, planDayId: number, logId: number | null) => {
-    setRestWeekId(null);
+    setRestWeekId(null); setDoneWeekId(null);
     let resolvedId = logId;
     if (!resolvedId) {
       const r = await logsApi.createDayLog(planDayId, weekId);
@@ -256,7 +245,9 @@ export default function MyPlans() {
   const finishWeek = async () => {
     if (!weekInfo || !plan) return;
     await logsApi.completeWeek(weekInfo.week_id);
-    const r = await plansApi.getWeeks(plan.id); setWeeks(r.data); setView('weeks');
+    // Stay on the day list (now shown as completed) for the celebration
+    const [wr, dr] = await Promise.all([plansApi.getWeeks(plan.id), logsApi.getWeekDays(weekInfo.week_id)]);
+    setWeeks(wr.data); setWeekInfo(dr.data); setRestWeekId(null); setDoneWeekId(weekInfo.week_id);
   };
 
   const finishPlan = async () => {
@@ -291,10 +282,11 @@ export default function MyPlans() {
     setView('edit-plan');
   };
 
-  const saveEdit = async () => {
+  // closing: the shorten dialog's trash animation, awaited with the request before leaving the view
+  const saveEdit = async (closing: Promise<void> = Promise.resolve()) => {
     if (!editPlan) return;
     const named = editDays.flatMap(d => d.exercises.filter(e => e.name.trim()));
-    if (named.some(e => !isValidRepRange(e.rep_min, e.rep_max))) { setEditError(t('rep_range_error')); return; }
+    if (named.some(e => !isValidRepRange(e.rep_min, e.rep_max))) { setConfirm(null); setEditError(t('rep_range_error')); return; }
     setEditSaving(true); setEditError('');
     try {
       await plansApi.updateStructure(editPlan.id, {
@@ -314,9 +306,12 @@ export default function MyPlans() {
       if (editMonths !== editPlan.months) {
         await plansApi.update(editPlan.id, { months: editMonths });
       }
+      await closing;
+      setConfirm(null);
       await loadPlans();
       setView('list');
     } catch (e) {
+      setConfirm(null);
       setEditError(apiErrorDetail(e) || t('save_changes_error'));
     } finally { setEditSaving(false); }
   };
@@ -361,7 +356,7 @@ export default function MyPlans() {
 
   const deletePlan = async () => {
     if (!planToDelete) return;
-    await plansApi.delete(planToDelete.id);
+    await Promise.all([plansApi.delete(planToDelete.id), trashDelay()]);
     setPlanToDelete(null);
     await loadPlans();
   };
@@ -407,7 +402,7 @@ export default function MyPlans() {
         <ConfirmDialog
           title={t('delete_plan_title')}
           body={t('delete_plan_body')}
-          okLabel={t('delete_plan_confirm')} okClass="btn-danger"
+          okLabel={t('delete_plan_confirm')} okClass="btn-danger" trash
           cancelLabel={t('cancel_btn')}
           onOk={deletePlan} onCancel={() => setPlanToDelete(null)}
         />
@@ -476,9 +471,9 @@ export default function MyPlans() {
           <ConfirmDialog
             title={t('shorten_plan_title')}
             body={t('shorten_plan_body')}
-            okLabel={t('shorten_plan_confirm')} okClass="btn-danger"
+            okLabel={t('shorten_plan_confirm')} okClass="btn-danger" trash
             cancelLabel={t('cancel_btn')}
-            onOk={() => { setConfirm(null); void saveEdit(); }}
+            onOk={() => void saveEdit(trashDelay())}
             onCancel={() => setConfirm(null)}
           />
         )}
@@ -514,7 +509,8 @@ export default function MyPlans() {
         )}
       </div>
 
-      <div className="plan-summary-card">
+      <div className={`plan-summary-card${allWeeksComplete ? ' has-mascot' : ''}`}>
+        {allWeeksComplete && <div className="m-spot-summary"><Mascot state="cheer" size={48} /></div>}
         <div className="plan-summary-count">
           <span className="plan-summary-big">{completedWeeks}<small>/{weeks.length}</small></span>
           <span className="day-list-label">{t('weeks_completed_label')}</span>
@@ -527,7 +523,8 @@ export default function MyPlans() {
         </div>
       </div>
 
-      <div className="week-cards">
+      <div className={`week-cards${currentWeekId != null ? ' has-mascot' : ''}`}>
+        {currentWeekId != null && <WeeksMascot />}
         {weeks.map(w => {
           const state = w.status === 'completed' ? 'done' : w.id === currentWeekId ? 'current' : '';
           return (
@@ -573,6 +570,7 @@ export default function MyPlans() {
       </div>
 
       <div className="day-cards">
+        {doneWeekId === weekInfo.week_id && <Confetti big />}
         {weekInfo.days.map((d, i) => {
           const state = d.status === 'completed' ? (d.skipped ? 'skipped' : 'done') : '';
           return (
@@ -593,7 +591,9 @@ export default function MyPlans() {
           );
         })}
       </div>
-      {restWeekId === weekInfo.week_id && <div className="m-spot-rest"><Mascot state="done" size={52} /></div>}
+      {doneWeekId === weekInfo.week_id
+        ? <div className="m-spot-rest"><CelebrateMascot week /></div>
+        : restWeekId === weekInfo.week_id && <div className="m-spot-rest"><CelebrateMascot /></div>}
 
       {confirm === 'week' && (
         <ConfirmDialog

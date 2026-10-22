@@ -104,7 +104,7 @@ export default function Dashboard() {
 
       {!hasAnything && (
         <div className="card" style={{ position:'relative', textAlign:'center', padding:'56px 32px' }}>
-          <Mascot entrance="rope" size={44} className="m-spot-cal" />
+          <Mascot entrance="parachute" size={44} className="m-spot-cal" />
           <div style={{ fontSize:52, marginBottom:16 }}>🏋️</div>
           <h2 style={{ fontSize:20, fontWeight:800, color:'var(--text-heading)', marginBottom:8 }}>{t('dashboard_welcome_title')}</h2>
           <p style={{ fontSize:14, color:'var(--text-muted)', marginBottom:24, maxWidth:360, margin:'0 auto 24px' }}>
@@ -120,7 +120,7 @@ export default function Dashboard() {
       {hasAnything && (
         <div className="stats-mosaic">
           <WorkoutCalendar workouts={d.workout_calendar} className="stats-cal"
-            mascot={<Mascot entrance="rope" size={44} className="m-spot-cal" />} />
+            mascot={<Mascot entrance="parachute" size={44} className="m-spot-cal" />} />
           {weight}
           {streak}
           {month}
