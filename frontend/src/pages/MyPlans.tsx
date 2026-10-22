@@ -8,6 +8,7 @@ import PlanCard from '../components/PlanCard';
 import DayList from '../components/DayList';
 import ExerciseEditor from '../components/ExerciseEditor';
 import WorkoutLogger from '../components/WorkoutLogger';
+import Mascot from '../components/mascot/Mascot';
 import { resolveDayColor, type DayColor } from '../utils/dayColors';
 import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -63,6 +64,8 @@ export default function MyPlans() {
   const [exerciseWeights, setExerciseWeights] = useState<Record<number, string>>({});
   const [workoutDate, setWorkoutDate] = useState('');
   const [skipped, setSkipped]         = useState(false);
+  // Week whose day was just finished (not skipped): Kulka plays the "workout done" sequence under its days
+  const [restWeekId, setRestWeekId]   = useState<number | null>(null);
   const [daySnapshot, setDaySnapshot] = useState<FillSnapshot | null>(null);
   const [exSnapshots, setExSnapshots] = useState<FillSnapshot>({});
 
@@ -91,10 +94,11 @@ export default function MyPlans() {
 
   const openWeek = async (w: WeekSummary) => {
     const r = await logsApi.getWeekDays(w.id);
-    setWeekInfo(r.data); setView('days');
+    setRestWeekId(null); setWeekInfo(r.data); setView('days');
   };
 
   const openDay = async (weekId: number, planDayId: number, logId: number | null) => {
+    setRestWeekId(null);
     let resolvedId = logId;
     if (!resolvedId) {
       const r = await logsApi.createDayLog(planDayId, weekId);
@@ -245,6 +249,7 @@ export default function MyPlans() {
     await Promise.all(dayLog.exercise_logs.map(el => logsApi.saveSets(el.id, el.set_logs, workoutDate, skipped, el.skipped)));
     await logsApi.completeDay(dayLog.id, workoutDate, skipped);
     if (weekInfo) { const r = await logsApi.getWeekDays(weekInfo.week_id); setWeekInfo(r.data); }
+    setRestWeekId(skipped ? null : weekInfo?.week_id ?? null);
     setView('days');
   };
 
@@ -389,7 +394,8 @@ export default function MyPlans() {
       {plans.length === 0 ? (
         <PlansEmptyState onCreate={() => navigate('/create-plan')} />
       ) : (
-        <div className="plan-list">
+        <div className="plan-list has-mascot">
+          <div className="m-spot-plans"><Mascot entrance="peek" size={40} /></div>
           {plans.map(p => (
             <PlanCard key={p.id} plan={p} onOpen={() => openPlan(p)} onEdit={() => openEdit(p)}
               onCopy={() => copyPlan(p.id)} onDelete={() => setPlanToDelete(p)} />
@@ -587,6 +593,7 @@ export default function MyPlans() {
           );
         })}
       </div>
+      {restWeekId === weekInfo.week_id && <div className="m-spot-rest"><Mascot state="done" size={52} /></div>}
 
       {confirm === 'week' && (
         <ConfirmDialog

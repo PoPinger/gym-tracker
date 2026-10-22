@@ -8,6 +8,7 @@ import { isValidRepRange, repRangePayload } from '../utils/repRange';
 import { Plus, Trash2, ChevronUp, ChevronDown, ArrowRight, ArrowLeft, Dumbbell, Moon } from 'lucide-react';
 import { plural } from '../utils/plural';
 import DayList from '../components/DayList';
+import StepperMascot from '../components/mascot/StepperMascot';
 import { defaultDayColor, type DayColor } from '../utils/dayColors';
 
 type Step = 1 | 2 | 3 | 4;
@@ -18,7 +19,8 @@ interface DayDraft { day_name: string; color: DayColor; exercises: ExDraft[]; }
 function StepIndicator({ step, labels, current }: { step: Step; labels: string[]; current: string }) {
   return (
     <>
-      <div className="steps">
+      <div className="steps has-mascot">
+        <StepperMascot step={step} />
         {labels.map((label, i) => {
           const n = (i + 1) as Step;
           const state = step > n ? 'done' : step === n ? 'active' : 'todo';

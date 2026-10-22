@@ -1,6 +1,6 @@
 // Workout logger of a training day: one focus card per exercise, accented with the day's colour.
 // Mobile first: big numeric inputs, per-exercise saved/unsaved status and a sticky finish bar.
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, CalendarDays, Check, CheckCircle2, Circle, Dumbbell, SkipForward, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
@@ -9,6 +9,7 @@ import { formatRepRange } from '../utils/repRange';
 import { todayIso } from '../utils/date';
 import type { DayColor } from '../utils/dayColors';
 import AnimatedValue from './AnimatedValue';
+import Mascot from './mascot/Mascot';
 import type { DayLog, ExerciseLog } from '../types';
 
 type Status = 'empty' | 'unsaved' | 'saved' | 'skipped';
@@ -28,6 +29,8 @@ const fingerprint = (el: ExerciseLog, weight: string) =>
   JSON.stringify([el.skipped, weight, el.set_logs.map(s => s.reps)]);
 const hasData = (el: ExerciseLog, weight: string) => weight !== '' || el.set_logs.some(s => s.reps != null);
 const pctTone = (pct: number | null) => pct == null || pct === 0 ? 'neutral' : pct > 0 ? 'good' : 'bad';
+// How long Kulka reacts to a saved exercise's progress vs the previous week
+const REACTION_MS = { progressUp: 2200, progressDown: 2600 } as const;
 
 function StatusBadge({ s }: { s: Status }) {
   const { t } = useLanguage();
@@ -72,9 +75,18 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
   });
   const savedCount = items.filter(i => i.status === 'saved' || i.status === 'skipped').length;
 
-  const save = async (id: number, print: string) => {
+  const [reaction, setReaction] = useState<keyof typeof REACTION_MS | null>(null);
+  const reactionTimer = useRef<number>(undefined);
+  useEffect(() => () => window.clearTimeout(reactionTimer.current), []);
+
+  const save = async (id: number, print: string, pct: number | null) => {
     await p.onSave(id);
     setSavedPrint(s => ({ ...s, [id]: print }));
+    if (pct == null || pct === 0) return;
+    const r = pct > 0 ? 'progressUp' : 'progressDown';
+    setReaction(r);
+    window.clearTimeout(reactionTimer.current);
+    reactionTimer.current = window.setTimeout(() => setReaction(null), REACTION_MS[r]);
   };
 
   return (
@@ -157,7 +169,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
                   onClick={() => p.onToggleExerciseSkipped(el.id, !el.skipped)}>
                   <span className="wl-switch-track"><span /></span>{t('exercise_skipped_checkbox')}
                 </button>
-                <button type="button" disabled={p.saving[el.id] || p.dateInvalid} onClick={() => void save(el.id, fingerprint(el, it.w))}
+                <button type="button" disabled={p.saving[el.id] || p.dateInvalid} onClick={() => void save(el.id, fingerprint(el, it.w), it.prev?.pct ?? null)}
                   className={`btn wl-save ${needsSave ? 'btn-primary' : 'btn-outline saved'}`}>
                   {p.saving[el.id] ? t('save_sets_saving') : needsSave ? t('save_sets_btn') : <><Check size={15} strokeWidth={3} /> {t('save_sets_saved')}</>}
                 </button>
@@ -168,6 +180,10 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
       </div>
 
       <div className="wl-finishbar">
+        {/* Kulka jumps in from the bottom of the screen; the clip box hides it below the bar */}
+        <span className="wl-mascot-slot">
+          <span className="wl-mascot-clip"><Mascot entrance="trampoline" size={40} state={p.skipped ? 'skipped' : reaction ?? 'idle'} /></span>
+        </span>
         <span className="wl-finish-count">{t('wl_saved_count').replace('{n}', String(savedCount)).replace('{total}', String(items.length))}</span>
         <button className="btn btn-success btn-lg" disabled={p.dateInvalid} onClick={p.onFinish}><CheckCircle2 size={18} /> {t('finish_day_btn')}</button>
       </div>

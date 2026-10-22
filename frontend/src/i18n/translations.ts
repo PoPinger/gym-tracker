@@ -97,6 +97,7 @@ export interface TranslationMap {
 
   // Dashboard – loading / header
   loading_app: string;
+  mascot_label: string;
   dashboard_title: string;
   dashboard_subtitle: string;
   active_weeks_1: string;
@@ -485,6 +486,7 @@ const pl: TranslationMap = {
   rel_yesterday: 'wczoraj',
 
   loading_app: 'Ładowanie aplikacji…',
+  mascot_label: 'Kulka – dotknij, a pomacha',
   dashboard_title: 'Statystyki',
   dashboard_subtitle: 'Twoje treningi i postępy w jednym miejscu',
   active_weeks_1: 'aktywny tydzień',
@@ -848,6 +850,7 @@ const en: TranslationMap = {
   rel_yesterday: 'yesterday',
 
   loading_app: 'Loading app…',
+  mascot_label: 'Kulka – tap to wave',
   dashboard_title: 'Statistics',
   dashboard_subtitle: 'Your workouts and progress in one place',
   active_weeks_1: 'active week',

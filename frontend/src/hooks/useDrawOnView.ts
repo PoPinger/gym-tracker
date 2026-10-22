@@ -57,13 +57,19 @@ function draw(root: Element) {
   });
 }
 
-// `pending` keeps lines and dots hidden (class draw-pending) until the chart has been seen
+// The last dot fades in by DRAW_MS + 480 ms (see draw); `drawn` turns true after that
+const DONE_MS = DRAW_MS + 500;
+
+// `pending` keeps lines and dots hidden (class draw-pending) until the chart has been seen;
+// `drawn` tells when the draw animation has fully finished
 export function useDrawOnView<T extends Element>() {
   const [pending, setPending] = useState(() => !prefersReducedMotion());
+  const [drawn, setDrawn] = useState(false);
   const ref = useFirstInView<T>(el => {
-    if (prefersReducedMotion()) { setPending(false); return; }
+    if (prefersReducedMotion()) { setPending(false); setDrawn(true); return; }
     draw(el);
     setPending(false);
+    window.setTimeout(() => setDrawn(true), DONE_MS);
   }, 0.3);
-  return [ref, pending] as const;
+  return [ref, pending, drawn] as const;
 }

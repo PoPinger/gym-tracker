@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { adminApi } from '../services/api';
 import AppLoader from '../components/AppLoader';
+import Mascot from '../components/mascot/Mascot';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { AdminUser, ResetCode } from '../types';
 import { parseApiDate, formatDateTime, relativeTime } from '../utils/relativeTime';
@@ -61,6 +62,7 @@ export default function Admin() {
           <h1 className="page-title">{t('admin_title')}</h1>
           <p className="page-subtitle">{t('admin_sub')}</p>
         </div>
+        <Mascot entrance="parachute" size={44} className="m-spot-admin" />
       </div>
 
       {error && <div className="alert alert-error"><span>{error}</span></div>}

@@ -213,6 +213,74 @@ a { text-decoration: none; color: inherit; }
 @keyframes loader-shimmer { from { background-position: 112% 0; } to { background-position: -12% 0; } }
 .app-loader-text { font-size: 13px; color: var(--text-muted); }
 @media (prefers-reduced-motion: reduce) { .app-loader-name::after { display: none; animation: none; } }
+.app-loader-mascot { margin-bottom: -4px; }
+
+/* ── Mascot (Kulka): pixel-art button; frame keyframes are injected by Mascot.tsx, movement lives here.
+   Entrance distances come from --m-top (to the top of the screen), --m-left and --m-below (to the bottom). ── */
+.mascot { position: relative; display: block; flex-shrink: 0; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; line-height: 0; -webkit-tap-highlight-color: transparent; }
+.mascot:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+.mascot svg { display: block; width: 100%; height: auto; overflow: visible; }
+.m-bob { animation: m-bob 0.9s step-end infinite; }
+@keyframes m-bob { 50% { transform: translateY(1px); } }
+.m-s-hop { animation: m-hop 0.5s cubic-bezier(.3,.6,.5,1) infinite; }
+@keyframes m-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-28%); } }
+/* Rope: hangs from Kulka's hands up past the top of the screen, pulled up after the landing */
+.m-rope { position: absolute; left: calc(50% - 1px); bottom: 74%; width: 2px; height: calc(var(--m-top, 400px) + 40px); background: repeating-linear-gradient(#b45309 0 3px, #f59e0b 3px 6px); transform-origin: top; }
+.m-rope-up { animation: m-rope-up 0.3s ease-in forwards; }
+@keyframes m-rope-up { to { transform: scaleY(0); } }
+.m-e-rope { animation: m-e-rope 1.6s cubic-bezier(.35,.05,.45,1) both; }
+@keyframes m-e-rope { from { transform: translate(6px, calc(-1 * var(--m-top, 400px) - 30px)); } to { transform: translate(6px, -14px); } }
+.m-e-hop { animation: m-e-hop 0.45s ease-in-out both; }
+@keyframes m-e-hop { 0% { transform: translate(6px, -14px); } 50% { transform: translate(3px, -26px); } 100% { transform: translate(0, 0); } }
+.m-e-run { animation: m-e-run 0.9s cubic-bezier(.25,.6,.45,1) both; }
+@keyframes m-e-run { from { transform: translateX(calc(-1 * var(--m-left, 400px) - 10px)); } to { transform: translateX(-8px); } }
+.m-e-skid { animation: m-e-skid 0.45s ease-out both; }
+@keyframes m-e-skid { 0% { transform: translateX(-8px); } 60% { transform: translateX(3px); } 100% { transform: translateX(0); } }
+.m-e-peek { z-index: 0; animation: m-e-peek 0.6s ease-out both; }
+@keyframes m-e-peek { from { transform: translateY(100%); } to { transform: translateY(24%); } }
+.m-e-peek-hold { z-index: 0; transform: translateY(24%); }
+.m-e-peek-hop { animation: m-e-peek-hop 0.55s ease-in-out both; }
+@keyframes m-e-peek-hop { 0% { transform: translateY(24%); z-index: 0; } 50% { transform: translateY(-30%); z-index: 0; } 51% { z-index: 2; } 100% { transform: translateY(0); z-index: 2; } }
+.m-e-tramp { animation: m-e-tramp 0.75s both; }
+@keyframes m-e-tramp {
+  0% { transform: translateY(var(--m-below, 200px)); animation-timing-function: cubic-bezier(.2,.7,.4,1); }
+  60% { transform: translateY(-40px); animation-timing-function: cubic-bezier(.6,0,.8,.4); }
+  100% { transform: translateY(0); } }
+.m-e-land svg { transform-origin: 50% 100%; animation: m-e-land 0.26s ease-out both; }
+@keyframes m-e-land { 0% { transform: scale(1.18, 0.8); } 100% { transform: scale(1, 1); } }
+.m-e-para { transform-origin: 50% 0; animation: m-e-para 2.4s cubic-bezier(.2,.5,.5,1) both; }
+@keyframes m-e-para {
+  0% { transform: translateY(calc(-1 * var(--m-top, 400px) - 40px)) rotate(-7deg); }
+  25% { transform: translateY(calc(-0.55 * var(--m-top, 400px))) rotate(6deg); }
+  50% { transform: translateY(calc(-0.22 * var(--m-top, 400px))) rotate(-5deg); }
+  75% { transform: translateY(calc(-0.06 * var(--m-top, 400px))) rotate(3deg); }
+  100% { transform: translateY(0) rotate(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .mascot, .mascot * { animation: none !important; transition: none !important; }
+  .m-rope { display: none; }
+  .m-stepper { transition: none; }
+}
+/* Spots: each page reserves room so Kulka never covers content */
+.cal-card { position: relative; }
+.m-spot-cal { position: absolute; right: 14px; bottom: 100%; z-index: 2; }
+.m-spot-admin { margin-left: auto; align-self: flex-end; }
+.m-spot-plans { position: absolute; top: 0; left: 150px; }
+.m-spot-plans .mascot { position: absolute; bottom: 0; left: 0; z-index: 2; }
+.plan-list.has-mascot { position: relative; }
+.m-spot-plans + .plan-card { position: relative; z-index: 1; }
+.m-spot-plans .mascot.m-e-peek, .m-spot-plans .mascot.m-e-peek-hold { z-index: 0; } /* behind the card while peeking */
+.m-spot-rest { display: flex; justify-content: flex-end; margin-top: 8px; }
+.steps.has-mascot { position: relative; padding-top: 44px; }
+.m-stepper { position: absolute; top: 2px; left: 0; z-index: 1; transition: transform 0.7s cubic-bezier(.3,.1,.4,1); }
+.m-rider { position: absolute; z-index: 2; transform: translate(-50%, -100%); pointer-events: none; }
+.m-rider .mascot { pointer-events: auto; }
+.m-rider .mascot svg { position: static; width: 100%; height: auto; } /* not the chart's full-box svg rule */
+.m-rider-pop { animation: m-pop 0.35s cubic-bezier(.3,1.6,.6,1) both; transform-origin: 50% 100%; }
+@keyframes m-pop { from { transform: scale(0); } to { transform: scale(1); } }
+.wl-mascot-slot { position: relative; width: 40px; align-self: stretch; flex-shrink: 0; }
+.wl-mascot-clip { position: absolute; left: -14px; right: -14px; top: -90px; bottom: calc(-10px - env(safe-area-inset-bottom)); padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  display: flex; align-items: flex-end; justify-content: center; overflow: hidden; overflow: clip; pointer-events: none; }
+.wl-mascot-clip .mascot { pointer-events: auto; }
 
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.4); backdrop-filter: blur(3px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }

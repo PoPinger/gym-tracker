@@ -4,6 +4,7 @@ import { ArrowLeft, CalendarDays, Check, CheckCircle2, ChevronRight, Minus, Penc
 import { useLanguage } from '../i18n/LanguageContext';
 import { useDrawOnView } from '../hooks/useDrawOnView';
 import AnimatedValue from './AnimatedValue';
+import WeightRider from './mascot/WeightRider';
 import { plural } from '../utils/plural';
 import { trendTone, type WeightGoal } from '../utils/weightTrend';
 import type { WeightCycle, WeightWeek } from '../types';
@@ -62,7 +63,7 @@ export function SetupView({ months, setMonths, goal, setGoal, error, loading, on
 // Lines are SVG stretched to the box (non-scaling strokes); dots and labels are HTML so they stay round and readable
 function WeeklyChart({ weeks, avg, goal }: { weeks: WeightWeek[]; avg: (w: WeightWeek) => number | null; goal: string | null }) {
   const { t } = useLanguage();
-  const [plotRef, pending] = useDrawOnView<HTMLDivElement>();
+  const [plotRef, pending, drawn] = useDrawOnView<HTMLDivElement>();
   const pts = weeks.map((w, i) => ({ n: w.week_number, i, a: avg(w) })).filter((p): p is { n: number; i: number; a: number } => p.a != null);
   if (pts.length < 2) return <div className="card w-chart"><div className="day-list-label">{t('weight_chart_title')}</div><div className="w-chart-empty">{t('weight_chart_empty')}</div></div>;
 
@@ -89,6 +90,7 @@ function WeeklyChart({ weeks, avg, goal }: { weeks: WeightWeek[]; avg: (w: Weigh
             <span key={p.n} data-draw-dot className={`w-chart-dot tone-${k ? trendTone(+(p.a - pts[k - 1].a).toFixed(1), goal) : 'neutral'}`}
               style={{ left: `${x(p.i)}%`, top: `${y(p.a)}%` }} title={`${t('week_tile_label')} ${p.n}: ${fmtKg(p.a)}`} />
           ))}
+          <WeightRider pts={pts.map(p => ({ x: x(p.i), y: y(p.a), kg: p.a }))} drawn={drawn} />
         </div>
         <div className="w-chart-x">
           {weeks.map((w, i) => (i === weeks.length - 1 || (i % labelEvery === 0 && weeks.length - 1 - i >= labelEvery)) && (

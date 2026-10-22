@@ -7,6 +7,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import WorkoutCalendar from '../components/WorkoutCalendar';
 import AppLoader from '../components/AppLoader';
 import AnimatedValue from '../components/AnimatedValue';
+import Mascot from '../components/mascot/Mascot';
 import { useDrawOnView } from '../hooks/useDrawOnView';
 import type { DashboardData } from '../types';
 
@@ -102,7 +103,8 @@ export default function Dashboard() {
       </div>
 
       {!hasAnything && (
-        <div className="card" style={{ textAlign:'center', padding:'56px 32px' }}>
+        <div className="card" style={{ position:'relative', textAlign:'center', padding:'56px 32px' }}>
+          <Mascot entrance="rope" size={44} className="m-spot-cal" />
           <div style={{ fontSize:52, marginBottom:16 }}>🏋️</div>
           <h2 style={{ fontSize:20, fontWeight:800, color:'var(--text-heading)', marginBottom:8 }}>{t('dashboard_welcome_title')}</h2>
           <p style={{ fontSize:14, color:'var(--text-muted)', marginBottom:24, maxWidth:360, margin:'0 auto 24px' }}>
@@ -117,7 +119,8 @@ export default function Dashboard() {
       {/* Mosaic: calendar as the big card, weight (sparkline) and streak beside it, month/year below */}
       {hasAnything && (
         <div className="stats-mosaic">
-          <WorkoutCalendar workouts={d.workout_calendar} className="stats-cal" />
+          <WorkoutCalendar workouts={d.workout_calendar} className="stats-cal"
+            mascot={<Mascot entrance="rope" size={44} className="m-spot-cal" />} />
           {weight}
           {streak}
           {month}

@@ -7,7 +7,7 @@ import type { CalendarWorkout } from '../types';
 import { toIsoDate, todayIso } from '../utils/date';
 import { plural } from '../utils/plural';
 
-export default function WorkoutCalendar({ workouts, className = '' }: { workouts: CalendarWorkout[]; className?: string }) {
+export default function WorkoutCalendar({ workouts, className = '', mascot }: { workouts: CalendarWorkout[]; className?: string; mascot?: React.ReactNode }) {
   const navigate = useNavigate();
   const { lang, t } = useLanguage();
   const [month, setMonth]   = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
@@ -50,6 +50,7 @@ export default function WorkoutCalendar({ workouts, className = '' }: { workouts
 
   return (
     <div className={`card cal-card ${className}`}>
+      {mascot}
       <div className="cal-header">
         <div className="card-label" style={{ marginBottom:0 }}>{t('calendar_title')}</div>
         <div className="cal-nav">
