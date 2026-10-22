@@ -289,12 +289,15 @@ a { text-decoration: none; color: inherit; }
 .m-trash-can svg { display: block; }
 .m-trash-lid { margin-bottom: -2px; transform-origin: 90% 100%; transform: rotate(38deg) translate(-2px, -2px); }
 .m-trash-confirm .m-trash-lid { animation: m-trash-lid 0.32s 0.48s ease-out both; }
+.m-trash-closing .m-trash-lid { animation: m-trash-lid 0.32s ease-out both; }
 @keyframes m-trash-lid { 0% { transform: rotate(38deg) translate(-2px, -2px); } 55% { transform: rotate(0) translateY(-4px); } 80% { transform: rotate(-4deg) translateY(1px); } 100% { transform: none; } }
 .m-trash-paper { position: absolute; left: 33px; top: 9px; animation: m-trash-paper 0.4s 0.1s cubic-bezier(.3,.2,.6,1) both; }
 @keyframes m-trash-paper { 0% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(14px, -18px) rotate(160deg); } 100% { transform: translate(22px, 12px) rotate(300deg) scale(0.6); opacity: 0; } }
 /* Plan weeks view: on top of the current week's tile (positioned by WeeksMascot.tsx), or on the progress card */
 .week-cards.has-mascot { position: relative; margin-top: 44px; }
 .m-weeks { position: absolute; left: 0; top: 0; z-index: 2; }
+.week-cards.has-mascot .week-card { position: relative; z-index: 1; }
+.m-weeks.m-weeks-walk { z-index: 0; } /* behind the tiles above his row while walking in */
 .plan-summary-card.has-mascot { position: relative; margin-top: 68px; } /* room for the hop under the header button */
 .m-spot-summary { position: absolute; right: 18px; bottom: calc(100% - 1px); }
 /* Confetti: pixel squares, never blocks clicks */
@@ -308,9 +311,39 @@ a { text-decoration: none; color: inherit; }
 .m-confetti-big { inset: -8px 0 0; overflow: hidden; }
 .m-confetti-big > span { animation-name: m-conf-fall; animation-timing-function: linear; }
 @keyframes m-conf-fall { 0% { top: -8px; transform: none; opacity: 1; } 85% { opacity: 1; } 100% { top: 100%; transform: translateX(var(--dx)) rotate(var(--r)); opacity: 0; } }
+/* Builder (Edytuj plan card, cycle duration dialog): the excavator lane above the container's top edge, clipped
+   at its left/right edges; Kulka's spot at the top right (BuilderKulka.tsx) */
+.card.has-builder { position: relative; margin-top: 52px; }
+.modal.has-builder { position: relative; }
+.m-build-lane { position: absolute; left: 0; right: 0; bottom: 100%; height: 84px; overflow: hidden; overflow: clip; pointer-events: none; }
+.m-build-rig { position: absolute; left: 0; z-index: 1; }
+.m-build-rig > svg { display: block; }
+.m-build-rider { position: absolute; }
+.m-build-bucket { position: absolute; line-height: 0; }
+.m-build-spot { position: absolute; right: 14px; bottom: -1px; z-index: 2; pointer-events: auto; }
+/* Exercise editor: Kulka sits on the list's top edge (positioned by CraneKulka.tsx), the crane hook hangs above him */
+.exed.has-crane { position: relative; }
+.exed.has-crane .exed-list, .exed.has-crane .exed-empty { margin-top: 36px; }
+.exed.has-crane .page-header.exed-header { margin-bottom: 0; }
+.m-crane { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; }
+.m-crane-hook { position: absolute; left: 16px; bottom: calc(100% - 15px); line-height: 0; }
+.m-crane-hook svg { display: block; }
+.m-crane-cable { position: absolute; left: 4px; bottom: 100%; width: 2px; height: var(--m-top, 400px); background: #334155; }
+.m-crane-brick, .m-crane-can { position: absolute; z-index: 3; pointer-events: none; line-height: 0; }
+.m-crane-can { transform: translateY(-100%); }
+/* Moja waga: Kulka on top of the Masa / Redukcja toggle (GoalKulka.tsx); inflated / stretched on a switch */
+.w-panel-actions.has-mascot { padding-top: 40px; }
+.w-goal-wrap { position: relative; display: inline-flex; }
+.m-goal { position: absolute; right: 10px; bottom: calc(100% - 3px); z-index: 5; }
+.m-goal-bulk svg, .m-goal-cut svg { transform-origin: 50% 100%; animation: 1.8s ease-in-out both; }
+.m-goal-bulk svg { animation-name: m-inflate; }
+.m-goal-cut svg { animation-name: m-thin; }
+@keyframes m-inflate { 0%, 100% { transform: none; } 33%, 67% { transform: scale(1.45, 1.25); } }
+@keyframes m-thin { 0%, 100% { transform: none; } 33%, 67% { transform: scale(0.6, 1.4); } }
 @media (prefers-reduced-motion: reduce) {
   .m-trash-lid, .m-trash-paper, .m-weeks { animation: none !important; transition: none !important; }
   .m-confetti { display: none; }
+  .m-crane { transition: none !important; }
 }
 
 

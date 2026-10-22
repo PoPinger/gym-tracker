@@ -1,6 +1,7 @@
 // Kulka on the plan weeks view, rendered inside .week-cards: walks in from the left edge of the grid
 // carrying a barbell, stops on top of the current week's tile (its right corner, clear of the number and
-// status) and presses the barbell overhead in a loop. Reduced motion: no walk, static press pose.
+// status) and presses the barbell overhead in a loop. While walking he is behind the tiles (index.css), so he
+// never passes over the row above (its "Gotowe" text). Reduced motion: no walk, static press pose.
 import { useLayoutEffect, useRef, useState } from 'react';
 import Mascot, { type MascotState } from './Mascot';
 import { prefersReducedMotion } from '../../hooks/useFirstInView';
@@ -48,7 +49,7 @@ export default function WeeksMascot() {
   }, [reduced]);
 
   return (
-    <div ref={ref} className="m-weeks">
+    <div ref={ref} className={`m-weeks${mode === 'walkBar' ? ' m-weeks-walk' : ''}`}>
       <Mascot size={SIZE} state={mode} />
     </div>
   );

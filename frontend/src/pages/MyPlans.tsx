@@ -10,7 +10,8 @@ import ExerciseEditor from '../components/ExerciseEditor';
 import WorkoutLogger from '../components/WorkoutLogger';
 import Mascot from '../components/mascot/Mascot';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { trashDelay } from '../components/mascot/trash';
+import { kulkaDelay, trashDelay, SHRUG_MS, STAMP_MS } from '../components/mascot/trash';
+import BuilderKulka, { type BuilderOutcome } from '../components/mascot/BuilderKulka';
 import WeeksMascot from '../components/mascot/WeeksMascot';
 import CelebrateMascot from '../components/mascot/CelebrateMascot';
 import Confetti from '../components/mascot/Confetti';
@@ -65,6 +66,8 @@ export default function MyPlans() {
   const [editActiveDayIdx, setEditActiveDayIdx] = useState(0);
   const [editSaving, setEditSaving]           = useState(false);
   const [editError, setEditError]             = useState('');
+  const [editIntro, setEditIntro]             = useState(true); // Kulka's excavator entrance, once per opening
+  const [editOutcome, setEditOutcome]         = useState<BuilderOutcome>(null);
 
   const [planToDelete, setPlanToDelete] = useState<PlanSummary | null>(null);
 
@@ -279,15 +282,17 @@ export default function MyPlans() {
     })));
     setEditActiveDayIdx(0);
     setEditError('');
+    setEditIntro(true);
+    setEditOutcome(null);
     setView('edit-plan');
   };
 
-  // closing: the shorten dialog's trash animation, awaited with the request before leaving the view
+  // closing: the shorten dialog's trash animation or Kulka's stamp, awaited with the request before leaving the view
   const saveEdit = async (closing: Promise<void> = Promise.resolve()) => {
     if (!editPlan) return;
     const named = editDays.flatMap(d => d.exercises.filter(e => e.name.trim()));
     if (named.some(e => !isValidRepRange(e.rep_min, e.rep_max))) { setConfirm(null); setEditError(t('rep_range_error')); return; }
-    setEditSaving(true); setEditError('');
+    setEditSaving(true); setEditError(''); setEditOutcome('save');
     try {
       await plansApi.updateStructure(editPlan.id, {
         name: editName,
@@ -311,18 +316,24 @@ export default function MyPlans() {
       await loadPlans();
       setView('list');
     } catch (e) {
-      setConfirm(null);
+      setConfirm(null); setEditOutcome(null);
       setEditError(apiErrorDetail(e) || t('save_changes_error'));
     } finally { setEditSaving(false); }
   };
 
   const handleSaveEdit = () => {
-    if (!editPlan) return;
+    if (!editPlan || editOutcome) return;
     if (editMonths < editPlan.months) {
       setConfirm('shorten');
     } else {
-      void saveEdit();
+      void saveEdit(kulkaDelay(STAMP_MS));
     }
+  };
+
+  const cancelEdit = () => {
+    if (editOutcome) return;
+    setEditOutcome('cancel');
+    void kulkaDelay(SHRUG_MS).then(() => setView('list'));
   };
 
   const addEditEx = () => {
@@ -426,7 +437,9 @@ export default function MyPlans() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card has-builder">
+          <BuilderKulka activity={`${editName}|${editMonths}|${JSON.stringify(editDays)}`} outcome={editOutcome}
+            intro={editIntro} onIntroDone={() => setEditIntro(false)} />
           <div className="form-group" style={{ marginBottom:24 }}>
             <label className="form-label">{t('plan_name_label')}</label>
             <input className="form-input" value={editName}
@@ -460,7 +473,7 @@ export default function MyPlans() {
 
           {editError && <div className="alert alert-error" style={{ marginBottom:16 }}>{editError}</div>}
           <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-            <button className="btn btn-outline" onClick={() => setView('list')}>{t('cancel_btn')}</button>
+            <button className="btn btn-outline" onClick={cancelEdit}>{t('cancel_btn')}</button>
             <button className="btn btn-primary" disabled={editSaving} onClick={handleSaveEdit}>
               {editSaving ? t('saving') : t('save_changes_btn')}
             </button>

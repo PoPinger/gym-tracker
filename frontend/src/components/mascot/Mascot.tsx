@@ -11,6 +11,7 @@ interface Clip { frames: [FrameName, number][]; loop?: boolean; bob?: boolean; c
 
 // Workout done: curls getting faster, then tired (panting, sweat), then sitting down to rest
 const curls = [520, 460, 400, 340, 280, 230, 190, 160, 135, 115, 100, 90].flatMap(ms => [['curlDown', ms], ['curlUp', ms]] as [FrameName, number][]);
+const writing = (ms: number, n: number) => Array.from({ length: n }, () => [['writeA', ms], ['writeB', ms]] as [FrameName, number][]).flat();
 const panting = Array.from({ length: 4 }, () => [['tired1', 380], ['tired2', 380]] as [FrameName, number][]).flat();
 
 const CLIPS = {
@@ -39,18 +40,42 @@ const CLIPS = {
   cheer: { frames: [['cheer', 1000]], cls: 'm-s-hop' },
   peekL: { frames: [['peekL', 1000]] },
   peekR: { frames: [['peekR', 1000]] },
+  // Builder: writes, now and then looks up tapping the pencil on his chin; faster while the form changes
+  build: { frames: [...writing(260, 6), ['chin1', 500], ['chin2', 180], ['chin1', 180], ['chin2', 180], ['chin1', 400]], loop: true },
+  buildFast: { frames: writing(100, 1), loop: true },
+  stamp: { frames: [['stampUp', 260], ['stampDown', 300], ['thumbsUp', 1000]] },
+  shrug: { frames: [['shrug', 450], ['tuck', 1000]] },
+  ride: { frames: [['ride', 1000]] },
+  jumpH: { frames: [['jumpH', 1000]] },
+  // Crane: hanging by the harness, ticking off the list, running/carrying a brick, pushing, kicking, wiping sweat
+  harness: { frames: [['harness', 1000]] },
+  tick: { frames: [['tick1', 700], ['tick2', 220], ['tick1', 900], ['tick2', 220], ['tick1', 500]], loop: true },
+  runH: { frames: [['runH1', 110], ['runH2', 110]], loop: true },
+  carry: { frames: [['carry1', 160], ['carry2', 160]], loop: true },
+  pushUp: { frames: [['pushUp', 1000]] },
+  pushDown: { frames: [['pushDown', 1000]] },
+  kick: { frames: [['kickBack', 220], ['kickFwd', 1000]] },
+  wipe: { frames: [['wipe1', 120], ['wipe2', 120], ['wipe1', 120], ['wipe2', 120], ['thumbsUpH', 1000]] },
+  // Masa / Redukcja: the body is inflated / stretched by CSS (index.css)
+  puff: { frames: [['puff', 1000]] },
+  stretch: { frames: [['stretch', 1000]] },
 } satisfies Record<string, Clip>;
 
 type ClipName = keyof typeof CLIPS;
 export type MascotState = 'idle' | 'press' | 'done' | 'progressUp' | 'progressDown' | 'skipped' | 'slide' | 'climb' | 'walk' | 'run' | 'skid'
-  | 'happy' | 'worry' | 'hide' | 'toss' | 'walkBar' | 'cheer';
+  | 'happy' | 'worry' | 'hide' | 'toss' | 'walkBar' | 'cheer' | 'jump'
+  | 'build' | 'buildFast' | 'stamp' | 'shrug' | 'ride' | 'jumpH'
+  | 'harness' | 'tick' | 'runH' | 'carry' | 'pushUp' | 'pushDown' | 'kick' | 'wipe' | 'puff' | 'stretch';
 export type MascotEntrance = 'none' | 'rope' | 'run' | 'peek' | 'trampoline' | 'parachute';
 
 // Static pose per state for reduced motion
 const STATIC: Record<MascotState, FrameName> = {
   idle: 'idle', press: 'press3', done: 'rest', progressUp: 'jump', progressDown: 'sad', skipped: 'bored',
   slide: 'slide', climb: 'climb1', walk: 'walk1', run: 'run1', skid: 'skid',
-  happy: 'idleHappy', worry: 'paperWorry', hide: 'paperHide', toss: 'smile', walkBar: 'walkBar1', cheer: 'cheer',
+  happy: 'idleHappy', worry: 'paperWorry', hide: 'paperHide', toss: 'smile', walkBar: 'walkBar1', cheer: 'cheer', jump: 'jump',
+  build: 'writeA', buildFast: 'writeA', stamp: 'thumbsUp', shrug: 'tuck', ride: 'ride', jumpH: 'jumpH',
+  harness: 'harness', tick: 'tick1', runH: 'runH1', carry: 'carry1', pushUp: 'pushUp', pushDown: 'pushDown', kick: 'kickFwd',
+  wipe: 'thumbsUpH', puff: 'puff', stretch: 'stretch',
 };
 
 // Entrance = timed steps of (pose clip, CSS class that moves the mascot); durations match index.css
@@ -102,8 +127,9 @@ function Frame({ name, cls }: { name: FrameName; cls?: string }) {
   return <g className={cls}>{framePaths(name).map(p => <path key={p.fill} fill={p.fill} d={p.d} />)}</g>;
 }
 
-export default function Mascot({ state = 'idle', entrance = 'none', size = 48, className = '', style }: {
-  state?: MascotState; entrance?: MascotEntrance; size?: number; className?: string; style?: CSSProperties;
+// noWave: tapping does nothing (Kulka in his helmet has no waving frames)
+export default function Mascot({ state = 'idle', entrance = 'none', size = 48, className = '', style, noWave = false }: {
+  state?: MascotState; entrance?: MascotEntrance; size?: number; className?: string; style?: CSSProperties; noWave?: boolean;
 }) {
   const { t } = useLanguage();
   const ref = useRef<HTMLButtonElement>(null);
@@ -141,7 +167,7 @@ export default function Mascot({ state = 'idle', entrance = 'none', size = 48, c
   useEffect(() => () => window.clearTimeout(waveTimer.current), []);
 
   const wave = () => {
-    if (reduced) return;
+    if (reduced || noWave) return;
     setWaving(true);
     window.clearTimeout(waveTimer.current);
     waveTimer.current = window.setTimeout(() => setWaving(false), WAVE_MS);

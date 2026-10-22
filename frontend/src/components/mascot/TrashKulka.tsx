@@ -30,6 +30,16 @@ function Prop({ art, cls }: { art: ReturnType<typeof propPaths>; cls: string }) 
   );
 }
 
+// The can alone (lid open; `closing` shuts it with the bounce), shared with the exercise editor's kick
+export function TrashCan({ closing = false }: { closing?: boolean }) {
+  return (
+    <span className={`m-trash-can${closing ? ' m-trash-closing' : ''}`}>
+      <Prop art={LID} cls="m-trash-lid" />
+      <Prop art={CAN} cls="m-trash-body" />
+    </span>
+  );
+}
+
 const STATE: Record<TrashPhase, MascotState> = { open: 'worry', cancel: 'hide', confirm: 'toss' };
 
 export default function TrashKulka({ phase }: { phase: TrashPhase }) {
@@ -37,10 +47,7 @@ export default function TrashKulka({ phase }: { phase: TrashPhase }) {
   return (
     <div className={`m-trash m-trash-${phase}`}>
       <Mascot size={SIZE} state={STATE[phase]} />
-      <span className="m-trash-can">
-        <Prop art={LID} cls="m-trash-lid" />
-        <Prop art={CAN} cls="m-trash-body" />
-      </span>
+      <TrashCan />
       {phase === 'confirm' && !reduced && <Prop art={PAPER} cls="m-trash-paper" />}
     </div>
   );

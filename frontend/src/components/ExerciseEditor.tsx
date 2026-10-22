@@ -8,6 +8,8 @@ import { MUSCLE_GROUPS } from '../types';
 import { plural } from '../utils/plural';
 import { isValidRepRange } from '../utils/repRange';
 import type { DayColor } from '../utils/dayColors';
+import CraneKulka, { type EditorCue } from './mascot/CraneKulka';
+import { kulkaDelay, WIPE_MS } from './mascot/trash';
 
 export interface ExerciseDraft { name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
 type Field = 'name' | 'muscle_group' | 'sets' | 'rep_min' | 'rep_max';
@@ -45,12 +47,23 @@ export default function ExerciseEditor({ dayName, color, exercises, onChange, on
   // One row open at a time; it follows its exercise through moves and deletes
   const [open, setOpen] = useState<number | null>(null);
   const focusNew = useRef(false);
-  const move = (ei: number, dir: -1 | 1) => { onMove(ei, dir); setOpen(o => o === ei ? ei + dir : o === ei + dir ? ei : o); };
-  const remove = (ei: number) => { onRemove(ei); setOpen(o => o == null || o === ei ? null : o > ei ? o - 1 : o); };
-  const add = () => { onAdd(); setOpen(n); focusNew.current = true; };
+  // Kulka reacts to each action after it has happened; "Gotowe" leaves once he has wiped his sweat
+  const [cue, setCue] = useState<EditorCue | null>(null);
+  const nudge = (kind: EditorCue['kind'], index: number) => setCue(c => ({ kind, index, seq: (c?.seq ?? 0) + 1 }));
+  const leaving = useRef(false);
+  const move = (ei: number, dir: -1 | 1) => { onMove(ei, dir); setOpen(o => o === ei ? ei + dir : o === ei + dir ? ei : o); nudge(dir < 0 ? 'up' : 'down', ei + dir); };
+  const remove = (ei: number) => { onRemove(ei); setOpen(o => o == null || o === ei ? null : o > ei ? o - 1 : o); nudge('remove', ei); };
+  const add = () => { onAdd(); setOpen(n); focusNew.current = true; nudge('add', n); };
+  const done = () => {
+    if (leaving.current) return;
+    leaving.current = true;
+    nudge('done', 0);
+    void kulkaDelay(WIPE_MS).then(onDone);
+  };
 
   return (
-    <div className={`exed day-color-${color}`} style={{ maxWidth: 720 }}>
+    <div className={`exed has-crane day-color-${color}`} style={{ maxWidth: 720 }}>
+      <CraneKulka cue={cue} />
       <button className="back-btn" onClick={onBack}><ArrowLeft size={15} /> {t('back_to_days')}</button>
       <div className="page-header exed-header">
         <span className="exed-day-icon"><Dumbbell size={20} /></span>
@@ -115,7 +128,7 @@ export default function ExerciseEditor({ dayName, color, exercises, onChange, on
       )}
 
       <button type="button" className="exed-add" onClick={add}><Plus size={16} /> {t('add_exercise_btn')}</button>
-      <button className="btn btn-primary exed-done" onClick={onDone}><CheckCircle2 size={15} /> {t('done_label')}</button>
+      <button className="btn btn-primary exed-done" onClick={done}><CheckCircle2 size={15} /> {t('done_label')}</button>
     </div>
   );
 }

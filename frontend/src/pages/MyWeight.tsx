@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { weightApi, apiErrorDetail } from '../services/api';
 import AppLoader from '../components/AppLoader';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { trashDelay } from '../components/mascot/trash';
+import { kulkaDelay, trashDelay, SHRUG_MS, STAMP_MS } from '../components/mascot/trash';
+import BuilderKulka, { type BuilderOutcome } from '../components/mascot/BuilderKulka';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { WeightCycle, WeightWeek } from '../types';
 import GoalSwitch from '../components/GoalSwitch';
@@ -82,23 +83,33 @@ export default function MyWeight() {
   const [durationSaving, setDurationSaving] = useState(false);
   const [durationError, setDurationError]   = useState('');
   const [showShorten, setShowShorten]       = useState(false);
+  // Kulka the builder on the dialog: excavator entrance once per opening, stamp on save, shrug on cancel
+  const [durationIntro, setDurationIntro]     = useState(true);
+  const [durationOutcome, setDurationOutcome] = useState<BuilderOutcome>(null);
 
-  // closing: the shorten dialog's trash animation, awaited with the request before the dialog closes
+  // closing: the shorten dialog's trash animation or Kulka's stamp, awaited with the request before the dialog closes
   const saveDuration = async (closing: Promise<void> = Promise.resolve()) => {
     if (!cycle || editMonths == null) return;
-    if (editMonths === cycle.months) { setShowShorten(false); setEditMonths(null); return; }
+    if (editMonths === cycle.months) { await closing; setShowShorten(false); setEditMonths(null); setDurationOutcome(null); return; }
     setDurationSaving(true); setDurationError('');
     try {
       const [res] = await Promise.all([weightApi.updateMonths(cycle.id, editMonths), closing]);
       setCycle(res.data); setEditMonths(null);
     } catch (err) {
       setDurationError(apiErrorDetail(err) || t('save_changes_error'));
-    } finally { setDurationSaving(false); setShowShorten(false); }
+    } finally { setDurationSaving(false); setShowShorten(false); setDurationOutcome(null); }
   };
 
   const handleSaveDuration = () => {
+    if (durationOutcome) return;
     if (cycle && editMonths != null && editMonths < cycle.months) setShowShorten(true);
-    else void saveDuration();
+    else { setDurationOutcome('save'); void saveDuration(kulkaDelay(STAMP_MS)); }
+  };
+
+  const cancelDuration = () => {
+    if (durationOutcome) return;
+    setDurationOutcome('cancel');
+    void kulkaDelay(SHRUG_MS).then(() => { setEditMonths(null); setDurationOutcome(null); });
   };
 
   const handleReset = async () => {
@@ -181,7 +192,7 @@ export default function MyWeight() {
       <PanelView cycle={cycle} first={getWeek1Avg()} last={lastLoggedWeight(cycle)}
         avg={computeAverage} prevAvg={getPrevWeekAvg}
         onOpenWeek={week => { setSelectedWeek(week); setView('week-detail'); }} onReset={() => setShowReset(true)}
-        onEditDuration={() => { setEditMonths(cycle.months); setDurationError(''); }}
+        onEditDuration={() => { setEditMonths(cycle.months); setDurationError(''); setDurationIntro(true); }}
         goalSwitch={<GoalSwitch goal={cycle.goal} onChange={changeGoal} disabled={goalSaving} />} />
       {showReset && (
         <ConfirmDialog
@@ -194,7 +205,8 @@ export default function MyWeight() {
       )}
       {editMonths != null && !showShorten && (
         <div className="modal-overlay">
-          <div className="modal w-duration-modal" role="dialog" aria-modal="true" aria-label={t('weight_edit_duration_title')}>
+          <div className="modal w-duration-modal has-builder" role="dialog" aria-modal="true" aria-label={t('weight_edit_duration_title')}>
+            <BuilderKulka activity={editMonths} outcome={durationOutcome} intro={durationIntro} onIntroDone={() => setDurationIntro(false)} />
             <div className="modal-title">{t('weight_edit_duration_title')}</div>
             <label className="form-label">{t('edit_duration_label')}</label>
             <div className="seg-control seg-control-12" role="radiogroup" aria-label={t('edit_duration_label')}>
@@ -211,7 +223,7 @@ export default function MyWeight() {
             </div>
             {durationError && <div className="alert alert-error">{durationError}</div>}
             <div className="modal-actions">
-              <button className="btn btn-outline btn-sm" onClick={() => setEditMonths(null)}>{t('cancel_btn')}</button>
+              <button className="btn btn-outline btn-sm" onClick={cancelDuration}>{t('cancel_btn')}</button>
               <button className="btn btn-primary btn-sm" disabled={durationSaving} onClick={handleSaveDuration}>
                 {durationSaving ? t('saving') : t('save_changes_btn')}
               </button>
