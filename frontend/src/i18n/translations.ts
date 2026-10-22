@@ -87,6 +87,10 @@ export interface TranslationMap {
   admin_copy: string;
   admin_copied: string;
   admin_generate_error: string;
+  admin_mascot: string;
+  admin_mascot_error: string;
+  mascot_kulka: string;
+  mascot_ariana: string;
   admin_last_active: string;
   admin_last_login: string;
   admin_never: string;
@@ -98,6 +102,7 @@ export interface TranslationMap {
   // Dashboard – loading / header
   loading_app: string;
   mascot_label: string;
+  mascot_label_ariana: string;
   dashboard_title: string;
   dashboard_subtitle: string;
   active_weeks_1: string;
@@ -477,6 +482,10 @@ const pl: TranslationMap = {
   admin_copy: 'Kopiuj',
   admin_copied: 'Skopiowano',
   admin_generate_error: 'Nie udało się wygenerować kodu',
+  admin_mascot: 'Maskotka',
+  admin_mascot_error: 'Nie udało się zmienić maskotki',
+  mascot_kulka: 'Kulka',
+  mascot_ariana: 'Ariana',
   admin_last_active: 'Ostatnia aktywność',
   admin_last_login: 'Ostatnie logowanie',
   admin_never: 'nigdy',
@@ -487,6 +496,7 @@ const pl: TranslationMap = {
 
   loading_app: 'Ładowanie aplikacji…',
   mascot_label: 'Kulka – dotknij, a pomacha',
+  mascot_label_ariana: 'Ariana – dotknij, a pomacha',
   dashboard_title: 'Statystyki',
   dashboard_subtitle: 'Twoje treningi i postępy w jednym miejscu',
   active_weeks_1: 'aktywny tydzień',
@@ -841,6 +851,10 @@ const en: TranslationMap = {
   admin_copy: 'Copy',
   admin_copied: 'Copied',
   admin_generate_error: 'Could not generate the code',
+  admin_mascot: 'Mascot',
+  admin_mascot_error: 'Could not change the mascot',
+  mascot_kulka: 'Kulka',
+  mascot_ariana: 'Ariana',
   admin_last_active: 'Last activity',
   admin_last_login: 'Last login',
   admin_never: 'never',
@@ -851,6 +865,7 @@ const en: TranslationMap = {
 
   loading_app: 'Loading app…',
   mascot_label: 'Kulka – tap to wave',
+  mascot_label_ariana: 'Ariana – tap to wave',
   dashboard_title: 'Statistics',
   dashboard_subtitle: 'Your workouts and progress in one place',
   active_weeks_1: 'active week',

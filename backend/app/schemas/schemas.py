@@ -7,6 +7,9 @@ from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
 PASSWORD_MIN_LENGTH = 8
 
+# Mascot shown to the user; NULL in the database = "kulka"
+Mascot = Literal["kulka", "ariana"]
+
 
 def _check_password_length(v: str) -> str:
     if len(v) < PASSWORD_MIN_LENGTH:
@@ -37,6 +40,7 @@ class TokenResponse(BaseModel):
     email: str
     display_name: Optional[str]
     is_admin: bool = False
+    mascot: Mascot = "kulka"
 
 
 class UserOut(BaseModel):
@@ -45,6 +49,12 @@ class UserOut(BaseModel):
     display_name: Optional[str]
     created_at: datetime
     is_admin: bool = False
+    mascot: Mascot = "kulka"
+
+    @field_validator("mascot", mode="before")
+    @classmethod
+    def default_mascot(cls, v):
+        return v or "kulka"
 
     class Config:
         from_attributes = True
@@ -88,9 +98,19 @@ class AdminUserOut(BaseModel):
     created_at: datetime
     last_active_at: Optional[datetime]
     last_login_at: Optional[datetime]
+    mascot: Mascot = "kulka"
+
+    @field_validator("mascot", mode="before")
+    @classmethod
+    def default_mascot(cls, v):
+        return v or "kulka"
 
     class Config:
         from_attributes = True
+
+
+class MascotUpdate(BaseModel):
+    mascot: Mascot
 
 
 class ResetCodeOut(BaseModel):

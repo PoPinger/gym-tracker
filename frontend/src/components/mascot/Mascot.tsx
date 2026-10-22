@@ -1,11 +1,14 @@
-// Kulka, the animated pixel-art mascot. Poses switch with CSS keyframes (one <g> per frame);
-// movement (bob, entrances, hops) is CSS too (index.css, "Mascot"). Tapping makes Kulka wave.
+// Kulka, the animated pixel-art mascot (or Ariana, when the admin gave the account her: useMascotKind). Poses
+// switch with CSS keyframes (one <g> per frame); movement (bob, entrances, hops) is CSS too (index.css, "Mascot").
+// Tapping makes the mascot wave.
 // With prefers-reduced-motion: no entrance and one static pose per state.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { prefersReducedMotion } from '../../hooks/useFirstInView';
 import { framePaths, GRID_H, GRID_W, type FrameName } from './kulkaSprites';
+import { useMascotKind } from './MascotContext';
+import type { MascotKind } from '../../types';
 
 interface Clip { frames: [FrameName, number][]; loop?: boolean; bob?: boolean; cls?: string }
 
@@ -100,6 +103,7 @@ const ENTRANCES: Record<Exclude<MascotEntrance, 'none'>, { clip: ClipName; ms: n
 };
 
 const WAVE_MS = 1200;
+const LABEL = { kulka: 'mascot_label', ariana: 'mascot_label_ariana' } as const;
 
 // Frame visibility keyframes per clip, injected once: each frame is shown (step-end) in its time windows
 const pct = (v: number) => `${+(v * 100).toFixed(3)}%`;
@@ -132,15 +136,17 @@ function injectStyles() {
   document.head.appendChild(el);
 }
 
-function Frame({ name, cls }: { name: FrameName; cls?: string }) {
-  return <g className={cls}>{framePaths(name).map(p => <path key={p.fill} fill={p.fill} d={p.d} />)}</g>;
+function Frame({ name, kind, cls }: { name: FrameName; kind: MascotKind; cls?: string }) {
+  return <g className={cls}>{framePaths(name, kind).map(p => <path key={p.fill} fill={p.fill} d={p.d} />)}</g>;
 }
 
-// noWave: tapping does nothing (Kulka in his helmet has no waving frames)
-export default function Mascot({ state = 'idle', entrance = 'none', size = 48, className = '', style, noWave = false }: {
-  state?: MascotState; entrance?: MascotEntrance; size?: number; className?: string; style?: CSSProperties; noWave?: boolean;
+// noWave: tapping does nothing (Kulka in his helmet has no waving frames); kind: a given mascot instead of the account's
+export default function Mascot({ state = 'idle', entrance = 'none', size = 48, className = '', style, noWave = false, kind: kindProp }: {
+  state?: MascotState; entrance?: MascotEntrance; size?: number; className?: string; style?: CSSProperties; noWave?: boolean; kind?: MascotKind;
 }) {
   const { t } = useLanguage();
+  const accountKind = useMascotKind();
+  const kind = kindProp ?? accountKind;
   const ref = useRef<HTMLButtonElement>(null);
   const [reduced] = useState(prefersReducedMotion);
   const steps = reduced || entrance === 'none' ? [] : ENTRANCES[entrance];
@@ -190,13 +196,13 @@ export default function Mascot({ state = 'idle', entrance = 'none', size = 48, c
   const moveCls = step ? step.cls : !reduced && !waving ? clip.cls ?? '' : '';
 
   return (
-    <button ref={ref} type="button" className={`mascot ${moveCls} ${className}`} style={{ width: size, ...style }}
-      onClick={wave} aria-label={t('mascot_label')} title={t('mascot_label')}>
+    <button ref={ref} type="button" className={`mascot m-k-${kind} ${moveCls} ${className}`} style={{ width: size, ...style }}
+      onClick={wave} aria-label={t(LABEL[kind])} title={t(LABEL[kind])}>
       {entrance === 'rope' && step && <span className={`m-rope${stepIdx > 0 ? ' m-rope-up' : ''}`} aria-hidden="true" />}
       <svg viewBox={`0 0 ${GRID_W} ${GRID_H}`} width={size} height={size * GRID_H / GRID_W} shapeRendering="crispEdges" aria-hidden="true">
         {/* key restarts the frame animations whenever the clip changes */}
-        <g key={clipName} className={!reduced && clip.bob ? 'm-bob' : undefined}>
-          {names.map(n => <Frame key={n} name={n} cls={animated ? `mk-${clipName}-${n}` : undefined} />)}
+        <g key={`${kind}-${clipName}`} className={!reduced && clip.bob ? 'm-bob' : undefined}>
+          {names.map(n => <Frame key={n} name={n} kind={kind} cls={animated ? `mk-${clipName}-${n}` : undefined} />)}
         </g>
       </svg>
     </button>

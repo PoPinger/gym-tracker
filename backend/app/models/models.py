@@ -20,6 +20,7 @@ class User(Base):
     token_version = Column(Integer, nullable=False, default=0, server_default="0")  # bump to revoke all JWTs
     last_active_at = Column(DateTime, nullable=True)  # throttled: written at most every 5 min
     last_login_at = Column(DateTime, nullable=True)
+    mascot = Column(String(20), nullable=True)  # set by the admin only; NULL = kulka
 
     plans = relationship("TrainingPlan", back_populates="user", cascade="all, delete-orphan")
     weight_cycles = relationship("WeightCycle", back_populates="user", cascade="all, delete-orphan")

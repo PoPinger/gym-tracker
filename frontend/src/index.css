@@ -226,6 +226,7 @@ a { text-decoration: none; color: inherit; }
 @keyframes m-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-28%); } }
 /* Rope: hangs from Kulka's hands up past the top of the screen, pulled up after the landing */
 .m-rope { position: absolute; left: calc(50% - 1px); bottom: 74%; width: 2px; height: calc(var(--m-top, 400px) + 40px); background: repeating-linear-gradient(#b45309 0 3px, #f59e0b 3px 6px); transform-origin: top; }
+.m-k-ariana .m-rope { bottom: 104%; } /* Ariana holds the rope above her head */
 .m-rope-up { animation: m-rope-up 0.3s ease-in forwards; }
 .mascot.m-e-rope, .mascot.m-e-hop { z-index: 310; } /* over the mobile top bar (z-index 300) while on the rope */
 @keyframes m-rope-up { to { transform: scaleY(0); } }
@@ -327,6 +328,7 @@ a { text-decoration: none; color: inherit; }
 .exed.has-crane .page-header.exed-header { margin-bottom: 0; }
 .m-crane { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; }
 .m-crane-hook { position: absolute; left: 16px; bottom: calc(100% - 15px); line-height: 0; }
+.m-crane-hook.m-k-ariana { bottom: calc(100% + 3px); } /* her harness meets above her head */
 .m-crane-hook svg { display: block; }
 .m-crane-cable { position: absolute; left: 4px; bottom: 100%; width: 2px; height: var(--m-top, 400px); background: #334155; }
 .m-crane-brick, .m-crane-can { position: absolute; z-index: 3; pointer-events: none; line-height: 0; }
@@ -519,6 +521,9 @@ a { text-decoration: none; color: inherit; }
 .admin-user-name { font-size: 15px; font-weight: 700; color: var(--text-heading); }
 .admin-user-email { font-size: 13px; color: var(--text-muted); overflow-wrap: anywhere; }
 .admin-user-date { font-size: 12px; color: var(--text-subtle); margin-top: 2px; }
+.admin-mascot { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--text-heading); }
+.admin-mascot .form-select { width: auto; min-width: 120px; min-height: 36px; padding-top: 6px; padding-bottom: 6px; }
+.admin-mascot-preview { pointer-events: none; }
 .admin-code { margin: 16px 0 8px; padding: 14px; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 28px; font-weight: 800; letter-spacing: 0.14em; color: var(--primary); background: var(--primary-light); border: 1.5px dashed var(--primary-muted); border-radius: var(--radius-sm); user-select: all; }
 .user-actions { display: flex; gap: 2px; }
 .pwd-btn:hover { background: var(--primary-light); color: var(--primary); }

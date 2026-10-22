@@ -7,7 +7,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Mascot, { type MascotState } from './Mascot';
 import { prefersReducedMotion } from '../../hooks/useFirstInView';
-import { GRID_H } from './kulkaSprites';
+import { GRID_H, HEAD_ROW } from './kulkaSprites';
+import { useMascotKind } from './MascotContext';
 
 export interface GoalPick { goal: 'bulk' | 'cut'; seq: number }
 
@@ -17,12 +18,12 @@ const SHAPE_MS = 1700; // matches .m-goal-bulk / .m-goal-cut
 const GROW = 5, ROUND = 1.07; // Masa: height ×5, width a bit more
 const SHRINK = 0.2, SLIM = 0.86; // Redukcja: height ×0.2, width a bit less
 const EDGE = 4; // px kept free at the screen edges
-const HEAD_ROW = 10; // the sprite grid is empty above his head (its outline): only the rows below count for the top edge
 
 export default function GoalKulka({ pick, from }: { pick: GoalPick | null; from: DOMRect | null }) {
   const ref = useRef<HTMLDivElement>(null);
   const [reduced] = useState(prefersReducedMotion);
   const [jumping, setJumping] = useState(!!from && !reduced);
+  const headRow = HEAD_ROW[useMascotKind()]; // only the rows from the head down count for the top edge
 
   // Size change on every click (state adjusted during render when the prop changes); a new seq restarts it
   const [seenPick, setSeenPick] = useState(pick);
@@ -44,7 +45,7 @@ export default function GoalKulka({ pick, from }: { pick: GoalPick | null; from:
     const r = el.getBoundingClientRect(), vw = document.documentElement.clientWidth;
     let gx = SHRINK * SLIM, gy = SHRINK;
     if (shape.goal === 'bulk') {
-      gy = Math.max(1, Math.min(GROW, (r.bottom - EDGE) / (r.height * (1 - HEAD_ROW / GRID_H))));
+      gy = Math.max(1, Math.min(GROW, (r.bottom - EDGE) / (r.height * (1 - headRow / GRID_H))));
       gx = Math.min(gy * ROUND, (vw - 2 * EDGE) / r.width);
     }
     const cx = r.left + r.width / 2, half = (r.width * gx) / 2;
@@ -52,7 +53,7 @@ export default function GoalKulka({ pick, from }: { pick: GoalPick | null; from:
     el.style.setProperty('--gx', gx.toFixed(3));
     el.style.setProperty('--gy', gy.toFixed(3));
     el.style.setProperty('--gdx', `${Math.round(dx)}px`);
-  }, [shape]);
+  }, [shape, headRow]);
 
   // Jump in an arc from the end of the chart line
   useLayoutEffect(() => {

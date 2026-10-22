@@ -25,6 +25,7 @@ def _token_response(user: User) -> TokenResponse:
         email=user.email,
         display_name=user.display_name,
         is_admin=user.is_admin,
+        mascot=user.mascot or "kulka",
     )
 
 

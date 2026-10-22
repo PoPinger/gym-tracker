@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../i18n/LanguageContext';
 import { LogOut, Menu, X, ShieldCheck, KeyRound } from 'lucide-react';
 import ChangePasswordModal from './ChangePasswordModal';
+import { MascotContext, mascotOf } from './mascot/MascotContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -112,6 +113,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   );
 
   return (
+    <MascotContext.Provider value={mascotOf(user)}>
     <div className="app-layout">
       {/* Mobile topbar */}
       <header className="topbar">
@@ -138,5 +140,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {pwdOpen && <ChangePasswordModal onClose={() => setPwdOpen(false)} onChanged={saveSession} />}
     </div>
+    </MascotContext.Provider>
   );
 }

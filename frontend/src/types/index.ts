@@ -4,7 +4,10 @@ export interface User {
   display_name?: string;
   created_at: string;
   is_admin?: boolean;
+  mascot?: MascotKind;
 }
+
+export type MascotKind = 'kulka' | 'ariana';
 
 export interface AdminUser {
   id: number;
@@ -13,6 +16,7 @@ export interface AdminUser {
   created_at: string;
   last_active_at?: string | null;
   last_login_at?: string | null;
+  mascot: MascotKind;
 }
 
 export interface ResetCode {

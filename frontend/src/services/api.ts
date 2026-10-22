@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { MascotKind } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -53,6 +54,7 @@ export const authApi = {
 export const adminApi = {
   listUsers: () => api.get('/admin/users'),
   createResetCode: (userId: number) => api.post(`/admin/users/${userId}/reset-code`),
+  setMascot: (userId: number, mascot: MascotKind) => api.put(`/admin/users/${userId}/mascot`, { mascot }),
 };
 
 // Plans

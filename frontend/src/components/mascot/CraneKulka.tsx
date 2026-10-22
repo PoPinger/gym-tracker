@@ -10,6 +10,7 @@ import Mascot, { type MascotState } from './Mascot';
 import { TrashCan } from './TrashKulka';
 import { prefersReducedMotion } from '../../hooks/useFirstInView';
 import { BRICK, GRID_H, GRID_W, propPaths } from './kulkaSprites';
+import { useMascotKind } from './MascotContext';
 
 export interface EditorCue { kind: 'add' | 'up' | 'down' | 'remove' | 'done'; index: number; seq: number }
 
@@ -34,6 +35,7 @@ export default function CraneKulka({ cue }: { cue: EditorCue | null }) {
   const [reduced] = useState(prefersReducedMotion);
   const [state, setState] = useState<MascotState>(reduced ? 'tick' : 'harness');
   const [hook, setHook] = useState(!reduced);
+  const kind = useMascotKind();
   const [kick, setKick] = useState<{ brick: Pos; can: Pos; closing: boolean } | null>(null);
   const ref = useRef<HTMLDivElement>(null), hookRef = useRef<HTMLDivElement>(null), brickRef = useRef<HTMLSpanElement>(null);
   const pos = useRef<Pos>({ x: 0, y: 0 });
@@ -182,7 +184,7 @@ export default function CraneKulka({ cue }: { cue: EditorCue | null }) {
     <>
       <div ref={ref} className="m-crane">
         {hook && (
-          <div ref={hookRef} className="m-crane-hook">
+          <div ref={hookRef} className={`m-crane-hook m-k-${kind}`}>
             <span className="m-crane-cable" />
             <svg viewBox="0 0 5 6" width={5 * C} height={6 * C} shapeRendering="crispEdges" aria-hidden="true">
               {HOOK.paths.map(p => <path key={p.fill} fill={p.fill} d={p.d} />)}

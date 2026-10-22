@@ -5,7 +5,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Mascot, { type MascotState } from './Mascot';
 import { prefersReducedMotion } from '../../hooks/useFirstInView';
-import { GRID_H, GRID_W, propPaths, STAMP_MARK } from './kulkaSprites';
+import { GRID_H, GRID_W, handCell, propPaths, STAMP_MARK } from './kulkaSprites';
+import { useMascotKind } from './MascotContext';
 
 export interface StampCue { index: number; seq: number }
 
@@ -23,6 +24,8 @@ export default function WeekStampKulka({ cue }: { cue: StampCue | null }) {
   const [reduced] = useState(prefersReducedMotion);
   const [state, setState] = useState<MascotState>('notebook');
   const [mark, setMark] = useState<Pos | null>(null);
+  const [hx, hy] = handCell('dayStampDown', useMascotKind(), 'R');
+  const stampX = (hx + 1) * C, stampY = (hy + 2) * C; // the stamp's face, under the right hand
   const ref = useRef<HTMLDivElement>(null);
   const pos = useRef<Pos>({ x: 0, y: 0 });
   const timers = useRef<number[]>([]);
@@ -53,14 +56,14 @@ export default function WeekStampKulka({ cue }: { cue: StampCue | null }) {
     if (!tile) return;
     const b = card().getBoundingClientRect(), r = tile.getBoundingClientRect();
     // Stands on the tile's top edge so the stamp in his right hand comes down on the tile's centre
-    const target = { x: Math.round(r.left - b.left + r.width / 2 - 20 * C), y: Math.round(r.top - b.top - H + 10) };
+    const target = { x: Math.round(r.left - b.left + r.width / 2 - stampX), y: Math.round(r.top - b.top - H + 10) };
     const from = pos.current, t1 = runMs(from, target), t2 = t1 + STAMP_DOWN_MS, t3 = t2 + STAMP_HOLD_MS;
     clear();
     busy.current = true;
     moveTo(target, t1);
     at(0, () => { setMark(null); setState('run'); });
     at(t1, () => setState('dayStamp'));
-    at(t2, () => setMark({ x: target.x + 20 * C - (MARK.w * C) / 2, y: target.y + 26 * C }));
+    at(t2, () => setMark({ x: target.x + stampX - (MARK.w * C) / 2, y: target.y + stampY }));
     at(t3, () => { const home = rest(); setState('run'); moveTo(home, runMs(target, home)); at(runMs(target, home), () => { setState('notebook'); busy.current = false; }); });
     at(t2 + 900, () => setMark(null));
   }, [cue?.seq]); // eslint-disable-line react-hooks/exhaustive-deps

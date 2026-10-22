@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { User } from '../types';
+import type { MascotKind, User } from '../types';
 import { authApi, apiErrorDetail } from '../services/api';
 
 export function useAuth() {
@@ -15,10 +15,10 @@ export function useAuth() {
   const [loading, setLoading] = useState(false);
 
   // Store a TokenResponse from login / register / change-password
-  const saveSession = (data: { access_token: string; user_id: number; email: string; display_name?: string; is_admin?: boolean }) => {
+  const saveSession = (data: { access_token: string; user_id: number; email: string; display_name?: string; is_admin?: boolean; mascot?: MascotKind }) => {
     const userData: User = {
       id: data.user_id, email: data.email, display_name: data.display_name,
-      is_admin: data.is_admin, created_at: new Date().toISOString(),
+      is_admin: data.is_admin, mascot: data.mascot, created_at: new Date().toISOString(),
     };
     localStorage.setItem('token', data.access_token);
     localStorage.setItem('user', JSON.stringify(userData));

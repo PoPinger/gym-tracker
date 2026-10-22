@@ -4,7 +4,7 @@ import { adminApi } from '../services/api';
 import AppLoader from '../components/AppLoader';
 import Mascot from '../components/mascot/Mascot';
 import { useLanguage } from '../i18n/LanguageContext';
-import type { AdminUser, ResetCode } from '../types';
+import type { AdminUser, MascotKind, ResetCode } from '../types';
 import { parseApiDate, formatDateTime, relativeTime } from '../utils/relativeTime';
 import { KeyRound, Copy, Check } from 'lucide-react';
 
@@ -15,6 +15,7 @@ export default function Admin() {
   const [busyId, setBusyId]     = useState<number | null>(null);
   const [issued, setIssued]     = useState<{ user: AdminUser; code: ResetCode } | null>(null);
   const [copied, setCopied]     = useState(false);
+  const [mascotBusy, setMascotBusy] = useState<number | null>(null);
   const { lang, t }             = useLanguage();
 
   const locale = lang === 'pl' ? 'pl-PL' : 'en-US';
@@ -40,6 +41,19 @@ export default function Admin() {
       setError(t('admin_generate_error'));
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const changeMascot = async (user: AdminUser, mascot: MascotKind) => {
+    setMascotBusy(user.id);
+    setError('');
+    try {
+      const res = await adminApi.setMascot(user.id, mascot);
+      setUsers(list => list.map(u => (u.id === user.id ? { ...u, mascot: res.data.mascot } : u)));
+    } catch {
+      setError(t('admin_mascot_error'));
+    } finally {
+      setMascotBusy(null);
     }
   };
 
@@ -83,6 +97,15 @@ export default function Admin() {
                     {t('admin_last_login')}: {u.last_login_at ? formatDateTime(parseApiDate(u.last_login_at), lang) : t('admin_never')}
                   </div>
                   <div className="admin-user-date">{t('admin_created')}: {fmtDate(u.created_at)}</div>
+                  <div className="admin-mascot">
+                    <span>{t('admin_mascot')}</span>
+                    <select className="form-select" value={u.mascot} disabled={mascotBusy === u.id} aria-label={t('admin_mascot')}
+                      onChange={e => changeMascot(u, e.target.value as MascotKind)}>
+                      <option value="kulka">{t('mascot_kulka')}</option>
+                      <option value="ariana">{t('mascot_ariana')}</option>
+                    </select>
+                    <span className="admin-mascot-preview" aria-hidden="true" inert><Mascot key={u.mascot} kind={u.mascot} size={28} noWave /></span>
+                  </div>
                 </div>
                 <button className="btn btn-outline btn-sm" onClick={() => generate(u)} disabled={busyId !== null}>
                   <KeyRound size={15} />
