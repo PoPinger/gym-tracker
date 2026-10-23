@@ -297,6 +297,15 @@ a { text-decoration: none; color: inherit; }
 @keyframes m-trash-lid { 0% { transform: rotate(38deg) translate(-2px, -2px); } 55% { transform: rotate(0) translateY(-4px); } 80% { transform: rotate(-4deg) translateY(1px); } 100% { transform: none; } }
 .m-trash-paper { position: absolute; left: 33px; top: 9px; animation: m-trash-paper 0.4s 0.1s cubic-bezier(.3,.2,.6,1) both; }
 @keyframes m-trash-paper { 0% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(14px, -18px) rotate(160deg); } 100% { transform: translate(22px, 12px) rotate(300deg) scale(0.6); opacity: 0; } }
+/* Login / password reset: Kulka stands on the auth card's top edge, centred above the logo */
+.auth-wrap.has-mascot { padding-top: 84px; }
+.auth-card.has-mascot { position: relative; }
+.m-spot-auth { position: absolute; left: 50%; bottom: calc(100% - 3px); transform: translateX(-50%); z-index: 1; }
+.m-qmark { position: absolute; bottom: 44px; pointer-events: none; opacity: 0; animation: m-qmark 2.4s ease-out infinite both; }
+@keyframes m-qmark {
+  0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: 1; } 50% { transform: translate(-3px, -10px); }
+  75% { opacity: 1; } 100% { transform: translate(2px, -20px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .m-qmark { animation: none; opacity: 1; } }
 /* Plan weeks view: on top of the current week's tile (positioned by WeeksMascot.tsx), or on the progress card */
 .week-cards.has-mascot { position: relative; margin-top: 44px; }
 .m-weeks { position: absolute; left: 0; top: 0; z-index: 2; }

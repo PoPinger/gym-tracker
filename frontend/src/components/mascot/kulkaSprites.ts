@@ -144,6 +144,7 @@ const NOTEBOOK = ['wwKww', 'wdKdw', 'wwKdw', 'wwKww'];
 // Water bottle: standing in the hand, or tipped towards the mouth (cap on the left)
 const BOTTLE = ['.g.', 'bbb', 'bwb', 'bwb', 'bbb'];
 const BOTTLE_TIP = ['.bbbbb', 'gbwwbb', '.bbbbb'];
+export const QMARK = ['.yyy.', 'yy.yy', '...yy', '..yy.', '..y..', '.....', '..y..'];
 export const STAMP_MARK = ['......e', '.....ee', 'e...ee.', 'ee.ee..', '.eee...', '..e....'];
 
 type Eyes = 'open' | 'blink' | 'happy' | 'effort' | 'half' | 'lookL' | 'lookR' | 'lookUp' | 'sad' | 'angry';
@@ -309,6 +310,10 @@ const POSES = {
   // Deload week: relaxed stretching, arms high and wide, then a lean to one side
   stretchUp: { arms: { L: [[1, 15], [0, 9]], R: [[22, 15], [23, 9]] }, eyes: 'blink' },
   stretchSide: { arms: { L: [[1, 17], [0, 14]], R: [[21, 14], [18, 9]] }, eyes: 'happy' },
+  // Password reset: confused, scratching the top of his head; a puzzled shrug in between
+  scratch1: { arms: { L: IDLE_ARMS.L, R: [[23, 13], [17, 9]] }, eyes: 'lookUp', mouth: 'flat' },
+  scratch2: { arms: { L: IDLE_ARMS.L, R: [[23, 13], [15, 9]] }, eyes: 'lookUp', mouth: 'flat' },
+  puzzled: { arms: { L: [[1, 19], [0, 16]], R: [[22, 19], [23, 16]] }, eyes: 'lookUp', mouth: 'flat' },
 } satisfies Record<string, Pose>;
 
 export type FrameName = keyof typeof POSES;

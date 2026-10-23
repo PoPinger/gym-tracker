@@ -5,6 +5,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { authApi } from '../services/api';
 import PasswordInput from '../components/PasswordInput';
 import { Dumbbell, Mail, KeyRound, ArrowRight, ArrowLeft } from 'lucide-react';
+import AuthKulka from '../components/mascot/AuthKulka';
 
 const MIN_PASSWORD = 8;
 
@@ -62,8 +63,9 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="auth-wrap">
-      <div className="auth-card">
+    <div className="auth-wrap has-mascot">
+      <div className="auth-card has-mascot">
+        <AuthKulka mode="confused" />
         <div className="auth-logo">
           <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:8 }}>
             <div style={{ width:44, height:44, background:'linear-gradient(135deg,#4f46e5,#818cf8)', borderRadius:14, display:'flex', alignItems:'center', justifyContent:'center' }}>
