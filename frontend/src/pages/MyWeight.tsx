@@ -11,11 +11,12 @@ import type { GoalPick } from '../components/mascot/GoalKulka';
 import { SetupView, PanelView, WeekView } from '../components/WeightViews';
 import { lastLoggedWeight, type WeightGoal } from '../utils/weightTrend';
 import { plural } from '../utils/plural';
+import { formatKg } from '../utils/progress';
 
 type View = 'setup' | 'weeks' | 'week-detail';
 
 export default function MyWeight() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const [cycle, setCycle]               = useState<WeightCycle | null>(null);
   const [loading, setLoading]           = useState(true);
@@ -134,7 +135,9 @@ export default function MyWeight() {
     if (isNaN(w) || w <= 0) return;
     setDaySaving(prev => ({ ...prev, [dayLogId]: true }));
     try {
-      await weightApi.saveDayWeight(dayLogId, w);
+      // Queued on the phone (sent when online); the label names the entry if the server rejects it
+      const weekNum = cycle?.weeks.find(wk => wk.id === weekId)?.week_number;
+      await weightApi.saveDayWeight(dayLogId, w, `${dayNames[dayOfWeek]} · ${t('week_tile_label')} ${weekNum ?? ''} · ${formatKg(w, lang)}`);
       setDaySaved(prev => ({ ...prev, [dayLogId]: true }));
       setTimeout(() => setDaySaved(prev => ({ ...prev, [dayLogId]: false })), 2000);
       setCycle(prev => {

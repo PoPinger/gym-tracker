@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { plansApi, logsApi, exercisesApi, apiErrorDetail } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
@@ -60,6 +60,15 @@ export default function MyPlans() {
   const [daySnapshot, setDaySnapshot] = useState<FillSnapshot | null>(null);
   const [exSnapshots, setExSnapshots] = useState<FillSnapshot>({});
   const [deloadError, setDeloadError] = useState(false);
+  // Opened offline something never loaded on this phone: a short hint instead of an error
+  const [offlineMiss, setOfflineMiss] = useState(false);
+  const missTimer = useRef<number>(undefined);
+  useEffect(() => () => window.clearTimeout(missTimer.current), []);
+  const showOfflineMiss = () => {
+    setOfflineMiss(true);
+    window.clearTimeout(missTimer.current);
+    missTimer.current = window.setTimeout(() => setOfflineMiss(false), 5000);
+  };
 
   const [editPlan, setEditPlan]               = useState<Plan | null>(null);
   const [editName, setEditName]               = useState('');
@@ -82,13 +91,17 @@ export default function MyPlans() {
   useEffect(() => { loadPlans(); }, [loadPlans]);
 
   const openPlan = async (p: PlanSummary) => {
-    const [pr, wr] = await Promise.all([plansApi.get(p.id), plansApi.getWeeks(p.id)]);
-    setPlan(pr.data); setWeeks(wr.data); setView('weeks');
+    try {
+      const [pr, wr] = await Promise.all([plansApi.get(p.id), plansApi.getWeeks(p.id)]);
+      setPlan(pr.data); setWeeks(wr.data); setOfflineMiss(false); setView('weeks');
+    } catch { showOfflineMiss(); }
   };
 
   const openWeek = async (w: WeekSummary) => {
-    const r = await logsApi.getWeekDays(w.id);
-    setRestWeekId(null); setDoneWeekId(null); setDeloadError(false); setWeekInfo(r.data); setView('days');
+    try {
+      const r = await logsApi.getWeekDays(w.id);
+      setRestWeekId(null); setDoneWeekId(null); setDeloadError(false); setOfflineMiss(false); setWeekInfo(r.data); setView('days');
+    } catch { showOfflineMiss(); }
   };
 
   // Deload marks the whole week; shown at once, reverted if the request fails
@@ -104,15 +117,18 @@ export default function MyPlans() {
     catch { apply(!isDeload); setDeloadError(true); }
   };
 
-  const openDay = async (weekId: number, planDayId: number, logId: number | null) => {
-    setRestWeekId(null); setDoneWeekId(null);
-    let resolvedId = logId;
-    if (!resolvedId) {
-      const r = await logsApi.createDayLog(planDayId, weekId);
-      resolvedId = r.data.id;
-    }
-    const r = await logsApi.getDayLog(resolvedId!);
-    const log: DayLog = r.data;
+  // label: day name and week, shown if the offline-created day can't be saved later
+  const openDay = async (weekId: number, planDayId: number, logId: number | null, planId: number, label: string) => {
+    let log: DayLog;
+    try {
+      let resolvedId = logId;
+      if (!resolvedId) {
+        const r = await logsApi.createDayLog(planDayId, weekId, planId, label);
+        resolvedId = r.data.id;
+      }
+      log = (await logsApi.getDayLog(resolvedId!)).data;
+    } catch { showOfflineMiss(); return; }
+    setRestWeekId(null); setDoneWeekId(null); setOfflineMiss(false);
 
     const weights: Record<number, string> = {};
     for (const el of log.exercise_logs) {
@@ -134,11 +150,15 @@ export default function MyPlans() {
     if (!target) return;
     navigate(location.pathname, { replace: true, state: null });
     (async () => {
-      const [pr, wr, dr] = await Promise.all([
-        plansApi.get(target.planId), plansApi.getWeeks(target.planId), logsApi.getWeekDays(target.weekId),
-      ]);
-      setPlan(pr.data); setWeeks(wr.data); setWeekInfo(dr.data);
-      await openDay(target.weekId, target.planDayId, target.logId);
+      try {
+        const [pr, wr, dr] = await Promise.all([
+          plansApi.get(target.planId), plansApi.getWeeks(target.planId), logsApi.getWeekDays(target.weekId),
+        ]);
+        setPlan(pr.data); setWeeks(wr.data); setWeekInfo(dr.data);
+        const info: WeekInfo = dr.data;
+        const name = info.days.find(d => d.plan_day_id === target.planDayId)?.day_name ?? t('training_fallback');
+        await openDay(target.weekId, target.planDayId, target.logId, target.planId, `${name} · ${t('week_tile_label')} ${info.week_number}`);
+      } catch { showOfflineMiss(); }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -172,7 +192,7 @@ export default function MyPlans() {
   const saveNote = async (exLogId: number, note: string) => {
     const el = dayLog?.exercise_logs.find(e => e.id === exLogId);
     if (!el) return;
-    await exercisesApi.update(el.exercise_id, { note });
+    await exercisesApi.saveNote(el.exercise_id, note, el.exercise_name);
     setDayLog(prev => prev && {
       ...prev,
       exercise_logs: prev.exercise_logs.map(e => e.exercise_id === el.exercise_id ? { ...e, note: note || null } : e),
@@ -195,6 +215,12 @@ export default function MyPlans() {
   };
 
   const dateInvalid = !workoutDate || workoutDate > todayIso();
+
+  // Labels of queued writes, shown in the sync pill's list if the server ever rejects one
+  const weekLabel = dayLog ? `${t('week_tile_label')} ${dayLog.week_number ?? weekInfo?.week_number ?? ''}` : '';
+  const dayLabel = () => `${weekInfo?.days.find(d => d.plan_day_id === dayLog?.plan_day_id)?.day_name ?? t('training_fallback')} · ${weekLabel}`;
+  const sendSets = (el: DayLog['exercise_logs'][number]) =>
+    logsApi.saveSets(el.id, el.set_logs, `${el.exercise_name} · ${weekLabel}`, workoutDate, skipped, el.skipped);
 
   // Copy reps/weight from the previous week's same exercise; fields without previous data stay as they are
   const fillFromPrevWeek = (log: DayLog, exLogIds: number[]) => {
@@ -268,16 +294,20 @@ export default function MyPlans() {
     if (!el) return;
     setSaving(p => ({ ...p, [exLogId]: true }));
     try {
-      await logsApi.saveSets(exLogId, el.set_logs, workoutDate, skipped, el.skipped);
+      await sendSets(el);
     } finally { setSaving(p => ({ ...p, [exLogId]: false })); }
   };
 
   const finishDay = async () => {
     if (!dayLog || dateInvalid) return;
     // Save every exercise first so typed but unsaved values are never lost (sets are saved per exercise)
-    await Promise.all(dayLog.exercise_logs.map(el => logsApi.saveSets(el.id, el.set_logs, workoutDate, skipped, el.skipped)));
-    await logsApi.completeDay(dayLog.id, workoutDate, skipped);
-    if (weekInfo) { const r = await logsApi.getWeekDays(weekInfo.week_id); setWeekInfo(r.data); }
+    // (queued in this order, so they also reach the server in this order)
+    for (const el of dayLog.exercise_logs) await sendSets(el);
+    await logsApi.completeDay(dayLog.id, dayLabel(), workoutDate, skipped);
+    if (weekInfo) {
+      const r = await logsApi.getWeekDays(weekInfo.week_id).catch(() => null);
+      setWeekInfo(w => r?.data ?? (w && { ...w, days: w.days.map(d => d.plan_day_id === dayLog.plan_day_id ? { ...d, status: 'completed', skipped } : d) }));
+    }
     setRestWeekId(skipped ? null : weekInfo?.week_id ?? null);
     setView('days');
   };
@@ -435,6 +465,7 @@ export default function MyPlans() {
         )}
       </div>
 
+      {offlineMiss && <div className="alert alert-info" role="status">{t('offline_unavailable')}</div>}
       {plans.length === 0 ? (
         <PlansEmptyState onCreate={() => navigate('/create-plan')} />
       ) : (
@@ -574,6 +605,7 @@ export default function MyPlans() {
         </div>
       </div>
 
+      {offlineMiss && <div className="alert alert-info" role="status">{t('offline_unavailable')}</div>}
       <div className={`week-cards${currentWeekId != null ? ' has-mascot' : ''}`}>
         {currentWeekId != null && <WeeksMascot />}
         {weeks.map(w => {
@@ -631,13 +663,14 @@ export default function MyPlans() {
       </div>
       {deloadError && <div className="alert alert-error" style={{ marginBottom: 14 }}>{t('deload_error')}</div>}
 
+      {offlineMiss && <div className="alert alert-info" role="status">{t('offline_unavailable')}</div>}
       <div className="day-cards">
         {doneWeekId === weekInfo.week_id && <Confetti big />}
         {weekInfo.days.map((d, i) => {
           const state = d.status === 'completed' ? (d.skipped ? 'skipped' : 'done') : '';
           return (
             <button key={d.plan_day_id} className={`day-card day-color-${resolveDayColor(d.color, i)} ${state}`}
-              onClick={() => openDay(weekInfo.week_id, d.plan_day_id, d.log_id)}>
+              onClick={() => openDay(weekInfo.week_id, d.plan_day_id, d.log_id, weekInfo.plan_id, `${d.day_name} · ${t('week_tile_label')} ${weekInfo.week_number}`)}>
               <span className="day-card-icon">
                 {state === 'skipped' ? <XCircle size={20} /> : state === 'done' ? <CheckCircle2 size={20} /> : <Dumbbell size={20} />}
               </span>

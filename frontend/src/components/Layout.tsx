@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../i18n/LanguageContext';
 import { LogOut, Menu, X, ShieldCheck, KeyRound } from 'lucide-react';
 import ChangePasswordModal from './ChangePasswordModal';
+import SyncStatus from './SyncStatus';
 import { MascotContext, mascotOf } from './mascot/MascotContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -35,6 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="sidebar-logo">
         <img className="logo-img" src="/icons/logo.png" alt="GymTracker" />
       </div>
+      <div className="sidebar-sync"><SyncStatus /></div>
 
       <nav className="sidebar-nav">
         {NAV.map(({ path, label, icon }) => (
@@ -121,6 +123,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {open ? <X size={22} /> : <Menu size={22} />}
         </button>
         <span className="topbar-logo">Gym<span>Tracker</span></span>
+        <span className="topbar-sync"><SyncStatus /></span>
       </header>
 
       {/* Overlay */}

@@ -359,6 +359,23 @@ export interface TranslationMap {
   history_error: string;
   history_no_date: string;
   history_close: string;
+  sync_offline: string;
+  sync_offline_saved: string;
+  sync_syncing: string;
+  sync_synced: string;
+  sync_failed_1: string;
+  sync_failed_other: string;
+  sync_failed_title: string;
+  sync_failed_body: string;
+  sync_retry: string;
+  sync_discard: string;
+  sync_close: string;
+  sync_kind_createDay: string;
+  sync_kind_saveSets: string;
+  sync_kind_completeDay: string;
+  sync_kind_note: string;
+  sync_kind_weight: string;
+  offline_unavailable: string;
   workout_date_label: string;
   workout_date_future: string;
   skipped_checkbox_label: string;
@@ -764,6 +781,23 @@ const pl: TranslationMap = {
   history_error: 'Nie udało się wczytać historii',
   history_no_date: 'bez daty',
   history_close: 'Zamknij',
+  sync_offline: 'Offline',
+  sync_offline_saved: 'Offline – zapisano na telefonie',
+  sync_syncing: 'Synchronizacja…',
+  sync_synced: 'Zsynchronizowano',
+  sync_failed_1: 'Nie udało się zapisać 1 wpisu',
+  sync_failed_other: 'Nie udało się zapisać {n} wpisów',
+  sync_failed_title: 'Niezapisane wpisy',
+  sync_failed_body: 'Serwer nie przyjął tych zmian. Są nadal na telefonie – spróbuj ponownie albo je odrzuć.',
+  sync_retry: 'Spróbuj ponownie',
+  sync_discard: 'Odrzuć',
+  sync_close: 'Zamknij',
+  sync_kind_createDay: 'Nowy dzień treningowy',
+  sync_kind_saveSets: 'Serie',
+  sync_kind_completeDay: 'Zakończenie dnia',
+  sync_kind_note: 'Notatka',
+  sync_kind_weight: 'Waga',
+  offline_unavailable: 'Brak połączenia – tych danych nie ma jeszcze na telefonie. Otwórz je raz z internetem.',
   workout_date_label: 'Data treningu:',
   workout_date_future: 'Data treningu nie może być z przyszłości.',
   skipped_checkbox_label: 'Trening pominięty',
@@ -1164,6 +1198,23 @@ const en: TranslationMap = {
   history_error: 'Could not load the history',
   history_no_date: 'no date',
   history_close: 'Close',
+  sync_offline: 'Offline',
+  sync_offline_saved: 'Offline – saved on this phone',
+  sync_syncing: 'Syncing…',
+  sync_synced: 'Synced',
+  sync_failed_1: 'Could not save 1 entry',
+  sync_failed_other: 'Could not save {n} entries',
+  sync_failed_title: 'Unsaved entries',
+  sync_failed_body: 'The server did not accept these changes. They are still on this phone – try again or discard them.',
+  sync_retry: 'Try again',
+  sync_discard: 'Discard',
+  sync_close: 'Close',
+  sync_kind_createDay: 'New training day',
+  sync_kind_saveSets: 'Sets',
+  sync_kind_completeDay: 'Finished day',
+  sync_kind_note: 'Note',
+  sync_kind_weight: 'Weight',
+  offline_unavailable: 'No connection – this data is not on this phone yet. Open it once while online.',
   workout_date_label: 'Workout date:',
   workout_date_future: 'Workout date cannot be in the future.',
   skipped_checkbox_label: 'Workout skipped',
