@@ -1003,8 +1003,6 @@ a { text-decoration: none; color: inherit; }
 .hist-sets { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px; }
 .hist-set { display: inline-flex; align-items: baseline; gap: 3px; padding: 2px 8px; border-radius: 99px; background: var(--bg-subtle); font-size: 13px; font-weight: 700; color: var(--text-heading); }
 .hist-set small { font-size: 10px; font-weight: 600; color: var(--text-muted); }
-.hist-score { font-size: 12px; font-weight: 700; color: var(--text-muted); white-space: nowrap; }
-.hist-score.best { color: var(--success); }
 @keyframes sheet-up { from { transform: translateY(100%); } }
 @keyframes sheet-fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .sheet, .sheet-overlay { animation: none; } }

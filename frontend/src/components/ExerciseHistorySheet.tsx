@@ -98,7 +98,6 @@ export default function ExerciseHistorySheet({ exerciseId, name, onClose }: { ex
               <ul className="hist-list">
                 {[...entries].reverse().map(e => {
                   const w = firstWeight(e.sets);
-                  const score = e.skipped ? null : exerciseScore(e.sets);
                   return (
                     <li key={e.exercise_log_id} className={`hist-row${e.is_deload ? ' deload' : ''}${e.skipped ? ' skipped' : ''}`}>
                       <div className="hist-row-head">
@@ -114,7 +113,6 @@ export default function ExerciseHistorySheet({ exerciseId, name, onClose }: { ex
                             <span key={s.set_number} className="hist-set">{s.reps ?? '—'}{s.rir != null && <small>{t('wl_rir_short')} {s.rir}</small>}</span>
                           ))}
                         </span>
-                        {score != null && <span className={`hist-score${best?.e.exercise_log_id === e.exercise_log_id ? ' best' : ''}`}>{formatKg(Math.round(score * 10) / 10, lang)}</span>}
                       </div>
                     </li>
                   );

@@ -427,7 +427,7 @@ def _same_name(name: str) -> str:
 
 
 def get_exercise_history(db: Session, exercise: Exercise, user_id: int, all_plans: bool) -> dict:
-    """Every logged week of a plan exercise, oldest first; with all_plans also same-name exercises of the user's other plans."""
+    """Every logged week of a plan exercise in week order; with all_plans also same-name exercises of the user's other plans (older plans first)."""
     own_plan_id = exercise.plan_day.plan_id
     rows = (
         db.query(Exercise, TrainingPlan)
@@ -466,7 +466,7 @@ def get_exercise_history(db: Session, exercise: Exercise, user_id: int, all_plan
             "workout_date": day_log.workout_date.isoformat() if day_log.workout_date else None,
             "sets": [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg, "rir": s.rir}
                      for s in ex_log.set_logs],
-            "_order": (day_log.workout_date or date.max, plan.created_at or datetime.min, week.week_number),
+            "_order": (plan.created_at or datetime.min, plan.id, week.week_number),
         })
     entries.sort(key=lambda e: e["_order"])
     for e in entries:

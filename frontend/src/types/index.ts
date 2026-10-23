@@ -156,7 +156,7 @@ export interface ExerciseHistory {
   exercise_name: string;
   has_other_plans: boolean;
   notes: Array<{ plan_id: number; plan_name: string; note: string }>;
-  entries: ExerciseHistoryEntry[]; // oldest first
+  entries: ExerciseHistoryEntry[]; // week order (older plans first)
 }
 
 export interface WeightDayLog {
