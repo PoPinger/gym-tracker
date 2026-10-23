@@ -8,6 +8,7 @@ import SyncStatus from './SyncStatus';
 import RefreshButton from './RefreshButton';
 import PushToggle from './PushToggle';
 import { MascotContext, mascotOf } from './mascot/MascotContext';
+import { navTransition } from '../utils/motion';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -27,7 +28,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { path: '/weight',      label: t('nav_my_weight'),   icon: '/icons/my-weight.png' },
   ];
 
-  const go = (path: string) => { navigate(path); setOpen(false); };
+  // Sections further down the menu slide in from the right, ones above from the left
+  const order = [...NAV.map(n => n.path), '/admin'];
+  const go = (path: string) => {
+    setOpen(false);
+    if (path === location.pathname) return navigate(path);
+    navTransition(order.indexOf(path) > order.indexOf(location.pathname) ? 'forward' : 'back', () => navigate(path));
+  };
   const handleLogout = () => { logout(); navigate('/login'); };
 
   const initials = (user?.display_name || user?.email || 'U')

@@ -6,6 +6,7 @@ import type { TranslationMap } from '../i18n/translations';
 import type { CalendarWorkout } from '../types';
 import { toIsoDate, todayIso } from '../utils/date';
 import { plural } from '../utils/plural';
+import { navTransition } from '../utils/motion';
 
 export default function WorkoutCalendar({ workouts, className = '', mascot }: { workouts: CalendarWorkout[]; className?: string; mascot?: React.ReactNode }) {
   const navigate = useNavigate();
@@ -37,8 +38,8 @@ export default function WorkoutCalendar({ workouts, className = '', mascot }: { 
 
   const shift = (delta: number) => { setActive(null); setMonth(new Date(year, m + delta, 1)); };
 
-  const open = (w: CalendarWorkout) =>
-    navigate('/plans', { state: { openDay: { planId: w.plan_id, weekId: w.week_id, planDayId: w.plan_day_id, logId: w.log_id } } });
+  const open = (w: CalendarWorkout) => navTransition('forward', () =>
+    navigate('/plans', { state: { openDay: { planId: w.plan_id, weekId: w.week_id, planDayId: w.plan_day_id, logId: w.log_id } } }));
 
   // Touch devices: first tap shows the tooltip, second tap opens the day
   const onCellClick = (iso: string) => {

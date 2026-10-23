@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRefresh } from '../hooks/useRefresh';
 import { useNavigate } from 'react-router-dom';
 import { plansApi, apiErrorDetail } from '../services/api';
@@ -12,6 +12,7 @@ import { clampRest, DEFAULT_REST, formatRest, REST_MAX, REST_MIN, REST_STEP } fr
 import DayList from '../components/DayList';
 import StepperMascot from '../components/mascot/StepperMascot';
 import { defaultDayColor, type DayColor } from '../utils/dayColors';
+import { flipSwap, navTransition } from '../utils/motion';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -76,12 +77,16 @@ export default function CreatePlan() {
     const next: DayDraft[] = Array.from({ length: daysPerWeek }, (_, i) =>
       days[i] ?? { day_name: defaultDayNames[i] ?? `${t('day_number_fallback')} ${i + 1}`, color: defaultDayColor(i), exercises: [] }
     );
-    setDays(next);
-    setActiveDayIdx(0);
-    setStep(3);
+    navTransition('forward', () => {
+      setDays(next);
+      setActiveDayIdx(0);
+      setStep(3);
+    });
   };
 
-  const goToExercises = (idx: number) => { setActiveDayIdx(idx); setStep(4); };
+  // Steps slide like pages: forward from the right, back from the left
+  const goStep = (n: Step) => navTransition(n > step ? 'forward' : 'back', () => setStep(n));
+  const goToExercises = (idx: number) => navTransition('forward', () => { setActiveDayIdx(idx); setStep(4); });
 
   const setDayName = (i: number, name: string) => {
     setDays(d => d.map((day, idx) => idx === i ? { ...day, day_name: name } : day));
@@ -109,15 +114,17 @@ export default function CreatePlan() {
     }));
   };
 
+  // The two rows glide into each other's place
+  const exListRef = useRef<HTMLDivElement>(null);
   const moveEx = (ei: number, dir: -1 | 1) => {
     const target = ei + dir;
-    setDays(d => d.map((day, i) => {
+    flipSwap(exListRef.current, ei, target, () => setDays(d => d.map((day, i) => {
       if (i !== activeDayIdx) return day;
       const exs = [...day.exercises];
       if (target < 0 || target >= exs.length) return day;
       [exs[ei], exs[target]] = [exs[target], exs[ei]];
       return { ...day, exercises: exs };
-    }));
+    })));
   };
 
   const savePlan = async () => {
@@ -135,7 +142,7 @@ export default function CreatePlan() {
           })),
         })),
       });
-      navigate('/plans');
+      navTransition('forward', () => navigate('/plans'));
     } catch (e) {
       setError(apiErrorDetail(e) || t('save_plan_error'));
     } finally {
@@ -189,7 +196,7 @@ export default function CreatePlan() {
                 </div>
               </div>
             </div>
-            <button className="btn btn-primary" onClick={() => setStep(2)}>
+            <button className="btn btn-primary" onClick={() => goStep(2)}>
               {t('next_btn')} <ArrowRight size={16} />
             </button>
           </div>
@@ -221,7 +228,7 @@ export default function CreatePlan() {
               </div>
             </div>
             <div style={{ display:'flex', gap:10 }}>
-              <button className="btn btn-outline" onClick={() => setStep(1)}>
+              <button className="btn btn-outline" onClick={() => goStep(1)}>
                 <ArrowLeft size={16} /> {t('back_btn')}
               </button>
               <button className="btn btn-primary" onClick={goToStep3}>
@@ -246,7 +253,7 @@ export default function CreatePlan() {
 
             {error && <div className="alert alert-error">{error}</div>}
             <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-              <button className="btn btn-outline" onClick={() => setStep(2)}>
+              <button className="btn btn-outline" onClick={() => goStep(2)}>
                 <ArrowLeft size={16} /> {t('back_btn')}
               </button>
               <button className="btn btn-primary" disabled={saving} onClick={savePlan}>
@@ -259,7 +266,7 @@ export default function CreatePlan() {
         {/* Step 4: exercises */}
         {step === 4 && activeDay && (
           <div>
-            <button className="back-btn" onClick={() => setStep(3)}>
+            <button className="back-btn" onClick={() => goStep(3)}>
               <ArrowLeft size={15} /> {t('back_to_days')}
             </button>
             <h2 style={{ fontSize:18, fontWeight:800, color:'var(--text-heading)', marginBottom:4 }}>
@@ -275,9 +282,9 @@ export default function CreatePlan() {
               </div>
             )}
 
-            <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:16 }}>
+            <div ref={exListRef} style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:16 }}>
               {activeDay.exercises.map((ex, ei) => (
-                <div key={ei} className="ex-builder" style={{ background:'var(--bg-subtle)', border:'1.5px solid var(--border)', borderRadius:'var(--radius-lg)', padding:14 }}>
+                <div key={ei} data-flip className="ex-builder" style={{ background:'var(--bg-subtle)', border:'1.5px solid var(--border)', borderRadius:'var(--radius-lg)', padding:14 }}>
                   <div style={{ display:'flex', gap:10, alignItems:'flex-start', marginBottom:10 }}>
                     <div style={{ width:26, height:26, background:'white', border:'1.5px solid var(--border)', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:9 }}>
                       <span style={{ fontSize:11, fontWeight:800, color:'var(--text-subtle)' }}>{ei+1}</span>
@@ -347,7 +354,7 @@ export default function CreatePlan() {
 
             {error && <div className="alert alert-error">{error}</div>}
             <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-              <button className="btn btn-outline" onClick={() => setStep(3)}>
+              <button className="btn btn-outline" onClick={() => goStep(3)}>
                 <ArrowLeft size={16} /> {t('back_to_days')}
               </button>
               <button className="btn btn-primary" disabled={saving} onClick={savePlan}>

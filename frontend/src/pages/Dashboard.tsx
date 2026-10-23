@@ -6,10 +6,11 @@ import { useRefresh } from '../hooks/useRefresh';
 import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
 import WorkoutCalendar from '../components/WorkoutCalendar';
-import AppLoader from '../components/AppLoader';
+import PageLoader from '../components/PageLoader';
 import AnimatedValue from '../components/AnimatedValue';
 import Mascot from '../components/mascot/Mascot';
 import { useDrawOnView } from '../hooks/useDrawOnView';
+import { navTransition } from '../utils/motion';
 import type { DashboardData } from '../types';
 
 function StatCard({ icon, iconClass, label, value, sub, valueClass, onClick, extra, className = '' }: {
@@ -62,7 +63,7 @@ export default function Dashboard() {
   }, []);
   useRefresh({ reload: () => dashboardApi.get().then(r => setData(r.data)) });
 
-  if (loading) return <AppLoader />;
+  if (loading) return <PageLoader cards={3} />;
 
   const d = data!;
   const hasAnything = d.has_plan || d.quick_stats.this_year > 0 || d.workout_calendar.length > 0 || d.weight_panel;
@@ -93,7 +94,7 @@ export default function Dashboard() {
       ? t('weight_tile_current_avg').replace('{kg}', `${fmtNum(w.current_week_avg)} kg`)
       : t('weight_tile_empty')}
     extra={<Sparkline values={w?.weekly_avgs ?? []} tone={weightTone} />}
-    onClick={() => navigate('/weight')} />;
+    onClick={() => navTransition('forward', () => navigate('/weight'))} />;
 
   return (
     <div style={{ maxWidth: 1100 }}>
@@ -112,7 +113,7 @@ export default function Dashboard() {
           <p style={{ fontSize:14, color:'var(--text-muted)', marginBottom:24, maxWidth:360, margin:'0 auto 24px' }}>
             {t('dashboard_welcome_body')}
           </p>
-          <button className="btn btn-primary btn-lg" onClick={() => navigate('/create-plan')}>
+          <button className="btn btn-primary btn-lg" onClick={() => navTransition('forward', () => navigate('/create-plan'))}>
             {t('dashboard_create_first_plan')}
           </button>
         </div>

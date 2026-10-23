@@ -183,10 +183,11 @@ export function PanelView({ cycle, first, last, avg, prevAvg, onOpenWeek, onRese
 
 /* ─────────── WEEK ─────────── */
 // celebrate: the week was just finished here (Kulka jumps for joy with big confetti over the readings card)
-export function WeekView({ week, goal, avgVal, diffPrev, diffW1, dayNames, inputs, onInput, onSave, saving, saved, onBack, onFinish, celebrate }: {
+export function WeekView({ week, goal, avgVal, diffPrev, diffW1, dayNames, inputs, onInput, onSave, saving, saved, onBack, onFinish, celebrate, finishError }: {
   week: WeightWeek; goal: string | null; avgVal: number | null; diffPrev: number | null; diffW1: number | null; dayNames: string[];
   inputs: Record<number, string>; onInput: (day: number, v: string) => void; onSave: (logId: number, day: number) => void;
   saving: Record<number, boolean>; saved: Record<number, boolean>; onBack: () => void; onFinish: () => void; celebrate: boolean;
+  finishError: boolean;
 }) {
   const { t } = useLanguage();
   const days = [...week.day_logs].sort((a, b) => a.day_of_week - b.day_of_week);
@@ -233,6 +234,7 @@ export function WeekView({ week, goal, avgVal, diffPrev, diffW1, dayNames, input
         </div>
       </div>
 
+      {finishError && <div className="alert alert-error" role="alert" style={{ marginTop: 14 }}>{t('finish_save_error')}</div>}
       {week.status !== 'completed' && (
         <button className="btn btn-success btn-full w-finish" onClick={onFinish}><CheckCircle2 size={16} /> {t('finish_week_btn')}</button>
       )}

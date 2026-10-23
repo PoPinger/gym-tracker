@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { plansApi, logsApi, exercisesApi, apiErrorDetail } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
-import AppLoader from '../components/AppLoader';
+import PageLoader from '../components/PageLoader';
 import PlansEmptyState from '../components/PlansEmptyState';
 import PlanCard from '../components/PlanCard';
 import DayList from '../components/DayList';
@@ -15,6 +15,7 @@ import BuilderKulka, { type BuilderOutcome } from '../components/mascot/BuilderK
 import WeeksMascot from '../components/mascot/WeeksMascot';
 import CelebrateMascot from '../components/mascot/CelebrateMascot';
 import Confetti from '../components/mascot/Confetti';
+import CelebrationLayer from '../components/CelebrationLayer';
 import { resolveDayColor, type DayColor } from '../utils/dayColors';
 import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -23,6 +24,8 @@ import { firstWeight } from '../utils/progress';
 import { todayIso } from '../utils/date';
 import { DEFAULT_REST } from '../utils/rest';
 import { hasUnsaved, useRefresh } from '../hooks/useRefresh';
+import { useCelebration, DAY_CELEBRATION_MS, WEEK_CELEBRATION_MS } from '../hooks/useCelebration';
+import { navTransition } from '../utils/motion';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog, SetLog } from '../types';
 import {
   ChevronRight, CheckCircle2, XCircle, ArrowLeft,
@@ -67,6 +70,9 @@ export default function MyPlans() {
   const [daySnapshot, setDaySnapshot] = useState<FillSnapshot | null>(null);
   const [exSnapshots, setExSnapshots] = useState<FillSnapshot>({});
   const [deloadError, setDeloadError] = useState(false);
+  // Finishing a day / week failed to save: shown on that screen, which stays open
+  const [finishError, setFinishError] = useState(false);
+  const celebration = useCelebration();
   // Opened offline something never loaded on this phone: a short hint instead of an error
   const [offlineMiss, setOfflineMiss] = useState(false);
   const missTimer = useRef<number>(undefined);
@@ -100,14 +106,16 @@ export default function MyPlans() {
   const openPlan = async (p: PlanSummary) => {
     try {
       const [pr, wr] = await Promise.all([plansApi.get(p.id), plansApi.getWeeks(p.id)]);
-      setPlan(pr.data); setWeeks(wr.data); setOfflineMiss(false); setView('weeks');
+      navTransition('forward', () => { setPlan(pr.data); setWeeks(wr.data); setOfflineMiss(false); setView('weeks'); });
     } catch { showOfflineMiss(); }
   };
 
   const openWeek = async (w: WeekSummary) => {
     try {
       const r = await logsApi.getWeekDays(w.id);
-      setRestWeekId(null); setDoneWeekId(null); setDeloadError(false); setOfflineMiss(false); setWeekInfo(r.data); setView('days');
+      navTransition('forward', () => {
+        setRestWeekId(null); setDoneWeekId(null); setDeloadError(false); setFinishError(false); setOfflineMiss(false); setWeekInfo(r.data); setView('days');
+      });
     } catch { showOfflineMiss(); }
   };
 
@@ -135,15 +143,17 @@ export default function MyPlans() {
       }
       log = (await logsApi.getDayLog(resolvedId!)).data;
     } catch { showOfflineMiss(); return; }
-    setRestWeekId(null); setDoneWeekId(null); setOfflineMiss(false);
+    navTransition('forward', () => {
+      setRestWeekId(null); setDoneWeekId(null); setFinishError(false); setOfflineMiss(false);
 
-    setExerciseWeights(weightsOf(log));
-    setWorkoutDate(log.workout_date ?? todayIso());
-    setSkipped(log.skipped);
-    setDaySnapshot(null);
-    setExSnapshots({});
-    setDayLog(log);
-    setView('workout');
+      setExerciseWeights(weightsOf(log));
+      setWorkoutDate(log.workout_date ?? todayIso());
+      setSkipped(log.skipped);
+      setDaySnapshot(null);
+      setExSnapshots({});
+      setDayLog(log);
+      setView('workout');
+    });
   };
 
   // Refresh button: re-fetch what the open view shows, in place. The open training day is re-fetched
@@ -325,32 +335,45 @@ export default function MyPlans() {
     } finally { setSaving(p => ({ ...p, [exLogId]: false })); }
   };
 
+  // Saved right away; once saved Kulka celebrates on the logger, then the day list opens (a skipped day
+  // has no celebration and goes back at once). A failed save keeps the logger open with an error.
   const finishDay = async () => {
     if (!dayLog || dateInvalid) return;
-    // Save every exercise first so typed but unsaved values are never lost (sets are saved per exercise)
-    // (queued in this order, so they also reach the server in this order)
-    for (const el of dayLog.exercise_logs) await sendSets(el);
-    await logsApi.completeDay(dayLog.id, dayLabel(), workoutDate, skipped);
-    if (weekInfo) {
-      const r = await logsApi.getWeekDays(weekInfo.week_id).catch(() => null);
-      setWeekInfo(w => r?.data ?? (w && { ...w, days: w.days.map(d => d.plan_day_id === dayLog.plan_day_id ? { ...d, status: 'completed', skipped } : d) }));
-    }
-    setRestWeekId(skipped ? null : weekInfo?.week_id ?? null);
-    setView('days');
+    const weekId = weekInfo?.week_id ?? null;
+    setFinishError(false);
+    try {
+      // Save every exercise first so typed but unsaved values are never lost (sets are saved per exercise)
+      // (queued in this order, so they also reach the server in this order)
+      for (const el of dayLog.exercise_logs) await sendSets(el);
+      await logsApi.completeDay(dayLog.id, dayLabel(), workoutDate, skipped);
+    } catch { setFinishError(true); return; }
+    setWeekInfo(w => w && { ...w, days: w.days.map(d => d.plan_day_id === dayLog.plan_day_id ? { ...d, status: 'completed', skipped } : d) });
+    if (weekId != null) void logsApi.getWeekDays(weekId).then(r => setWeekInfo(w => w && w.week_id === weekId ? r.data : w), () => {});
+    const back = () => navTransition('back', () => { setRestWeekId(skipped ? null : weekId); setView('days'); });
+    if (skipped) back(); else celebration.run(DAY_CELEBRATION_MS, back);
   };
 
+  // Saved right away; once saved Kulka celebrates with big confetti over the (now completed) day list,
+  // then the weeks list opens. A failed save keeps the day list open with an error.
   const finishWeek = async () => {
     if (!weekInfo || !plan) return;
-    await logsApi.completeWeek(weekInfo.week_id);
-    // Stay on the day list (now shown as completed) for the celebration
-    const [wr, dr] = await Promise.all([plansApi.getWeeks(plan.id), logsApi.getWeekDays(weekInfo.week_id)]);
-    setWeeks(wr.data); setWeekInfo(dr.data); setRestWeekId(null); setDoneWeekId(weekInfo.week_id);
+    const weekId = weekInfo.week_id, planId = plan.id;
+    setFinishError(false);
+    try { await logsApi.completeWeek(weekId); }
+    catch { setFinishError(true); return; }
+    setWeekInfo(w => w && w.week_id === weekId ? { ...w, status: 'completed' } : w);
+    setWeeks(ws => ws.map(w => w.id === weekId ? { ...w, status: 'completed' } : w));
+    setRestWeekId(null); setDoneWeekId(weekId);
+    void Promise.all([plansApi.getWeeks(planId), logsApi.getWeekDays(weekId)]).then(([wr, dr]) => {
+      setWeeks(wr.data); setWeekInfo(w => w && w.week_id === weekId ? dr.data : w);
+    }, () => {});
+    celebration.run(WEEK_CELEBRATION_MS, () => navTransition('back', () => setView('weeks')));
   };
 
   const finishPlan = async () => {
     if (!plan) return;
     await plansApi.complete(plan.id);
-    await loadPlans(); setView('list');
+    await loadPlans(); navTransition('back', () => setView('list'));
   };
 
   const copyPlan = async (id: number) => { await plansApi.copy(id); await loadPlans(); };
@@ -358,28 +381,30 @@ export default function MyPlans() {
   const openEdit = async (p: PlanSummary) => {
     const r = await plansApi.get(p.id);
     const full: Plan = r.data;
-    setEditPlan(full);
-    setEditName(full.name);
-    setEditMonths(full.months);
-    setEditDays(full.days.map((d, i) => ({
-      id: d.id,
-      day_name: d.day_name,
-      color: resolveDayColor(d.color, i),
-      exercises: d.exercises.map(ex => ({
-        id: ex.id,
-        name: ex.name,
-        muscle_group: ex.muscle_group,
-        sets: ex.sets,
-        rep_min: ex.rep_min != null ? String(ex.rep_min) : '',
-        rep_max: ex.rep_max != null ? String(ex.rep_max) : '',
-        rest_seconds: ex.rest_seconds ?? DEFAULT_REST,
-      })),
-    })));
-    setEditActiveDayIdx(0);
-    setEditError('');
-    setEditIntro(true);
-    setEditOutcome(null);
-    setView('edit-plan');
+    navTransition('forward', () => {
+      setEditPlan(full);
+      setEditName(full.name);
+      setEditMonths(full.months);
+      setEditDays(full.days.map((d, i) => ({
+        id: d.id,
+        day_name: d.day_name,
+        color: resolveDayColor(d.color, i),
+        exercises: d.exercises.map(ex => ({
+          id: ex.id,
+          name: ex.name,
+          muscle_group: ex.muscle_group,
+          sets: ex.sets,
+          rep_min: ex.rep_min != null ? String(ex.rep_min) : '',
+          rep_max: ex.rep_max != null ? String(ex.rep_max) : '',
+          rest_seconds: ex.rest_seconds ?? DEFAULT_REST,
+        })),
+      })));
+      setEditActiveDayIdx(0);
+      setEditError('');
+      setEditIntro(true);
+      setEditOutcome(null);
+      setView('edit-plan');
+    });
   };
 
   // closing: the shorten dialog's trash animation or Kulka's stamp, awaited with the request before leaving the view
@@ -409,7 +434,7 @@ export default function MyPlans() {
       await closing;
       setConfirm(null);
       await loadPlans();
-      setView('list');
+      navTransition('back', () => setView('list'));
     } catch (e) {
       setConfirm(null); setEditOutcome(null);
       setEditError(apiErrorDetail(e) || t('save_changes_error'));
@@ -428,7 +453,7 @@ export default function MyPlans() {
   const cancelEdit = () => {
     if (editOutcome) return;
     setEditOutcome('cancel');
-    void kulkaDelay(SHRUG_MS).then(() => setView('list'));
+    void kulkaDelay(SHRUG_MS).then(() => navTransition('back', () => setView('list')));
   };
 
   const addEditEx = () => {
@@ -472,7 +497,7 @@ export default function MyPlans() {
   const completedWeeks   = weeks.filter(w => w.status === 'completed').length;
   const currentWeekId    = weeks.find(w => w.status !== 'completed')?.id;
 
-  if (loading) return <AppLoader />;
+  if (loading) return <PageLoader cards={3} />;
 
   /* ═══ PLAN LIST ═══ */
   if (view === 'list') return (
@@ -486,7 +511,7 @@ export default function MyPlans() {
         </div>
         {/* With no plans the empty state has the only call to action */}
         {plans.length > 0 && (
-          <button className="btn btn-primary" onClick={() => navigate('/create-plan')}>
+          <button className="btn btn-primary" onClick={() => navTransition('forward', () => navigate('/create-plan'))}>
             <Plus size={16} /> {t('new_plan_btn')}
           </button>
         )}
@@ -494,7 +519,7 @@ export default function MyPlans() {
 
       {offlineMiss && <div className="alert alert-info" role="status">{t('offline_unavailable')}</div>}
       {plans.length === 0 ? (
-        <PlansEmptyState onCreate={() => navigate('/create-plan')} />
+        <PlansEmptyState onCreate={() => navTransition('forward', () => navigate('/create-plan'))} />
       ) : (
         <div className="plan-list has-mascot">
           <div className="m-spot-plans"><Mascot entrance="peek" size={40} /></div>
@@ -521,7 +546,7 @@ export default function MyPlans() {
   if (view === 'edit-plan' && editPlan) {
     return (
       <div style={{ maxWidth: 720 }}>
-        <button className="back-btn" onClick={() => setView('list')}>
+        <button className="back-btn" onClick={() => navTransition('back', () => setView('list'))}>
           <ArrowLeft size={15} /> {t('back_to_my_plans')}
         </button>
         <div className="page-header">
@@ -565,7 +590,7 @@ export default function MyPlans() {
           <DayList days={editDays}
             onDayNameChange={(i, name) => setEditDays(ds => ds.map((d, idx) => idx === i ? { ...d, day_name: name } : d))}
             onDayColorChange={(i, color) => setEditDays(ds => ds.map((d, idx) => idx === i ? { ...d, color } : d))}
-            onOpenExercises={i => { setEditActiveDayIdx(i); setView('edit-exercises'); }} />
+            onOpenExercises={i => navTransition('forward', () => { setEditActiveDayIdx(i); setView('edit-exercises'); })} />
 
           {editError && <div className="alert alert-error" style={{ marginBottom:16 }}>{editError}</div>}
           <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
@@ -596,14 +621,14 @@ export default function MyPlans() {
     return (
       <ExerciseEditor dayName={activeEditDay?.day_name ?? ''} color={activeEditDay?.color ?? resolveDayColor(null, editActiveDayIdx)}
         exercises={activeEditDay?.exercises ?? []} onChange={setEditEx} onMove={moveEditEx} onRemove={removeEditEx}
-        onAdd={addEditEx} onDone={() => setView('edit-plan')} onBack={() => setView('edit-plan')} />
+        onAdd={addEditEx} onDone={() => navTransition('back', () => setView('edit-plan'))} onBack={() => navTransition('back', () => setView('edit-plan'))} />
     );
   }
 
   /* ═══ WEEKS VIEW ═══ */
   if (view === 'weeks' && plan) return (
     <div style={{ maxWidth: 900 }}>
-      <button className="back-btn" onClick={() => setView('list')}>
+      <button className="back-btn" onClick={() => navTransition('back', () => setView('list'))}>
         <ArrowLeft size={15} /> {t('back_to_my_plans')}
       </button>
       <div className="page-header">
@@ -665,7 +690,7 @@ export default function MyPlans() {
   /* ═══ DAYS VIEW ═══ */
   if (view === 'days' && weekInfo && plan) return (
     <div style={{ maxWidth: 700 }}>
-      <button className="back-btn" onClick={() => setView('weeks')}>
+      <button className="back-btn" onClick={() => navTransition('back', () => setView('weeks'))}>
         <ArrowLeft size={15} /> {t('all_weeks')}
       </button>
       <div className="page-header">
@@ -689,6 +714,7 @@ export default function MyPlans() {
         {weekInfo.is_deload && <Mascot state="stretch" size={40} />}
       </div>
       {deloadError && <div className="alert alert-error" style={{ marginBottom: 14 }}>{t('deload_error')}</div>}
+      {finishError && <div className="alert alert-error" role="alert" style={{ marginBottom: 14 }}>{t('finish_save_error')}</div>}
 
       {offlineMiss && <div className="alert alert-info" role="status">{t('offline_unavailable')}</div>}
       <div className="day-cards">
@@ -715,7 +741,7 @@ export default function MyPlans() {
       </div>
       {doneWeekId === weekInfo.week_id
         ? <div className="m-spot-rest"><CelebrateMascot week /></div>
-        : restWeekId === weekInfo.week_id && <div className="m-spot-rest"><CelebrateMascot /></div>}
+        : restWeekId === weekInfo.week_id && <div className="m-spot-rest"><Mascot state="done" size={52} /></div>}
 
       {confirm === 'week' && (
         <ConfirmDialog
@@ -726,6 +752,7 @@ export default function MyPlans() {
           onOk={() => { finishWeek(); setConfirm(null); }} onCancel={() => setConfirm(null)}
         />
       )}
+      {celebration.active && <CelebrationLayer onSkip={celebration.skip} />}
     </div>
   );
 
@@ -736,11 +763,16 @@ export default function MyPlans() {
     return (
       <>
         <WorkoutLogger key={`${dayLog.id}-${dayRev}`} dayLog={dayLog} dayName={day?.day_name ?? t('training_fallback')} color={resolveDayColor(day?.color, Math.max(dayIdx, 0))}
-          backLabel={`${t('week_tile_label')} ${weekInfo.week_number}`} onBack={() => setView('days')}
+          backLabel={`${t('week_tile_label')} ${weekInfo.week_number}`} onBack={() => navTransition('back', () => setView('days'))}
           workoutDate={workoutDate} onDateChange={setWorkoutDate} dateInvalid={dateInvalid}
           skipped={skipped} onToggleSkipped={toggleSkipped} onToggleExerciseSkipped={toggleExerciseSkipped}
           weights={exerciseWeights} onEditSet={editSet} onEditWeight={editExerciseWeight} onEditRir={editRir} onSaveNote={saveNote}
-          onSave={saveSets} saving={saving} onFinish={() => setConfirm('day')} />
+          onSave={saveSets} saving={saving} onFinish={() => setConfirm('day')} finishError={finishError} />
+        {celebration.active && (
+          <CelebrationLayer onSkip={celebration.skip}>
+            <span className="celebrate-kulka"><CelebrateMascot size={64} /></span>
+          </CelebrationLayer>
+        )}
 
         {confirm === 'day' && (
           <ConfirmDialog

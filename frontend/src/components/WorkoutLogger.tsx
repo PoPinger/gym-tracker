@@ -30,7 +30,7 @@ export interface WorkoutLoggerProps {
   weights: Record<number, string>; onEditSet: (id: number, setNum: number, raw: string) => void; onEditWeight: (id: number, raw: string) => void;
   onEditRir: (id: number, setNum: number, raw: string) => void; onSaveNote: (id: number, note: string) => Promise<void>;
   onSave: (id: number) => Promise<void>; saving: Record<number, boolean>;
-  onFinish: () => void;
+  onFinish: () => void; finishError?: boolean;
 }
 
 // What was last loaded from or sent to the server, to tell saved from unsaved
@@ -127,6 +127,8 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
   };
 
   const timer = useRestTimer(dayLog.id);
+  // The set whose ✓ was just saved: its check pops in (sets loaded as saved just show green)
+  const [pop, setPop] = useState<string | null>(null);
   const save = async (id: number, print: string, pct: number | null) => {
     timer.dismiss();
     await p.onSave(id);
@@ -141,7 +143,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
       .replace('{n}', String(setNum + 1)).replace('{total}', String(lastSet));
     if (setNum < lastSet) timer.start(el.id, el.rest_seconds ?? DEFAULT_REST, { title: t('wl_rest_done'), body });
     else timer.skip();
-    void save(el.id, print, pct);
+    void save(el.id, print, pct).then(() => setPop(`${el.id}-${setNum}`), () => {});
   };
 
   // Persistent note of the plan exercise: one open at a time
@@ -206,7 +208,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
                   const pr = it.prevSet(s.set_number);
                   const done = it.status === 'saved' && s.reps != null;
                   return (
-                    <div key={s.set_number} className="wl-set">
+                    <div key={s.set_number} className={`wl-set${done ? ' done' : ''}`}>
                       <span className="wl-label">{t('sets_header')} {s.set_number}</span>
                       <input type="number" inputMode="numeric" min={0} className="wl-input" placeholder={t('wl_reps_placeholder')}
                         aria-label={`${t('sets_header')} ${s.set_number}`}
@@ -216,7 +218,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
                         <option value="">{t('wl_rir_short')}</option>
                         {RIR_VALUES.map(v => <option key={v} value={v}>{t('wl_rir_short')} {v}</option>)}
                       </select>
-                      <button type="button" className={`wl-set-save${done ? ' done' : ''}`} aria-label={t('wl_save_set')} title={t('wl_save_set')}
+                      <button type="button" className={`wl-set-save${done ? ' done' : ''}${done && pop === `${el.id}-${s.set_number}` ? ' pop' : ''}`} aria-label={t('wl_save_set')} title={t('wl_save_set')}
                         disabled={s.reps == null || p.saving[el.id] || p.dateInvalid}
                         onClick={() => saveSet(el, s.set_number, fingerprint(el, it.w), it.prev?.pct ?? null)}>
                         <Check size={18} strokeWidth={3} />
@@ -283,6 +285,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
         })}
       </div>
 
+      {p.finishError && <div className="alert alert-error" role="alert" style={{ marginTop: 16 }}>{t('finish_save_error')}</div>}
       <div className={`wl-finishbar${timer.rest ? ' resting' : ''}`}>
         {/* Kulka jumps in from the bottom of the screen; the clip box hides it below the bar */}
         <span ref={slotRef} className="wl-mascot-slot">

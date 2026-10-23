@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRefresh } from '../hooks/useRefresh';
 import axios from 'axios';
 import { adminApi } from '../services/api';
-import AppLoader from '../components/AppLoader';
+import PageLoader from '../components/PageLoader';
 import Mascot from '../components/mascot/Mascot';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { AdminUser, MascotKind, ResetCode } from '../types';
@@ -69,7 +69,7 @@ export default function Admin() {
     }
   };
 
-  if (loading) return <AppLoader />;
+  if (loading) return <PageLoader cards={4} />;
 
   return (
     <div>

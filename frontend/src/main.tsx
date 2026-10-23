@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import './styles/motion.css'
 import { startSync } from './offline/queue'
 
 // Send writes saved offline (also from a previous session) and keep sending them when the connection is back

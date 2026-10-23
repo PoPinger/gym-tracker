@@ -1,7 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRefresh } from '../hooks/useRefresh';
+import { useCelebration, WEEK_CELEBRATION_MS } from '../hooks/useCelebration';
+import { navTransition } from '../utils/motion';
+import CelebrationLayer from '../components/CelebrationLayer';
 import { weightApi, apiErrorDetail } from '../services/api';
-import AppLoader from '../components/AppLoader';
+import PageLoader from '../components/PageLoader';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { kulkaDelay, trashDelay, SHRUG_MS, STAMP_MS } from '../components/mascot/trash';
 import BuilderKulka, { type BuilderOutcome } from '../components/mascot/BuilderKulka';
@@ -35,8 +38,11 @@ export default function MyWeight() {
 
   const [showReset, setShowReset]       = useState(false);
   const [showComplete, setShowComplete] = useState(false);
-  // Week just finished on its detail view: stay there for Kulka's celebration
+  // Week just finished on its detail view: Kulka celebrates there before the weeks panel opens
   const [doneWeekId, setDoneWeekId]     = useState<number | null>(null);
+  // Finishing the week failed to save: shown on the week, which stays open
+  const [finishError, setFinishError]   = useState(false);
+  const celebration = useCelebration();
 
   const loadCycle = useCallback(async () => {
     setLoading(true);
@@ -79,7 +85,7 @@ export default function MyWeight() {
     setSetupLoading(true); setSetupError('');
     try {
       const res = await weightApi.createCycle(months, setupGoal);
-      setCycle(res.data); setView('weeks');
+      navTransition('forward', () => { setCycle(res.data); setView('weeks'); });
     } catch (err) {
       setSetupError(apiErrorDetail(err) || t('setup_error_default'));
     } finally { setSetupLoading(false); }
@@ -168,13 +174,18 @@ export default function MyWeight() {
     } finally { setDaySaving(prev => ({ ...prev, [dayLogId]: false })); }
   };
 
+  // Saved right away; once saved Kulka celebrates with big confetti over the readings, then the weeks
+  // panel opens. A failed save keeps the week open with an error.
   const completeWeek = async (weekId: number) => {
-    await weightApi.completeWeek(weekId);
+    setFinishError(false);
+    try { await weightApi.completeWeek(weekId); }
+    catch { setShowComplete(false); setFinishError(true); return; }
     setShowComplete(false);
     setDoneWeekId(weekId);
-    // Refresh in place (no loader, no view change); keep the week marked done even if the refresh comes back empty
-    const res = await weightApi.getCurrentCycle().catch(() => null);
-    setCycle(prev => res?.data ?? (prev && { ...prev, weeks: prev.weeks.map(wk => wk.id === weekId ? { ...wk, status: 'completed' } : wk) }));
+    // Marked done at once, then refreshed in place (no loader); kept done even if the refresh comes back empty
+    setCycle(prev => prev && { ...prev, weeks: prev.weeks.map(wk => wk.id === weekId ? { ...wk, status: 'completed' } : wk) });
+    void weightApi.getCurrentCycle().then(res => { if (res.data) setCycle(res.data); }, () => {});
+    celebration.run(WEEK_CELEBRATION_MS, () => navTransition('back', () => setView('weeks')));
   };
 
   const computeAverage = (week: WeightWeek): number | null => {
@@ -201,7 +212,7 @@ export default function MyWeight() {
     t('day_thu'), t('day_fri'), t('day_sat'), t('day_sun'),
   ];
 
-  if (loading) return <AppLoader />;
+  if (loading) return <PageLoader cards={2} />;
 
   /* ═══ SETUP ═══ */
   if (view === 'setup') return (
@@ -214,7 +225,7 @@ export default function MyWeight() {
     <>
       <PanelView cycle={cycle} first={getWeek1Avg()} last={lastLoggedWeight(cycle)}
         avg={computeAverage} prevAvg={getPrevWeekAvg}
-        onOpenWeek={week => { setSelectedWeek(week); setDoneWeekId(null); setView('week-detail'); }} onReset={() => setShowReset(true)}
+        onOpenWeek={week => navTransition('forward', () => { setSelectedWeek(week); setDoneWeekId(null); setFinishError(false); setView('week-detail'); })} onReset={() => setShowReset(true)}
         onEditDuration={() => { setEditMonths(cycle.months); setDurationError(''); setDurationIntro(true); }}
         goalSwitch={<GoalSwitch goal={cycle.goal} onChange={changeGoal} disabled={goalSaving}
           onPick={g => setGoalPick(p => ({ goal: g, seq: (p?.seq ?? 0) + 1 }))} />} goalPick={goalPick} />
@@ -281,7 +292,9 @@ export default function MyWeight() {
         <WeekView week={week} goal={cycle.goal} avgVal={avg} diffPrev={diffPrev} diffW1={diffW1} dayNames={dayNames}
           inputs={dayInputs[week.id] ?? {}} onInput={(day, v) => handleDayInput(week.id, day, v)}
           onSave={(logId, day) => saveDayWeight(logId, week.id, day)} saving={daySaving} saved={daySaved}
-          onBack={() => setView('weeks')} onFinish={() => setShowComplete(true)} celebrate={doneWeekId === week.id} />
+          onBack={() => navTransition('back', () => setView('weeks'))} onFinish={() => setShowComplete(true)} celebrate={doneWeekId === week.id}
+          finishError={finishError} />
+        {celebration.active && <CelebrationLayer onSkip={celebration.skip} />}
         {showComplete && (
           <ConfirmDialog
             title={`${t('finish_week_question')} ${week.week_number}?`}

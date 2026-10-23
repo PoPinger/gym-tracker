@@ -349,6 +349,7 @@ export interface TranslationMap {
   deload_hint: string;
   deload_badge: string;
   deload_error: string;
+  finish_save_error: string;
   history_title: string;
   history_btn: string;
   history_open: string;
@@ -782,6 +783,7 @@ const pl: TranslationMap = {
   deload_hint: 'Lżejszy tydzień – nie liczy się do progresu ani rekordów',
   deload_badge: 'Deload',
   deload_error: 'Nie udało się zapisać zmiany',
+  finish_save_error: 'Nie udało się zapisać. Sprawdź połączenie i spróbuj ponownie.',
   history_title: 'Historia ćwiczenia',
   history_btn: 'Historia',
   history_open: 'Pokaż historię ćwiczenia',
@@ -1208,6 +1210,7 @@ const en: TranslationMap = {
   deload_hint: 'Lighter week – not counted in progress or records',
   deload_badge: 'Deload',
   deload_error: 'Could not save the change',
+  finish_save_error: 'Could not save. Check your connection and try again.',
   history_title: 'Exercise history',
   history_btn: 'History',
   history_open: 'Show exercise history',

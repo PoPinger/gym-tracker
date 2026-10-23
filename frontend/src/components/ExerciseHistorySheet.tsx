@@ -1,11 +1,13 @@
 // "Historia ćwiczenia": bottom sheet with the e1RM per week (Epley, drawn like the other charts) and every logged week.
 // Deload and skipped weeks are marked and never count as the best week.
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { History, StickyNote, X } from 'lucide-react';
 import { exercisesApi } from '../services/api';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useDrawOnView } from '../hooks/useDrawOnView';
 import { exerciseScore, firstWeight, formatKg } from '../utils/progress';
+import { DUR_FAST } from '../utils/motion';
+import { prefersReducedMotion } from '../hooks/useFirstInView';
 import type { ExerciseHistory, ExerciseHistoryEntry } from '../types';
 
 type Point = { e: ExerciseHistoryEntry; score: number };
@@ -39,8 +41,18 @@ function Chart({ points, best }: { points: Point[]; best: Point | null }) {
   );
 }
 
-export default function ExerciseHistorySheet({ exerciseId, name, onClose }: { exerciseId: number; name: string; onClose: () => void }) {
+export default function ExerciseHistorySheet({ exerciseId, name, onClose: close }: { exerciseId: number; name: string; onClose: () => void }) {
   const { t, lang } = useLanguage();
+  // Slides down before it goes (input underneath is free at once); reduced motion: closes right away
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<number>(undefined);
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
+  const onClose = useCallback(() => {
+    if (prefersReducedMotion()) { close(); return; }
+    setClosing(true);
+    window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(close, DUR_FAST);
+  }, [close]);
   const [allPlans, setAllPlans] = useState(false);
   const [data, setData] = useState<ExerciseHistory | null>(null);
   const [error, setError] = useState(false);
@@ -69,7 +81,7 @@ export default function ExerciseHistorySheet({ exerciseId, name, onClose }: { ex
   const showPlan = allPlans && new Set(entries.map(e => e.plan_id)).size > 1;
 
   return (
-    <div className="sheet-overlay" onClick={onClose}>
+    <div className={`sheet-overlay${closing ? ' closing' : ''}`} onClick={onClose}>
       <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="hist-title" onClick={e => e.stopPropagation()}>
         <div className="sheet-grip" />
         <div className="sheet-head">
@@ -87,7 +99,13 @@ export default function ExerciseHistorySheet({ exerciseId, name, onClose }: { ex
           </button>
         )}
 
-        {error ? <div className="alert alert-error">{t('history_error')}</div> : !data ? <div className="hist-loading" /> : (
+        {error ? <div className="alert alert-error">{t('history_error')}</div> : !data ? (
+          <div className="skel-rows" role="status" aria-label={t('loading_app')}>
+            <div className="skel hist-loading" />
+            <div className="skel skel-row" />
+            <div className="skel skel-row" />
+          </div>
+        ) : (
           <>
             {data.notes.map(n => (
               <div key={n.plan_id} className="hist-note"><StickyNote size={14} />

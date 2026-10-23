@@ -27,7 +27,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <LanguageProvider>
-      <BrowserRouter>
+      {/* Synchronous route updates, so a page transition (utils/motion.ts) captures the new page */}
+      <BrowserRouter unstable_useTransitions={false}>
         <Routes>
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />

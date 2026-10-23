@@ -1,0 +1,123 @@
+/* ─────────── Motion: "snappy & springy" ───────────
+   One shared config for UI motion (Kulka's own animations live in index.css and are not touched here).
+   Durations 150–200 ms, a quick spring with a tiny overshoot. utils/motion.ts mirrors these values for
+   JS-driven animations. Reduced motion: nothing moves, changes are instant (block at the end). */
+:root {
+  --dur-fast: 150ms;
+  --dur: 180ms;
+  --dur-slow: 200ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.3, 1.3, 0.5, 1);
+  --stagger-step: 25ms;
+}
+
+/* ── Page transitions (utils/motion.ts navTransition): forward slides in from the right, back from the left ── */
+/* The name is set only while a transition runs, so .main-content is never a stacking context otherwise */
+html[data-nav-dir] .main-content { view-transition-name: page; }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-old(page) { animation: var(--dur-fast) var(--ease-out) both nav-out-forward; }
+::view-transition-new(page) { animation: var(--dur-slow) var(--ease-spring) both nav-in-forward; }
+html[data-nav-dir="back"]::view-transition-old(page) { animation-name: nav-out-back; }
+html[data-nav-dir="back"]::view-transition-new(page) { animation-name: nav-in-back; }
+/* Fallback without the View Transitions API: only the new page slides in */
+.main-content.nav-in-forward > * { animation: nav-in-forward var(--dur-slow) var(--ease-spring) backwards; }
+.main-content.nav-in-back > * { animation: nav-in-back var(--dur-slow) var(--ease-spring) backwards; }
+@keyframes nav-in-forward { from { opacity: 0; transform: translateX(48px); } }
+@keyframes nav-in-back { from { opacity: 0; transform: translateX(-48px); } }
+@keyframes nav-out-forward { to { opacity: 0; transform: translateX(-32px); } }
+@keyframes nav-out-back { to { opacity: 0; transform: translateX(32px); } }
+
+/* ── Button press ── */
+.btn, .btn-icon, .back-btn, .nav-link, .tile, .week-card, .day-card, .wl-set-save, .exed-add, .exed-row,
+.seg-control button, .goal-switch button, .day-list-pill, .num-pill, .wl-rest-btn, .wl-note-btn, .sheet-close {
+  transition: var(--t), transform var(--dur-fast) var(--ease-spring);
+}
+.btn:active:not(:disabled), .btn-icon:active:not(:disabled), .back-btn:active, .nav-link:active, .tile:active,
+.week-card:active, .day-card:active, .wl-set-save:active:not(:disabled), .exed-add:active, .exed-row:active,
+.seg-control button:active, .goal-switch button:active, .day-list-pill:active, .num-pill:active,
+.wl-rest-btn:active, .wl-note-btn:active, .sheet-close:active {
+  transform: scale(0.96);
+}
+.exed-row:active, .day-card:active, .week-card:active { transform: scale(0.98); }
+
+/* ── Set ✓: the row turns green, the check pops in (only on the set just ticked) ── */
+.wl-set { border-radius: 10px; transition: background-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
+.wl-set.done { background: var(--success-light); box-shadow: 0 0 0 4px var(--success-light); }
+.wl-set-save.pop svg { animation: check-pop var(--dur-slow) var(--ease-spring) both; }
+@keyframes check-pop { 0% { transform: scale(0.2); opacity: 0; } 70% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+
+/* ── List stagger: cards appear one by one, quickly (capped at the 10th) ── */
+.plan-list > .plan-card, .week-cards > .week-card, .day-cards > .day-card, .wl-list > .wl-card, .exed-list > .exed-item {
+  animation: list-in var(--dur-slow) var(--ease-spring) backwards;
+}
+:is(.plan-list, .week-cards, .day-cards, .wl-list, .exed-list) > :nth-child(2) { animation-delay: calc(1 * var(--stagger-step)); }
+:is(.plan-list, .week-cards, .day-cards, .wl-list, .exed-list) > :nth-child(3) { animation-delay: calc(2 * var(--stagger-step)); }
+:is(.plan-list, .week-cards, .day-cards, .wl-list, .exed-list) > :nth-child(4) { animation-delay: calc(3 * var(--stagger-step)); }
+:is(.plan-list, .week-cards, .day-cards, .wl-list, .exed-list) > :nth-child(5) { animation-delay: calc(4 * var(--stagger-step)); }
+:is(.plan-list, .week-cards, .day-cards, .wl-list, .exed-list) > :nth-child(6) { animation-delay: calc(5 * var(--stagger-step)); }
+:is(.plan-list, .week-cards, .day-cards, .wl-list, .exed-list) > :nth-child(7) { animation-delay: calc(6 * var(--stagger-step)); }
+:is(.plan-list, .week-cards, .day-cards, .wl-list, .exed-list) > :nth-child(8) { animation-delay: calc(7 * var(--stagger-step)); }
+:is(.plan-list, .week-cards, .day-cards, .wl-list, .exed-list) > :nth-child(9) { animation-delay: calc(8 * var(--stagger-step)); }
+:is(.plan-list, .week-cards, .day-cards, .wl-list, .exed-list) > :nth-child(n+10) { animation-delay: calc(9 * var(--stagger-step)); }
+@keyframes list-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+
+/* ── Bottom sheets, dialogs and menus ── */
+.sheet-overlay { animation: fade-in var(--dur-fast) var(--ease-out) both; }
+.sheet { animation: sheet-in var(--dur-slow) var(--ease-spring) both; }
+.sheet-overlay.closing { animation: fade-out var(--dur-fast) var(--ease-out) both; pointer-events: none; }
+.sheet-overlay.closing .sheet { animation: sheet-out var(--dur-fast) var(--ease-out) both; }
+.modal-overlay { animation: fade-in var(--dur-fast) var(--ease-out) both; }
+.modal { animation: modal-in var(--dur-slow) var(--ease-spring) both; }
+.plan-card-menu { animation: menu-in var(--dur-fast) var(--ease-spring) both; transform-origin: top right; }
+.plan-card-menu.above { transform-origin: bottom right; }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes sheet-in { from { transform: translateY(100%); } }
+@keyframes sheet-out { to { transform: translateY(100%); } }
+@keyframes modal-in { from { opacity: 0; transform: scale(0.94); } }
+@keyframes menu-in { from { opacity: 0; transform: scale(0.92); } }
+
+/* ── Toggle switches ── */
+.wl-switch-track { transition: background-color var(--dur-fast) var(--ease-out); }
+.wl-switch-track span { transition: transform var(--dur) var(--ease-spring); }
+.wl-switch:active .wl-switch-track span { width: 22px; }
+.wl-switch.on:active .wl-switch-track span { transform: translateX(12px); }
+.goal-switch button { transition: var(--t), transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur) var(--ease-spring); }
+
+/* ── Skeleton loading cards ── */
+.skel-page { display: flex; flex-direction: column; gap: 14px; max-width: 760px; }
+.skel { position: relative; overflow: hidden; background: var(--bg-subtle); border-radius: var(--radius-sm); }
+.skel::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent); animation: skel-shimmer 1.1s ease-in-out infinite; }
+.skel-title { width: 46%; height: 26px; }
+.skel-sub { width: 30%; height: 14px; margin-bottom: 8px; }
+.skel-card { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.skel-line { height: 14px; }
+.skel-line.w60 { width: 60%; height: 18px; }
+.skel-line.w40 { width: 40%; }
+.skel-line.w80 { width: 80%; }
+.skel-rows { display: flex; flex-direction: column; gap: 10px; }
+.skel-row { height: 56px; border-radius: var(--radius); }
+@keyframes skel-shimmer { to { transform: translateX(100%); } }
+
+/* ── Celebration before navigating: a transparent layer, any tap skips ── */
+.celebrate-layer { position: fixed; inset: 0; z-index: 1200; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.celebrate-kulka { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 1201; transform: translateX(-50%); pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(page), ::view-transition-new(page) { animation: none; }
+  .main-content.nav-in-forward > *, .main-content.nav-in-back > *,
+  .plan-list > .plan-card, .week-cards > .week-card, .day-cards > .day-card, .wl-list > .wl-card, .exed-list > .exed-item,
+  .sheet-overlay, .sheet, .sheet-overlay.closing, .sheet-overlay.closing .sheet, .modal-overlay, .modal, .plan-card-menu,
+  .wl-set-save.pop svg, .skel::after { animation: none !important; }
+  .btn, .btn-icon, .back-btn, .nav-link, .tile, .week-card, .day-card, .wl-set-save, .exed-add, .exed-row,
+  .seg-control button, .goal-switch button, .day-list-pill, .num-pill, .wl-rest-btn, .wl-note-btn, .sheet-close,
+  .wl-set, .wl-switch-track, .wl-switch-track span { transition: none !important; }
+  .btn:active, .btn-icon:active, .back-btn:active, .nav-link:active, .tile:active, .week-card:active, .day-card:active,
+  .wl-set-save:active, .exed-add:active, .exed-row:active, .seg-control button:active, .goal-switch button:active,
+  .day-list-pill:active, .num-pill:active, .wl-rest-btn:active, .wl-note-btn:active, .sheet-close:active { transform: none !important; }
+  .wl-switch:active .wl-switch-track span { width: 18px; }
+}
+
+/* While Kulka celebrates a finished day over the logger, the finish bar's Kulka steps aside */
+body:has(.celebrate-layer) .wl-mascot-slot .mascot { visibility: hidden; }
