@@ -36,6 +36,8 @@ export interface Exercise {
   sets: number;
   rep_min?: number | null;
   rep_max?: number | null;
+  rest_seconds?: number | null;
+  note?: string | null;
   exercise_order: number;
 }
 
@@ -73,6 +75,7 @@ export interface SetLog {
   set_number: number;
   reps: number | null;
   weight_kg: number | null;
+  rir?: number | null;
 }
 
 export interface ExerciseLog {
@@ -83,6 +86,8 @@ export interface ExerciseLog {
   sets: number;
   rep_min?: number | null;
   rep_max?: number | null;
+  rest_seconds?: number | null;
+  note?: string | null;
   skipped: boolean;
   set_logs: SetLog[];
 }
@@ -96,9 +101,9 @@ export interface DayLog {
   workout_date: string | null;
   skipped: boolean;
   exercise_logs: ExerciseLog[];
-  prev_week_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null }>>;
+  prev_week_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null; rir?: number | null }>>;
   prev_week_skipped?: number[];
-  week1_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null }>>;
+  week1_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null; rir?: number | null }>>;
   week_number?: number;
   plan_name?: string;
 }

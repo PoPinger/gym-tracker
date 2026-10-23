@@ -168,6 +168,8 @@ def update_exercise(ex_id: int, data: ExerciseUpdate, db: Session = Depends(get_
         ex.sets = data.sets
     if data.exercise_order is not None:
         ex.exercise_order = data.exercise_order
+    if data.note is not None:
+        ex.note = data.note.strip() or None
     db.commit()
     db.refresh(ex)
     return ex
@@ -273,7 +275,7 @@ def get_day_log(log_id: int, db: Session = Depends(get_db), user: User = Depends
             ).first()
             if prev_log:
                 for ex_log in prev_log.exercise_logs:
-                    sets = [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg}
+                    sets = [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg, "rir": s.rir}
                             for s in ex_log.set_logs]
                     prev_week_data[ex_log.exercise_id] = sets
                     if prev_log.skipped or ex_log.skipped:
@@ -294,7 +296,7 @@ def get_day_log(log_id: int, db: Session = Depends(get_db), user: User = Depends
             ).first()
             if w1_log:
                 for ex_log in w1_log.exercise_logs:
-                    sets = [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg}
+                    sets = [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg, "rir": s.rir}
                             for s in ex_log.set_logs]
                     week1_data[ex_log.exercise_id] = sets
 
@@ -349,7 +351,7 @@ def _serialize_day_log(log) -> dict:
     for ex_log in log.exercise_logs:
         ex = ex_log.exercise
         set_logs = [
-            {"id": s.id, "set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg}
+            {"id": s.id, "set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg, "rir": s.rir}
             for s in ex_log.set_logs
         ]
         exercise_logs.append({
@@ -360,6 +362,8 @@ def _serialize_day_log(log) -> dict:
             "sets": ex.sets if ex else 0,
             "rep_min": ex.rep_min if ex else None,
             "rep_max": ex.rep_max if ex else None,
+            "rest_seconds": ex.rest_seconds if ex else None,
+            "note": ex.note if ex else None,
             "skipped": bool(ex_log.skipped),
             "set_logs": set_logs,
         })

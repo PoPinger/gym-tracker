@@ -36,6 +36,7 @@ def create_plan(db: Session, user_id: int, data: PlanCreate) -> TrainingPlan:
                 sets=ex_data.sets,
                 rep_min=ex_data.rep_min,
                 rep_max=ex_data.rep_max,
+                rest_seconds=ex_data.rest_seconds,
                 exercise_order=ex_data.exercise_order,
             )
             db.add(exercise)
@@ -123,6 +124,8 @@ def copy_plan(db: Session, original: TrainingPlan, user_id: int) -> TrainingPlan
                 sets=ex.sets,
                 rep_min=ex.rep_min,
                 rep_max=ex.rep_max,
+                rest_seconds=ex.rest_seconds,
+                note=ex.note,
                 exercise_order=ex.exercise_order,
             ))
 
@@ -167,6 +170,7 @@ def update_plan_structure(db: Session, plan: TrainingPlan, data) -> TrainingPlan
                     ex.sets = ex_data.sets
                     ex.rep_min = ex_data.rep_min
                     ex.rep_max = ex_data.rep_max
+                    ex.rest_seconds = ex_data.rest_seconds
                     ex.exercise_order = ex_data.exercise_order
                     # Synchronizuj SetLog dla wszystkich istniejących ExerciseLog tego ćwiczenia
                     existing_ex_logs = db.query(ExerciseLog).filter(
@@ -200,6 +204,7 @@ def update_plan_structure(db: Session, plan: TrainingPlan, data) -> TrainingPlan
                     sets=ex_data.sets,
                     rep_min=ex_data.rep_min,
                     rep_max=ex_data.rep_max,
+                    rest_seconds=ex_data.rest_seconds,
                     exercise_order=ex_data.exercise_order,
                 ))
 
@@ -339,12 +344,14 @@ def save_exercise_sets(db: Session, exercise_log_id: int, sets_data: list, user_
         if set_log:
             set_log.reps = s.reps
             set_log.weight_kg = s.weight_kg
+            set_log.rir = s.rir
         else:
             db.add(SetLog(
                 exercise_log_id=exercise_log_id,
                 set_number=s.set_number,
                 reps=s.reps,
                 weight_kg=s.weight_kg,
+                rir=s.rir,
             ))
     if workout_date:
         ex_log.day_log.workout_date = workout_date

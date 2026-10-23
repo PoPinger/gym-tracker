@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { plansApi, logsApi, apiErrorDetail } from '../services/api';
+import { plansApi, logsApi, exercisesApi, apiErrorDetail } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
 import AppLoader from '../components/AppLoader';
 import PlansEmptyState from '../components/PlansEmptyState';
@@ -21,6 +21,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { isValidRepRange, repRangePayload } from '../utils/repRange';
 import { firstWeight } from '../utils/progress';
 import { todayIso } from '../utils/date';
+import { DEFAULT_REST } from '../utils/rest';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog, SetLog } from '../types';
 import {
   ChevronRight, CheckCircle2, XCircle, ArrowLeft,
@@ -29,7 +30,7 @@ import {
 
 type View = 'list' | 'weeks' | 'days' | 'workout' | 'edit-plan' | 'edit-exercises';
 
-interface EditExDraft { id?: number; name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
+interface EditExDraft { id?: number; name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; rest_seconds: number; }
 interface EditDayDraft { id: number; day_name: string; color: DayColor; exercises: EditExDraft[]; }
 // Field values captured before a "skipped" auto-fill, keyed by exercise log id
 type FillSnapshot = Record<number, { set_logs: SetLog[]; weight: string }>;
@@ -139,6 +140,28 @@ export default function MyPlans() {
           set_logs: el.set_logs.map(s => s.set_number !== setNum ? s : { ...s, reps: val }),
         }),
       };
+    });
+  };
+
+  const editRir = (exLogId: number, setNum: number, raw: string) => {
+    const val = raw === '' ? null : Number(raw);
+    setDayLog(prev => prev && {
+      ...prev,
+      exercise_logs: prev.exercise_logs.map(el => el.id !== exLogId ? el : {
+        ...el,
+        set_logs: el.set_logs.map(s => s.set_number !== setNum ? s : { ...s, rir: val }),
+      }),
+    });
+  };
+
+  // The note belongs to the plan exercise, so it shows every week until changed
+  const saveNote = async (exLogId: number, note: string) => {
+    const el = dayLog?.exercise_logs.find(e => e.id === exLogId);
+    if (!el) return;
+    await exercisesApi.update(el.exercise_id, { note });
+    setDayLog(prev => prev && {
+      ...prev,
+      exercise_logs: prev.exercise_logs.map(e => e.exercise_id === el.exercise_id ? { ...e, note: note || null } : e),
     });
   };
 
@@ -278,6 +301,7 @@ export default function MyPlans() {
         sets: ex.sets,
         rep_min: ex.rep_min != null ? String(ex.rep_min) : '',
         rep_max: ex.rep_max != null ? String(ex.rep_max) : '',
+        rest_seconds: ex.rest_seconds ?? DEFAULT_REST,
       })),
     })));
     setEditActiveDayIdx(0);
@@ -303,7 +327,7 @@ export default function MyPlans() {
           exercises: d.exercises
             .filter(e => e.name.trim())
             .map((e, ei) => ({
-              id: e.id, name: e.name, muscle_group: e.muscle_group, sets: e.sets, exercise_order: ei,
+              id: e.id, name: e.name, muscle_group: e.muscle_group, sets: e.sets, exercise_order: ei, rest_seconds: e.rest_seconds,
               ...repRangePayload(e.rep_min, e.rep_max),
             })),
         })),
@@ -338,7 +362,7 @@ export default function MyPlans() {
 
   const addEditEx = () => {
     setEditDays(d => d.map((day, i) => i !== editActiveDayIdx ? day : {
-      ...day, exercises: [...day.exercises, { name: '', muscle_group: MUSCLE_GROUPS[0], sets: 3, rep_min: '', rep_max: '' }]
+      ...day, exercises: [...day.exercises, { name: '', muscle_group: MUSCLE_GROUPS[0], sets: 3, rep_min: '', rep_max: '', rest_seconds: DEFAULT_REST }]
     }));
   };
 
@@ -630,7 +654,7 @@ export default function MyPlans() {
           backLabel={`${t('week_tile_label')} ${weekInfo.week_number}`} onBack={() => setView('days')}
           workoutDate={workoutDate} onDateChange={setWorkoutDate} dateInvalid={dateInvalid}
           skipped={skipped} onToggleSkipped={toggleSkipped} onToggleExerciseSkipped={toggleExerciseSkipped}
-          weights={exerciseWeights} onEditSet={editSet} onEditWeight={editExerciseWeight}
+          weights={exerciseWeights} onEditSet={editSet} onEditWeight={editExerciseWeight} onEditRir={editRir} onSaveNote={saveNote}
           onSave={saveSets} saving={saving} onFinish={() => setConfirm('day')} />
 
         {confirm === 'day' && (

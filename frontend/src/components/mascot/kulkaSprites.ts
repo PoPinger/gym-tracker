@@ -141,6 +141,9 @@ const DROP = ['b', 'b'];
 export const TOWEL = ['wwwwwwww', 'bbbbbbbb', 'wwwwwwww', 'bbbbbbbb', 'wwwwwwww', 'w.w.w.w.'];
 const TOWEL_HAND = ['wwww', 'bbbb', 'wwww'];
 const NOTEBOOK = ['wwKww', 'wdKdw', 'wwKdw', 'wwKww'];
+// Water bottle: standing in the hand, or tipped towards the mouth (cap on the left)
+const BOTTLE = ['.g.', 'bbb', 'bwb', 'bwb', 'bbb'];
+const BOTTLE_TIP = ['.bbbbb', 'gbwwbb', '.bbbbb'];
 export const STAMP_MARK = ['......e', '.....ee', 'e...ee.', 'ee.ee..', '.eee...', '..e....'];
 
 type Eyes = 'open' | 'blink' | 'happy' | 'effort' | 'half' | 'lookL' | 'lookR' | 'lookUp' | 'sad' | 'angry';
@@ -162,6 +165,7 @@ interface Pose {
   stomp?: boolean; // right foot lifted for a stomp
   towel?: boolean; finger?: boolean; // towel in the right hand, raised index finger (right hand)
   notebook?: boolean; // small notebook held in front of the belly
+  bottle?: 'hold' | 'sip'; // water bottle in the right hand
   own?: boolean; front?: boolean; // skin pose overrides: coordinates already in the skin's grid; raised arms stay in front
 }
 
@@ -296,6 +300,12 @@ const POSES = {
   bareBlink: { arms: IDLE_ARMS, eyes: 'blink' },
   dayStampUp: { stamp: true, arms: { L: IDLE_ARMS.L, R: [[21, 16], [18, 12]] }, eyes: 'effort', mouth: 'grit' },
   dayStampDown: { stamp: true, arms: { L: IDLE_ARMS.L, R: [[21, 22], [19, 24]] }, eyes: 'happy', mouth: 'open' },
+  // Rest timer: sits drinking water from a bottle; stands up ready when the rest is over
+  drinkHold: { sit: true, bottle: 'hold', arms: { L: [[3, 25]], R: [[20, 26], [17, 26]] }, eyes: 'half' },
+  drinkBlink: { sit: true, bottle: 'hold', arms: { L: [[3, 25]], R: [[20, 26], [17, 26]] }, eyes: 'blink' },
+  drinkSip: { sit: true, bottle: 'sip', arms: { L: [[3, 25]], R: [[21, 20], [18, 22]] }, eyes: 'happy' },
+  ready1: { arms: { L: [[1, 19], [2, 16]], R: [[22, 19], [21, 16]] }, eyes: 'open', mouth: 'open' },
+  ready2: { feet: 'tuck', arms: { L: [[1, 18], [2, 15]], R: [[22, 18], [21, 15]] }, eyes: 'happy', mouth: 'open' },
 } satisfies Record<string, Pose>;
 
 export type FrameName = keyof typeof POSES;
@@ -461,6 +471,7 @@ const ARIANA: Skin = {
     paperWorry: { front: true, arms: PAPER_UP, paper: [20, 11], mouth: 'flat', drops: [[1, 12]] },
     bored: { sit: true, own: true, arms: { L: [[5, 19], [8, 14]], R: [[17, 22]] }, eyes: 'half', mouth: 'flat' },
     boredSigh: { sit: true, own: true, arms: { L: [[5, 19], [8, 14]], R: [[17, 22]] }, eyes: 'blink', mouth: 'pant' },
+    drinkSip: { sit: true, own: true, bottle: 'sip', arms: { L: [[6, 22]], R: [[18, 16], [16, 14]] }, eyes: 'happy' },
     wipe1: { helmet: true, own: true, front: true, arms: { L: [[4, 12], [7, 7]], R: [[18, 18]] }, eyes: 'blink', mouth: 'pant', drops: [[20, 5]] },
     wipe2: { helmet: true, own: true, front: true, arms: { L: [[5, 11], [12, 7]], R: [[18, 18]] }, eyes: 'half', mouth: 'pant', drops: [[21, 7]] },
   },
@@ -515,6 +526,8 @@ function compose(pose: Pose, sk: Skin): Canvas {
     if (pose.clip) sprite(c, pose.clipOk ? CLIPBOARD_OK : CLIPBOARD, ...near(pose.clip, kl, hl));
     if (pose.brick) sprite(c, BRICK, 5, hl[1] - 3);
     if (pose.notebook) sprite(c, NOTEBOOK, ...near([9, 22], kl, hl));
+    if (pose.bottle === 'hold') sprite(c, BOTTLE, hr[0], hr[1] - 5);
+    if (pose.bottle === 'sip') sprite(c, BOTTLE_TIP, hr[0] - 5, hr[1] - 2);
     if (!lb) hand(hl);
     if (!rb) hand(hr);
     if (pose.pencil) sprite(c, PENCIL, hr[0] - 2, hr[1] - 3);

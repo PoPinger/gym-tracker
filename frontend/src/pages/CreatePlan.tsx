@@ -7,13 +7,14 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { isValidRepRange, repRangePayload } from '../utils/repRange';
 import { Plus, Trash2, ChevronUp, ChevronDown, ArrowRight, ArrowLeft, Dumbbell, Moon } from 'lucide-react';
 import { plural } from '../utils/plural';
+import { clampRest, DEFAULT_REST, formatRest, REST_MAX, REST_MIN, REST_STEP } from '../utils/rest';
 import DayList from '../components/DayList';
 import StepperMascot from '../components/mascot/StepperMascot';
 import { defaultDayColor, type DayColor } from '../utils/dayColors';
 
 type Step = 1 | 2 | 3 | 4;
 
-interface ExDraft { name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
+interface ExDraft { name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; rest_seconds: number; }
 interface DayDraft { day_name: string; color: DayColor; exercises: ExDraft[]; }
 
 function StepIndicator({ step, labels, current }: { step: Step; labels: string[]; current: string }) {
@@ -89,7 +90,7 @@ export default function CreatePlan() {
 
   const addEx = () => {
     setDays(d => d.map((day, i) => i !== activeDayIdx ? day : {
-      ...day, exercises: [...day.exercises, { name: '', muscle_group: MUSCLE_GROUPS[0], sets: 3, rep_min: '', rep_max: '' }]
+      ...day, exercises: [...day.exercises, { name: '', muscle_group: MUSCLE_GROUPS[0], sets: 3, rep_min: '', rep_max: '', rest_seconds: DEFAULT_REST }]
     }));
   };
 
@@ -126,7 +127,7 @@ export default function CreatePlan() {
         days: days.map((d, di) => ({
           day_name: d.day_name, day_order: di, color: d.color,
           exercises: d.exercises.filter(e => e.name.trim()).map((e, ei) => ({
-            name: e.name, muscle_group: e.muscle_group, sets: e.sets, exercise_order: ei,
+            name: e.name, muscle_group: e.muscle_group, sets: e.sets, exercise_order: ei, rest_seconds: e.rest_seconds,
             ...repRangePayload(e.rep_min, e.rep_max),
           })),
         })),
@@ -307,6 +308,14 @@ export default function CreatePlan() {
                         <span style={{ color:'var(--text-muted)' }}>–</span>
                         <input type="number" min={1} max={100} step={1} className="rep-range-input" placeholder="max"
                           value={ex.rep_max} onChange={e => setEx(ei, 'rep_max', e.target.value)} />
+                      </div>
+                      <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>{t('rest_label')}</span>
+                      <div style={{ display:'flex', alignItems:'center', gap:6, background:'white', border:'1.5px solid var(--border)', borderRadius:8, padding:'4px 8px' }}>
+                        <button aria-label={t('rest_decrease')} disabled={ex.rest_seconds <= REST_MIN} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', padding:'2px 4px', fontSize:18, lineHeight:1, display:'flex', alignItems:'center', opacity: ex.rest_seconds <= REST_MIN ? 0.3 : 1 }}
+                          onClick={() => setEx(ei, 'rest_seconds', clampRest(ex.rest_seconds - REST_STEP))}>−</button>
+                        <span style={{ fontWeight:800, fontSize:15, color:'var(--text-heading)', minWidth:34, textAlign:'center' }}>{formatRest(ex.rest_seconds)}</span>
+                        <button aria-label={t('rest_increase')} disabled={ex.rest_seconds >= REST_MAX} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', padding:'2px 4px', fontSize:18, lineHeight:1, display:'flex', alignItems:'center', opacity: ex.rest_seconds >= REST_MAX ? 0.3 : 1 }}
+                          onClick={() => setEx(ei, 'rest_seconds', clampRest(ex.rest_seconds + REST_STEP))}>+</button>
                       </div>
                     </div>
 

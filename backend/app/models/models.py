@@ -92,6 +92,8 @@ class Exercise(Base):
     sets = Column(Integer, nullable=False)
     rep_min = Column(Integer, nullable=True)
     rep_max = Column(Integer, nullable=True)
+    rest_seconds = Column(Integer, nullable=True)
+    note = Column(Text, nullable=True)
     exercise_order = Column(Integer, nullable=False, default=0)
 
     plan_day = relationship("PlanDay", back_populates="exercises")
@@ -159,6 +161,7 @@ class SetLog(Base):
     set_number = Column(Integer, nullable=False)
     reps = Column(Integer, nullable=True)
     weight_kg = Column(Float, nullable=True)
+    rir = Column(Integer, nullable=True)
 
     exercise_log = relationship("ExerciseLog", back_populates="set_logs")
 

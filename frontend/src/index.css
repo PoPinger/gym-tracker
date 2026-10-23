@@ -904,3 +904,41 @@ a { text-decoration: none; color: inherit; }
   .av-live { animation: none !important; opacity: 1 !important; }
   .draw-pending [data-draw], .draw-pending [data-draw-dot] { opacity: 1; }
 }
+
+/* Workout logger, Stage A: per-set RIR + ✓ save, persistent note, rest timer in the finish bar (WorkoutLogger.tsx) */
+.wl-set { grid-template-columns: 70px minmax(0, 1fr) 70px 48px 80px; }
+.wl-rir { min-height: 48px; width: 100%; border: 1.5px solid var(--border); border-radius: 10px; background: var(--bg-subtle); font: inherit; font-size: 13px; font-weight: 700; color: var(--text-subtle); text-align: center; text-align-last: center; padding: 0 4px; cursor: pointer; -webkit-appearance: none; appearance: none; transition: var(--t); }
+.wl-rir.set { color: var(--text-heading); background: var(--bg-white); }
+.wl-rir:focus { outline: none; border-color: var(--day-fg); box-shadow: 0 0 0 3px var(--day-bg); }
+.wl-set-save { width: 48px; height: 48px; border-radius: 12px; border: 1.5px solid var(--day-fg); background: var(--bg-white); color: var(--day-fg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--t); }
+.wl-set-save:hover:not(:disabled):not(.done) { background: var(--day-bg); }
+.wl-set-save:active:not(:disabled) { transform: scale(0.94); }
+.wl-set-save.done { background: var(--success); border-color: var(--success); color: white; }
+.wl-set-save:disabled:not(.done) { opacity: 0.35; cursor: default; }
+.wl-set-save.done:disabled { cursor: default; }
+.wl-set-prev small { display: block; font-size: 11px; color: var(--text-subtle); }
+.wl-note-btn { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 40px; padding: 8px 12px; border: 1px dashed var(--border); border-radius: 10px; background: none; font: inherit; font-size: 13px; color: var(--text-muted); text-align: left; cursor: pointer; }
+.wl-note-btn b { font-weight: 700; flex-shrink: 0; }
+.wl-note-btn span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-body); font-style: italic; }
+.wl-note-btn span::before { content: '·'; font-style: normal; margin-right: 6px; color: var(--text-subtle); }
+.wl-note-btn.has { border-style: solid; background: #fffbeb; border-color: #fde68a; color: #b45309; }
+.wl-note-edit { display: flex; flex-direction: column; gap: 8px; }
+.wl-note-edit textarea { resize: vertical; min-height: 64px; font-size: 15px; }
+.wl-note-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.wl-note-error { font-size: 12px; font-weight: 600; color: var(--danger); }
+.wl-rest { position: relative; display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; padding: 4px 4px 4px 12px; min-height: 48px; border-radius: 12px; background: var(--bg-white); border: 1px solid var(--border); overflow: hidden; }
+.wl-rest-time { display: flex; flex-direction: column; line-height: 1.1; margin-right: auto; }
+.wl-rest-time small { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-subtle); }
+.wl-rest-time strong { font-size: 20px; font-weight: 800; color: var(--text-heading); font-variant-numeric: tabular-nums; }
+.wl-rest-btn { min-height: 40px; padding: 0 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-subtle); font: inherit; font-size: 13px; font-weight: 700; color: var(--text-body); cursor: pointer; white-space: nowrap; }
+.wl-rest-btn:hover { background: var(--bg-white); }
+.wl-rest-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--primary); transform-origin: left; transition: transform 0.25s linear; }
+.wl-finishbar.resting .btn { flex: 0 0 auto; }
+.wl-rest-bubble { position: absolute; left: -6px; bottom: calc(100% + 6px); z-index: 1; white-space: nowrap; border: 2px solid var(--primary); border-radius: 14px; background: var(--bg-white); color: var(--primary); font: inherit; font-size: 14px; font-weight: 800; padding: 6px 12px; cursor: pointer; box-shadow: var(--shadow-sm); animation: m-pop 0.35s cubic-bezier(.3,1.6,.6,1) both; transform-origin: 20px 100%; }
+.wl-rest-bubble::after { content: ''; position: absolute; left: 18px; top: 100%; border: 7px solid transparent; border-top-color: var(--primary); }
+@media (max-width: 600px) {
+  .wl-set { grid-template-columns: 52px minmax(0, 1fr) 62px 48px 56px; gap: 6px; }
+  .wl-finishbar.resting { gap: 8px; }
+  .wl-finishbar.resting .btn { padding-left: 14px; padding-right: 14px; }
+  .wl-finishbar.resting .wl-finish-label { display: none; }
+}

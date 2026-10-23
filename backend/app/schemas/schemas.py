@@ -151,7 +151,22 @@ class RepRangeMixin(BaseModel):
         return self
 
 
-class ExerciseEditItem(RepRangeMixin):
+REST_MIN_SECONDS, REST_MAX_SECONDS = 30, 300
+NOTE_MAX_LENGTH = 500
+
+
+class RestSecondsMixin(BaseModel):
+    rest_seconds: Optional[int] = None   # None = default rest (2:00)
+
+    @field_validator("rest_seconds")
+    @classmethod
+    def validate_rest_seconds(cls, v):
+        if v is not None and not (REST_MIN_SECONDS <= v <= REST_MAX_SECONDS):
+            raise ValueError("Przerwa musi mieścić się w przedziale 0:30–5:00")
+        return v
+
+
+class ExerciseEditItem(RepRangeMixin, RestSecondsMixin):
     id: Optional[int] = None   # None = new exercise
     name: str
     muscle_group: str
@@ -170,7 +185,7 @@ class PlanStructureUpdate(BaseModel):
     days: List[PlanDayEdit] = []
 
 
-class ExerciseCreate(RepRangeMixin):
+class ExerciseCreate(RepRangeMixin, RestSecondsMixin):
     name: str
     muscle_group: str
     sets: int
@@ -184,6 +199,8 @@ class ExerciseOut(BaseModel):
     sets: int
     rep_min: Optional[int] = None
     rep_max: Optional[int] = None
+    rest_seconds: Optional[int] = None
+    note: Optional[str] = None
     exercise_order: int
 
     class Config:
@@ -195,6 +212,14 @@ class ExerciseUpdate(BaseModel):
     muscle_group: Optional[str] = None
     sets: Optional[int] = None
     exercise_order: Optional[int] = None
+    note: Optional[str] = None   # "" clears the note
+
+    @field_validator("note")
+    @classmethod
+    def validate_note(cls, v):
+        if v is not None and len(v) > NOTE_MAX_LENGTH:
+            raise ValueError(f"Notatka może mieć najwyżej {NOTE_MAX_LENGTH} znaków")
+        return v
 
 
 class PlanDayCreate(DayColorMixin):
@@ -273,6 +298,14 @@ class SetLogIn(BaseModel):
     set_number: int
     reps: Optional[int] = None
     weight_kg: Optional[float] = None
+    rir: Optional[int] = None
+
+    @field_validator("rir")
+    @classmethod
+    def validate_rir(cls, v):
+        if v is not None and not (0 <= v <= 5):
+            raise ValueError("RIR musi mieścić się w przedziale 0–5")
+        return v
 
 
 class SetLogOut(BaseModel):
@@ -280,6 +313,7 @@ class SetLogOut(BaseModel):
     set_number: int
     reps: Optional[int]
     weight_kg: Optional[float]
+    rir: Optional[int] = None
 
     class Config:
         from_attributes = True

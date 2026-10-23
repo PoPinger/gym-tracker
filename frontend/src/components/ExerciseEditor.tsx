@@ -7,12 +7,13 @@ import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { MUSCLE_GROUPS } from '../types';
 import { plural } from '../utils/plural';
 import { isValidRepRange } from '../utils/repRange';
+import { clampRest, formatRest, REST_MAX, REST_MIN, REST_STEP } from '../utils/rest';
 import type { DayColor } from '../utils/dayColors';
 import CraneKulka, { type EditorCue } from './mascot/CraneKulka';
 import { kulkaDelay, WIPE_MS } from './mascot/trash';
 
-export interface ExerciseDraft { name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; }
-type Field = 'name' | 'muscle_group' | 'sets' | 'rep_min' | 'rep_max';
+export interface ExerciseDraft { name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; rest_seconds: number; }
+type Field = 'name' | 'muscle_group' | 'sets' | 'rep_min' | 'rep_max' | 'rest_seconds';
 
 type T = ReturnType<typeof useLanguage>['t'];
 const muscleLabel = (t: T, g: string) => t(MUSCLE_GROUP_TO_KEY[g] ?? 'muscle_chest');
@@ -31,6 +32,18 @@ function SetsStepper({ value, onChange }: { value: number; onChange: (n: number)
       <button type="button" aria-label={t('sets_decrease')} disabled={value <= 1} onClick={() => onChange(Math.max(1, value - 1))}><Minus size={15} /></button>
       <strong>{value}</strong>
       <button type="button" aria-label={t('sets_increase')} disabled={value >= 10} onClick={() => onChange(Math.min(10, value + 1))}><Plus size={15} /></button>
+    </span>
+  );
+}
+
+// Rest between sets: 0:30–5:00 in 15 s steps
+function RestStepper({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const { t } = useLanguage();
+  return (
+    <span className="exed-stepper exed-rest">
+      <button type="button" aria-label={t('rest_decrease')} disabled={value <= REST_MIN} onClick={() => onChange(clampRest(value - REST_STEP))}><Minus size={15} /></button>
+      <strong>{formatRest(value)}</strong>
+      <button type="button" aria-label={t('rest_increase')} disabled={value >= REST_MAX} onClick={() => onChange(clampRest(value + REST_STEP))}><Plus size={15} /></button>
     </span>
   );
 }
@@ -112,6 +125,10 @@ export default function ExerciseEditor({ dayName, color, exercises, onChange, on
                           <input type="number" inputMode="numeric" min={1} max={100} step={1} placeholder="max" aria-label={t('rep_max_label')}
                             value={ex.rep_max} onChange={e => onChange(ei, 'rep_max', e.target.value)} />
                         </span>
+                      </label>
+                      <label>
+                        <span className="day-list-label">{t('ex_col_rest')}</span>
+                        <RestStepper value={ex.rest_seconds} onChange={v => onChange(ei, 'rest_seconds', v)} />
                       </label>
                     </div>
                     <div className="exed-actions">

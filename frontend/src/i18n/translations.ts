@@ -328,6 +328,23 @@ export interface TranslationMap {
   wl_prev_short: string;
   wl_saved_count: string;
   wl_weight_label: string;
+  ex_col_rest: string;
+  rest_label: string;
+  rest_decrease: string;
+  rest_increase: string;
+  wl_rir_label: string;
+  wl_reps_placeholder: string;
+  wl_rir_short: string;
+  wl_save_set: string;
+  wl_rest_label: string;
+  wl_rest_add: string;
+  wl_rest_skip: string;
+  wl_rest_done: string;
+  wl_note_btn: string;
+  wl_note_placeholder: string;
+  wl_note_save: string;
+  wl_note_delete: string;
+  wl_note_error: string;
   workout_date_label: string;
   workout_date_future: string;
   skipped_checkbox_label: string;
@@ -702,6 +719,23 @@ const pl: TranslationMap = {
   wl_prev_short: 'poprz.',
   wl_saved_count: '{n}/{total} zapisane',
   wl_weight_label: 'Ciężar',
+  ex_col_rest: 'Przerwa',
+  rest_label: 'Przerwa:',
+  rest_decrease: 'Krótsza przerwa',
+  rest_increase: 'Dłuższa przerwa',
+  wl_rir_label: 'Powtórzenia w zapasie (RIR)',
+  wl_reps_placeholder: 'powt.',
+  wl_rir_short: 'RIR',
+  wl_save_set: 'Zapisz serię',
+  wl_rest_label: 'Przerwa',
+  wl_rest_add: '+30 s',
+  wl_rest_skip: 'Pomiń',
+  wl_rest_done: 'Zacznij serię!',
+  wl_note_btn: 'Notatka',
+  wl_note_placeholder: 'np. siedzenie na 4, bolał bark',
+  wl_note_save: 'Zapisz notatkę',
+  wl_note_delete: 'Usuń',
+  wl_note_error: 'Nie udało się zapisać notatki',
   workout_date_label: 'Data treningu:',
   workout_date_future: 'Data treningu nie może być z przyszłości.',
   skipped_checkbox_label: 'Trening pominięty',
@@ -1071,6 +1105,23 @@ const en: TranslationMap = {
   wl_prev_short: 'prev.',
   wl_saved_count: '{n}/{total} saved',
   wl_weight_label: 'Weight',
+  ex_col_rest: 'Rest',
+  rest_label: 'Rest:',
+  rest_decrease: 'Shorter rest',
+  rest_increase: 'Longer rest',
+  wl_rir_label: 'Reps in reserve (RIR)',
+  wl_reps_placeholder: 'reps',
+  wl_rir_short: 'RIR',
+  wl_save_set: 'Save set',
+  wl_rest_label: 'Rest',
+  wl_rest_add: '+30 s',
+  wl_rest_skip: 'Skip',
+  wl_rest_done: 'Start your set!',
+  wl_note_btn: 'Note',
+  wl_note_placeholder: 'e.g. seat on 4, shoulder hurt',
+  wl_note_save: 'Save note',
+  wl_note_delete: 'Delete',
+  wl_note_error: 'Could not save the note',
   workout_date_label: 'Workout date:',
   workout_date_future: 'Workout date cannot be in the future.',
   skipped_checkbox_label: 'Workout skipped',

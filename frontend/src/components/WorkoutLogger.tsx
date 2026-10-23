@@ -1,12 +1,15 @@
 // Workout logger of a training day: one focus card per exercise, accented with the day's colour.
 // Mobile first: big numeric inputs, per-exercise saved/unsaved status and a sticky finish bar.
+// Per set: optional RIR and a ✓ that saves and starts the exercise's rest timer (shown in the finish bar).
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, CalendarDays, Check, CheckCircle2, Circle, Dumbbell, SkipForward, TrendingUp } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Check, CheckCircle2, Circle, Dumbbell, SkipForward, StickyNote, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { exerciseScore, firstWeight, formatKg, formatPct, progressPct, shouldAddWeight } from '../utils/progress';
 import { formatRepRange } from '../utils/repRange';
 import { todayIso } from '../utils/date';
+import { DEFAULT_REST, formatRest } from '../utils/rest';
+import { useRestTimer } from '../hooks/useRestTimer';
 import type { DayColor } from '../utils/dayColors';
 import AnimatedValue from './AnimatedValue';
 import Mascot from './mascot/Mascot';
@@ -22,13 +25,14 @@ export interface WorkoutLoggerProps {
   workoutDate: string; onDateChange: (d: string) => void; dateInvalid: boolean;
   skipped: boolean; onToggleSkipped: (v: boolean) => void; onToggleExerciseSkipped: (id: number, v: boolean) => void;
   weights: Record<number, string>; onEditSet: (id: number, setNum: number, raw: string) => void; onEditWeight: (id: number, raw: string) => void;
+  onEditRir: (id: number, setNum: number, raw: string) => void; onSaveNote: (id: number, note: string) => Promise<void>;
   onSave: (id: number) => Promise<void>; saving: Record<number, boolean>;
   onFinish: () => void;
 }
 
 // What was last loaded from or sent to the server, to tell saved from unsaved
 const fingerprint = (el: ExerciseLog, weight: string) =>
-  JSON.stringify([el.skipped, weight, el.set_logs.map(s => s.reps)]);
+  JSON.stringify([el.skipped, weight, el.set_logs.map(s => [s.reps, s.rir ?? null])]);
 const hasData = (el: ExerciseLog, weight: string) => weight !== '' || el.set_logs.some(s => s.reps != null);
 const pctTone = (pct: number | null) => pct == null || pct === 0 ? 'neutral' : pct > 0 ? 'good' : 'bad';
 // How long Kulka reacts to a saved exercise's progress vs the previous week
@@ -36,6 +40,8 @@ const REACTION_MS = { progressUp: 2200, progressDown: 2600, wag: 800 } as const;
 // Skipping the day: Kulka stomps, releases the towel at THROW_AT_MS (Mascot.tsx "annoyed"), sits bored at ANNOYED_MS
 const THROW_AT_MS = 920;
 const ANNOYED_MS = 1500;
+const REST_ADD_S = 30;
+const RIR_VALUES = [0, 1, 2, 3, 4, 5];
 
 function StatusBadge({ s }: { s: Status }) {
   const { t } = useLanguage();
@@ -72,7 +78,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
     const status: Status = savedPrint[el.id] !== fingerprint(el, w) ? 'unsaved' : el.skipped ? 'skipped' : hasData(el, w) ? 'saved' : 'empty';
     return {
       el, w, status, range: formatRepRange(el.rep_min, el.rep_max),
-      prevReps: (n: number) => prevSets?.find(s => s.set_number === n)?.reps ?? null,
+      prevSet: (n: number) => prevSets?.find(s => s.set_number === n),
       addHint: weekNum > 1 && !dayLog.prev_week_skipped?.includes(el.exercise_id) && shouldAddWeight(prevSets, el.rep_max),
       prev: weekNum > 1 ? { weight: firstWeight(prevSets), pct: el.skipped ? null : progressPct(cur, exerciseScore(prevSets)) } : null,
       w1: weekNum > 2 ? { weight: firstWeight(w1Sets), pct: el.skipped ? null : progressPct(cur, exerciseScore(w1Sets)) } : null,
@@ -114,12 +120,31 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
     if (v && !reduced) react('wag');
   };
 
+  const timer = useRestTimer(dayLog.id);
   const save = async (id: number, print: string, pct: number | null) => {
+    timer.dismiss();
     await p.onSave(id);
     setSavedPrint(s => ({ ...s, [id]: print }));
     if (pct == null || pct === 0) return;
     react(pct > 0 ? 'progressUp' : 'progressDown');
   };
+  // ✓ on a set: saves the exercise as it is now and starts its rest (none after the last set)
+  const saveSet = (el: ExerciseLog, setNum: number, print: string, pct: number | null) => {
+    const lastSet = Math.max(...el.set_logs.map(s => s.set_number));
+    if (setNum < lastSet) timer.start(el.id, el.rest_seconds ?? DEFAULT_REST);
+    else timer.skip();
+    void save(el.id, print, pct);
+  };
+
+  // Persistent note of the plan exercise: one open at a time
+  const [note, setNote] = useState<{ id: number; text: string; saving: boolean; error: boolean } | null>(null);
+  const saveNote = async (text: string) => {
+    if (!note) return;
+    setNote({ ...note, text, saving: true, error: false });
+    try { await p.onSaveNote(note.id, text.trim()); setNote(null); }
+    catch { setNote(n => n && { ...n, saving: false, error: true }); }
+  };
+  const restEx = timer.rest && dayLog.exercise_logs.find(el => el.id === timer.rest!.exLogId);
 
   return (
     <div className={`wl day-color-${p.color}`} style={{ maxWidth: 700 }}>
@@ -165,14 +190,29 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
 
               <div className="wl-sets">
                 {el.set_logs.map(s => {
-                  const pr = it.prevReps(s.set_number);
+                  const pr = it.prevSet(s.set_number);
+                  const done = it.status === 'saved' && s.reps != null;
                   return (
-                    <label key={s.set_number} className="wl-set">
+                    <div key={s.set_number} className="wl-set">
                       <span className="wl-label">{t('sets_header')} {s.set_number}</span>
-                      <input type="number" inputMode="numeric" min={0} className="wl-input" placeholder={t('reps_header').toLowerCase()}
+                      <input type="number" inputMode="numeric" min={0} className="wl-input" placeholder={t('wl_reps_placeholder')}
+                        aria-label={`${t('sets_header')} ${s.set_number}`}
                         value={s.reps ?? ''} onChange={e => p.onEditSet(el.id, s.set_number, e.target.value)} />
-                      <span className="wl-set-prev">{pr != null && <>{t('wl_prev_short')} <b>{pr}</b></>}</span>
-                    </label>
+                      <select className={`wl-rir${s.rir != null ? ' set' : ''}`} aria-label={t('wl_rir_label')} title={t('wl_rir_label')}
+                        value={s.rir ?? ''} onChange={e => p.onEditRir(el.id, s.set_number, e.target.value)}>
+                        <option value="">{t('wl_rir_short')}</option>
+                        {RIR_VALUES.map(v => <option key={v} value={v}>{t('wl_rir_short')} {v}</option>)}
+                      </select>
+                      <button type="button" className={`wl-set-save${done ? ' done' : ''}`} aria-label={t('wl_save_set')} title={t('wl_save_set')}
+                        disabled={s.reps == null || p.saving[el.id] || p.dateInvalid}
+                        onClick={() => saveSet(el, s.set_number, fingerprint(el, it.w), it.prev?.pct ?? null)}>
+                        <Check size={18} strokeWidth={3} />
+                      </button>
+                      <span className="wl-set-prev">
+                        {pr?.reps != null && <>{t('wl_prev_short')} <b>{pr.reps}</b></>}
+                        {pr?.rir != null && <small>{t('wl_rir_short')} {pr.rir}</small>}
+                      </span>
+                    </div>
                   );
                 })}
               </div>
@@ -196,6 +236,25 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
                 </div>
               )}
 
+              <div className="wl-note">
+                {note?.id === el.id ? (
+                  <div className="wl-note-edit">
+                    <textarea className="form-input" rows={2} maxLength={500} autoFocus placeholder={t('wl_note_placeholder')} aria-label={t('wl_note_btn')}
+                      value={note.text} onChange={e => setNote({ ...note, text: e.target.value })} />
+                    {note.error && <span className="wl-note-error">{t('wl_note_error')}</span>}
+                    <div className="wl-note-actions">
+                      {el.note && <button type="button" className="btn btn-outline btn-sm btn-danger-outline" disabled={note.saving} onClick={() => void saveNote('')}>{t('wl_note_delete')}</button>}
+                      <button type="button" className="btn btn-outline btn-sm" disabled={note.saving} onClick={() => setNote(null)}>{t('cancel_btn')}</button>
+                      <button type="button" className="btn btn-primary btn-sm" disabled={note.saving} onClick={() => void saveNote(note.text)}>{t('wl_note_save')}</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" className={`wl-note-btn${el.note ? ' has' : ''}`} onClick={() => setNote({ id: el.id, text: el.note ?? '', saving: false, error: false })}>
+                    <StickyNote size={14} /> <b>{t('wl_note_btn')}</b>{el.note && <span>{el.note}</span>}
+                  </button>
+                )}
+              </div>
+
               <div className="wl-actions">
                 <button type="button" role="switch" aria-checked={el.skipped} className={`wl-switch${el.skipped ? ' on' : ''}`}
                   onClick={() => toggleExerciseSkipped(el.id, !el.skipped)}>
@@ -211,14 +270,29 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
         })}
       </div>
 
-      <div className="wl-finishbar">
+      <div className={`wl-finishbar${timer.rest ? ' resting' : ''}`}>
         {/* Kulka jumps in from the bottom of the screen; the clip box hides it below the bar */}
         <span ref={slotRef} className="wl-mascot-slot">
-          <span className="wl-mascot-clip"><Mascot entrance="trampoline" size={40} state={annoyed ? 'annoyed' : p.skipped ? 'skipped' : reaction ?? 'idle'} /></span>
+          <span className="wl-mascot-clip"><Mascot entrance="trampoline" size={40}
+            state={annoyed ? 'annoyed' : p.skipped ? 'skipped' : reaction ?? (timer.rest ? 'drink' : timer.ready ? 'ready' : 'idle')} /></span>
+          {timer.ready && !timer.rest && (
+            <button type="button" className="wl-rest-bubble" onClick={timer.dismiss}>{t('wl_rest_done')}</button>
+          )}
         </span>
         {towelFrom && <TowelThrow key={towelFrom.seq} from={towelFrom} onDone={() => setTowelFrom(null)} />}
-        <span className="wl-finish-count">{t('wl_saved_count').replace('{n}', String(savedCount)).replace('{total}', String(items.length))}</span>
-        <button className="btn btn-success btn-lg" disabled={p.dateInvalid} onClick={p.onFinish}><CheckCircle2 size={18} /> {t('finish_day_btn')}</button>
+        {timer.rest ? (
+          <div className="wl-rest" role="timer" aria-label={restEx ? `${t('wl_rest_label')} · ${restEx.exercise_name}` : t('wl_rest_label')}>
+            <span className="wl-rest-time"><small>{t('wl_rest_label')}</small><strong>{formatRest(timer.remaining)}</strong></span>
+            <button type="button" className="wl-rest-btn" onClick={() => timer.add(REST_ADD_S)}>{t('wl_rest_add')}</button>
+            <button type="button" className="wl-rest-btn" onClick={timer.skip}>{t('wl_rest_skip')}</button>
+            <span className="wl-rest-bar" style={{ transform: `scaleX(${timer.progress})` }} />
+          </div>
+        ) : (
+          <span className="wl-finish-count">{t('wl_saved_count').replace('{n}', String(savedCount)).replace('{total}', String(items.length))}</span>
+        )}
+        <button className="btn btn-success btn-lg" disabled={p.dateInvalid} onClick={p.onFinish} aria-label={t('finish_day_btn')}>
+          <CheckCircle2 size={18} /> <span className="wl-finish-label">{t('finish_day_btn')}</span>
+        </button>
       </div>
     </div>
   );
