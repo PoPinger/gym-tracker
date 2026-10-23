@@ -115,3 +115,7 @@ Implemented in `frontend/src/utils/progress.ts` and used in `pages/MyPlans.tsx`:
 ## Mascot (Kulka) spec
 
 Planned mascot changes are specified page by page in `docs/mascot-spec.md`, split into Stage A (sections 1, 2, 6, 7), Stage B (3, 4, 5) and Stage C (8, 9). Read it before working on the mascot (`frontend/src/components/mascot/`) and implement one stage at a time.
+
+## Workout features spec
+
+Planned workout features are specified in `docs/workout-features-spec.md`, split into Stage A (sections 1, 4, 5: rest timer, notes, RIR), Stage B (3, 6: exercise history + chart, deload week), Stage C (2: offline mode) and Stage D (7: rest timer push notifications). Read it before working on these features and implement one stage at a time.
