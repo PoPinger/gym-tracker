@@ -289,10 +289,10 @@ export default function CreatePlan() {
                     <div style={{ width:26, height:26, background:'white', border:'1.5px solid var(--border)', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:9 }}>
                       <span style={{ fontSize:11, fontWeight:800, color:'var(--text-subtle)' }}>{ei+1}</span>
                     </div>
-                    <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr auto', gap:8 }}>
+                    <div className="ex-builder-fields">
                       <input className="form-input" placeholder={t('exercise_name_placeholder')}
                         value={ex.name} onChange={e => setEx(ei, 'name', e.target.value)} />
-                      <select className="form-select" style={{ width:'auto', minWidth:130 }}
+                      <select className="form-select"
                         value={ex.muscle_group} onChange={e => setEx(ei, 'muscle_group', e.target.value)}>
                         {MUSCLE_GROUPS.map(g => (
                           <option key={g} value={g}>{t(MUSCLE_GROUP_TO_KEY[g] ?? 'muscle_chest')}</option>
@@ -301,8 +301,8 @@ export default function CreatePlan() {
                     </div>
                   </div>
 
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingLeft:36 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+                  <div className="ex-builder-meta" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingLeft:36 }}>
+                    <div className="ex-builder-params">
                       <span style={{ fontSize:13, color:'var(--text-muted)', fontWeight:500 }}>{t('sets_label')}</span>
                       <div style={{ display:'flex', alignItems:'center', gap:6, background:'white', border:'1.5px solid var(--border)', borderRadius:8, padding:'4px 8px' }}>
                         <button style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', padding:'2px 4px', fontSize:18, lineHeight:1, display:'flex', alignItems:'center' }}
@@ -329,7 +329,7 @@ export default function CreatePlan() {
                       </div>
                     </div>
 
-                    <div style={{ display:'flex', gap:4 }}>
+                    <div className="ex-builder-moves" style={{ display:'flex', gap:4 }}>
                       <button className="btn-icon" onClick={() => moveEx(ei, -1)} disabled={ei === 0}
                         style={{ opacity: ei === 0 ? 0.3 : 1 }}>
                         <ChevronUp size={15} />

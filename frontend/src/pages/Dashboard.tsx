@@ -59,13 +59,15 @@ export default function Dashboard() {
   const weekLabel = (n: number) => plural(n, t('weeks_streak_1'), t('weeks_streak_2_4'), t('weeks_streak_5plus'));
 
   useEffect(() => {
-    dashboardApi.get().then(r => setData(r.data)).finally(() => setLoading(false));
+    dashboardApi.get().then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   }, []);
   useRefresh({ reload: () => dashboardApi.get().then(r => setData(r.data)) });
 
   if (loading) return <PageLoader cards={3} />;
+  // Not loaded (offline before the first visit, or a server error): a hint instead of a blank page
+  if (!data) return <div className="alert alert-info" role="status">{t('offline_unavailable')}</div>;
 
-  const d = data!;
+  const d = data;
   const hasAnything = d.has_plan || d.quick_stats.this_year > 0 || d.workout_calendar.length > 0 || d.weight_panel;
   const w = d.weight_panel;
   const goalLabel = w?.goal === 'cut' ? t('goal_cut') : w?.goal === 'bulk' ? t('goal_bulk') : null;

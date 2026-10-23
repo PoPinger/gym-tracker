@@ -56,7 +56,7 @@ a { text-decoration: none; color: inherit; }
 /* ── LAYOUT ── */
 .app-layout { display: flex; min-height: 100vh; }
 
-.sidebar { width: var(--sidebar-w); background: var(--bg-white); border-right: 1px solid var(--border); position: fixed; top: 0; left: 0; height: 100vh; display: flex; flex-direction: column; z-index: 200; transition: transform 0.25s ease; }
+.sidebar { width: var(--sidebar-w); background: var(--bg-white); border-right: 1px solid var(--border); position: fixed; top: 0; left: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column; z-index: 200; transition: transform 0.25s ease; }
 .sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
 .logo-img { height: 44px; width: auto; max-width: 100%; object-fit: contain; }
 
@@ -417,7 +417,7 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* ── AUTH ── */
-.auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(135deg, #f0f0ff 0%, var(--bg) 50%, #f0fff8 100%); }
+.auth-wrap { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom)); background: linear-gradient(135deg, #f0f0ff 0%, var(--bg) 50%, #f0fff8 100%); }
 .auth-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 40px; width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); }
 .auth-logo { text-align: center; margin-bottom: 32px; }
 .auth-brand { font-size: 26px; font-weight: 800; color: var(--text-heading); letter-spacing: -0.5px; }
@@ -525,6 +525,19 @@ a { text-decoration: none; color: inherit; }
 /* ── EXERCISE BUILDER CARD ── */
 .ex-builder { background: var(--bg-subtle); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
 .ex-builder-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: start; }
+/* Exercise name + muscle group of the create-plan builder; stacked on phones so the name field has room */
+.ex-builder-fields { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.ex-builder-fields .form-select { width: auto; min-width: 130px; }
+/* Sets / range / rest and the move buttons: the move buttons wrap to their own line when there is no room */
+.ex-builder-meta { flex-wrap: wrap; gap: 8px; }
+.ex-builder-moves { margin-left: auto; }
+/* Labels and their steppers; on phones one label + control per row, so a label never wraps away from its control */
+.ex-builder-params { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 600px) { .ex-builder-params { display: grid; grid-template-columns: auto auto; justify-content: start; } }
+@media (max-width: 600px) {
+  .ex-builder-fields { grid-template-columns: minmax(0, 1fr); }
+  .ex-builder-fields .form-select { width: 100%; }
+}
 
 /* ── ADMIN ── */
 .admin-users { display: flex; flex-direction: column; gap: 10px; }
@@ -549,11 +562,11 @@ a { text-decoration: none; color: inherit; }
 
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
-  .sidebar { padding-top: var(--topbar-h); }
+  .sidebar { padding-top: calc(var(--topbar-h) + env(safe-area-inset-top)); padding-bottom: env(safe-area-inset-bottom); }
   .sidebar-logo { display: none; } /* topbar already shows the name; the row would sit under it */
   .sidebar.open { transform: translateX(0); box-shadow: var(--shadow-lg); }
-  .topbar { display: flex; }
-  .main-content { margin-left: 0; padding: 16px; padding-top: calc(var(--topbar-h) + 16px); }
+  .topbar { display: flex; height: calc(var(--topbar-h) + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); }
+  .main-content { margin-left: 0; padding: 16px; padding-top: calc(var(--topbar-h) + env(safe-area-inset-top) + 16px); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
   .page-title { font-size: 22px; }
   .grid-3 { grid-template-columns: repeat(2, 1fr); }
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
@@ -1028,7 +1041,7 @@ a { text-decoration: none; color: inherit; }
 .sidebar-sync { padding: 0 12px 8px; display: flex; }
 .sidebar-sync:empty { display: none; }
 @media (max-width: 768px) { .sidebar-sync { display: none; } }
-@media (max-width: 420px) { .topbar:has(.sync-pill) .topbar-logo { display: none; } }
+@media (max-width: 440px) { .topbar:has(.sync-pill) .topbar-logo { display: none; } }
 .sync-sheet-icon { width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: var(--warning-light); color: #b45309; }
 .sync-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 .sync-item { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); }
@@ -1061,3 +1074,21 @@ a { text-decoration: none; color: inherit; }
 .wl-switch.push.on .push-icon { color: var(--primary); }
 .wl-switch.push:disabled { cursor: default; opacity: 0.55; }
 .push-hint { font-size: 12px; line-height: 1.4; color: var(--text-muted); padding: 0 8px 4px; }
+
+/* ── Phones (iPhone) ── */
+@media (max-width: 768px) {
+  /* iOS zooms the page into any field with text under 16px */
+  .form-input, .form-select, .day-list-input, .rep-range-input, .exed-range input, .wl-date input, .wl-rir, .w-input, .wl-note-edit textarea { font-size: 16px; }
+  /* Touch targets of at least 44 × 44 px */
+  .btn-sm, .plan-card-menu button, .sidebar-footer button, .goal-switch button, .day-list-pill, .day-list-input,
+  .wl-rest-btn, .wl-note-btn, .admin-mascot .form-select, .ex-builder .rep-range-input, .auth-link { min-height: 44px; }
+  .logout-btn, .cal-nav .btn, .ex-builder button, .plan-card-more > .btn { min-width: 44px; min-height: 44px; }
+  .ex-builder button { justify-content: center; }
+  .ex-builder .rep-range-input { width: 44px; }
+  .sheet-close, .day-color-tile { width: 44px; height: 44px; }
+  .w-input { height: 44px; }
+  .auth-link { display: inline-flex; align-items: center; }
+  .back-btn { min-height: 44px; margin-top: -14px; margin-bottom: 6px; } /* same position as before */
+}
+/* Logger: a focused field is scrolled into view above the sticky finish bar, not under it */
+html:has(.wl-finishbar) { scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
