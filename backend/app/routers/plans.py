@@ -9,7 +9,7 @@ from app.schemas.schemas import (
     PlanDayCreate, PlanDayOut, PlanDayUpdate,
     ExerciseCreate, ExerciseOut, ExerciseUpdate,
     ExerciseReorderRequest, WeekOut, WeekSummary, DayLogCreate, DayLogOut, DayCompleteIn, SetLogIn,
-    PlanStructureUpdate,
+    PlanStructureUpdate, WeekDeloadIn,
 )
 from app.auth.auth import get_current_user
 from app.services import plan_service
@@ -188,6 +188,19 @@ def delete_exercise(ex_id: int, db: Session = Depends(get_db), user: User = Depe
     db.commit()
 
 
+@router.get("/exercises/{ex_id}/history")
+def get_exercise_history(ex_id: int, all_plans: bool = False,
+                         db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    ex = db.query(Exercise).filter(Exercise.id == ex_id).first()
+    if not ex:
+        raise HTTPException(404, "Ćwiczenie nie zostało znalezione")
+    day = db.query(PlanDay).filter(PlanDay.id == ex.plan_day_id).first()
+    plan = plan_service.get_plan(db, day.plan_id, user.id)
+    if not plan:
+        raise HTTPException(403, "Brak dostępu")
+    return plan_service.get_exercise_history(db, ex, user.id, all_plans)
+
+
 @router.post("/exercises/reorder", status_code=200)
 def reorder_exercises(data: ExerciseReorderRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     for item in data.exercises:
@@ -235,6 +248,7 @@ def get_week_days(week_id: int, db: Session = Depends(get_db), user: User = Depe
         "plan_id": week.plan_id,
         "plan_name": plan.name,
         "status": week.status,
+        "is_deload": bool(week.is_deload),
         "days": days_out,
     }
 
@@ -259,52 +273,49 @@ def get_day_log(log_id: int, db: Session = Depends(get_db), user: User = Depends
     week = db.query(TrainingWeek).filter(TrainingWeek.id == log.training_week_id).first()
     plan = db.query(TrainingPlan).filter(TrainingPlan.id == week.plan_id).first() if week else None
 
+    # Deload weeks are never a reference: "previous week" is the last earlier non-deload week,
+    # "week 1" the plan's first non-deload week
+    prev_week, week1 = plan_service.reference_weeks(db, week) if week else (None, None)
+
     # Fetch previous week data for comparison
     prev_week_data = {}
     prev_week_skipped = []
-    if week and week.week_number > 1:
-        prev_week = db.query(TrainingWeek).filter(
-            TrainingWeek.plan_id == week.plan_id,
-            TrainingWeek.week_number == week.week_number - 1,
+    if prev_week:
+        prev_log = db.query(TrainingDayLog).filter(
+            TrainingDayLog.training_week_id == prev_week.id,
+            TrainingDayLog.plan_day_id == log.plan_day_id,
+            TrainingDayLog.user_id == user.id,
         ).first()
-        if prev_week:
-            prev_log = db.query(TrainingDayLog).filter(
-                TrainingDayLog.training_week_id == prev_week.id,
-                TrainingDayLog.plan_day_id == log.plan_day_id,
-                TrainingDayLog.user_id == user.id,
-            ).first()
-            if prev_log:
-                for ex_log in prev_log.exercise_logs:
-                    sets = [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg, "rir": s.rir}
-                            for s in ex_log.set_logs]
-                    prev_week_data[ex_log.exercise_id] = sets
-                    if prev_log.skipped or ex_log.skipped:
-                        prev_week_skipped.append(ex_log.exercise_id)
+        if prev_log:
+            for ex_log in prev_log.exercise_logs:
+                sets = [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg, "rir": s.rir}
+                        for s in ex_log.set_logs]
+                prev_week_data[ex_log.exercise_id] = sets
+                if prev_log.skipped or ex_log.skipped:
+                    prev_week_skipped.append(ex_log.exercise_id)
 
     # Fetch week 1 data for comparison
     week1_data = {}
-    if week and week.week_number > 1:
-        week1 = db.query(TrainingWeek).filter(
-            TrainingWeek.plan_id == week.plan_id,
-            TrainingWeek.week_number == 1,
+    if week1:
+        w1_log = db.query(TrainingDayLog).filter(
+            TrainingDayLog.training_week_id == week1.id,
+            TrainingDayLog.plan_day_id == log.plan_day_id,
+            TrainingDayLog.user_id == user.id,
         ).first()
-        if week1:
-            w1_log = db.query(TrainingDayLog).filter(
-                TrainingDayLog.training_week_id == week1.id,
-                TrainingDayLog.plan_day_id == log.plan_day_id,
-                TrainingDayLog.user_id == user.id,
-            ).first()
-            if w1_log:
-                for ex_log in w1_log.exercise_logs:
-                    sets = [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg, "rir": s.rir}
-                            for s in ex_log.set_logs]
-                    week1_data[ex_log.exercise_id] = sets
+        if w1_log:
+            for ex_log in w1_log.exercise_logs:
+                sets = [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg, "rir": s.rir}
+                        for s in ex_log.set_logs]
+                week1_data[ex_log.exercise_id] = sets
 
     result = _serialize_day_log(log)
     result["prev_week_data"] = prev_week_data
     result["prev_week_skipped"] = prev_week_skipped
     result["week1_data"] = week1_data
+    result["prev_week_number"] = prev_week.week_number if prev_week else None
+    result["week1_number"] = week1.week_number if week1 else None
     result["week_number"] = week.week_number if week else None
+    result["is_deload"] = bool(week.is_deload) if week else False
     result["plan_name"] = plan.name if plan else None
     return result
 
@@ -336,6 +347,14 @@ def complete_day(log_id: int, data: Optional[DayCompleteIn] = None,
     if not log:
         raise HTTPException(404, "Dziennik nie został znaleziony")
     return {"ok": True, "status": log.status}
+
+
+@router.put("/weeks/{week_id}/deload", response_model=WeekSummary)
+def set_week_deload(week_id: int, data: WeekDeloadIn, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    week = plan_service.set_week_deload(db, week_id, user.id, data.is_deload)
+    if not week:
+        raise HTTPException(404, "Tydzień nie został znaleziony")
+    return week
 
 
 @router.post("/weeks/{week_id}/complete")

@@ -345,6 +345,20 @@ export interface TranslationMap {
   wl_note_save: string;
   wl_note_delete: string;
   wl_note_error: string;
+  deload_toggle: string;
+  deload_hint: string;
+  deload_badge: string;
+  deload_error: string;
+  history_title: string;
+  history_btn: string;
+  history_open: string;
+  history_all_plans: string;
+  history_chart_label: string;
+  history_best: string;
+  history_empty: string;
+  history_error: string;
+  history_no_date: string;
+  history_close: string;
   workout_date_label: string;
   workout_date_future: string;
   skipped_checkbox_label: string;
@@ -736,6 +750,20 @@ const pl: TranslationMap = {
   wl_note_save: 'Zapisz notatkę',
   wl_note_delete: 'Usuń',
   wl_note_error: 'Nie udało się zapisać notatki',
+  deload_toggle: 'Tydzień deload',
+  deload_hint: 'Lżejszy tydzień – nie liczy się do progresu ani rekordów',
+  deload_badge: 'Deload',
+  deload_error: 'Nie udało się zapisać zmiany',
+  history_title: 'Historia ćwiczenia',
+  history_btn: 'Historia',
+  history_open: 'Pokaż historię ćwiczenia',
+  history_all_plans: 'Pokaż ze wszystkich planów',
+  history_chart_label: 'e1RM na tydzień',
+  history_best: 'Najlepszy',
+  history_empty: 'Brak zapisanych tygodni dla tego ćwiczenia',
+  history_error: 'Nie udało się wczytać historii',
+  history_no_date: 'bez daty',
+  history_close: 'Zamknij',
   workout_date_label: 'Data treningu:',
   workout_date_future: 'Data treningu nie może być z przyszłości.',
   skipped_checkbox_label: 'Trening pominięty',
@@ -1122,6 +1150,20 @@ const en: TranslationMap = {
   wl_note_save: 'Save note',
   wl_note_delete: 'Delete',
   wl_note_error: 'Could not save the note',
+  deload_toggle: 'Deload week',
+  deload_hint: 'Lighter week – not counted in progress or records',
+  deload_badge: 'Deload',
+  deload_error: 'Could not save the change',
+  history_title: 'Exercise history',
+  history_btn: 'History',
+  history_open: 'Show exercise history',
+  history_all_plans: 'Show from all plans',
+  history_chart_label: 'e1RM per week',
+  history_best: 'Best',
+  history_empty: 'No logged weeks for this exercise yet',
+  history_error: 'Could not load the history',
+  history_no_date: 'no date',
+  history_close: 'Close',
   workout_date_label: 'Workout date:',
   workout_date_future: 'Workout date cannot be in the future.',
   skipped_checkbox_label: 'Workout skipped',

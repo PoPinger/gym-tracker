@@ -80,6 +80,7 @@ export const planDaysApi = {
 export const exercisesApi = {
   update: (id: number, data: object) => api.put(`/exercises/${id}`, data),
   delete: (id: number) => api.delete(`/exercises/${id}`),
+  history: (id: number, allPlans: boolean) => api.get(`/exercises/${id}/history`, { params: { all_plans: allPlans } }),
   reorder: (exercises: Array<{ id: number; exercise_order: number }>) =>
     api.post('/exercises/reorder', { exercises }),
 };
@@ -95,6 +96,7 @@ export const logsApi = {
   completeDay: (logId: number, workoutDate?: string, skipped?: boolean) =>
     api.post(`/day-logs/${logId}/complete`, { workout_date: workoutDate, skipped }),
   completeWeek: (weekId: number) => api.post(`/weeks/${weekId}/complete`),
+  setDeload: (weekId: number, isDeload: boolean) => api.put(`/weeks/${weekId}/deload`, { is_deload: isDeload }),
 };
 
 // Weight

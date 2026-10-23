@@ -370,9 +370,14 @@ class WeekSummary(BaseModel):
     id: int
     week_number: int
     status: str
+    is_deload: bool = False
 
     class Config:
         from_attributes = True
+
+
+class WeekDeloadIn(BaseModel):
+    is_deload: bool
 
 
 class ExerciseReorderItem(BaseModel):

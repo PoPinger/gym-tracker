@@ -1,7 +1,7 @@
 // Exercise editor of a training day: compact rows (number, name, muscle chip, "3 × 6–8"),
-// one row expanded at a time for editing. Accented with the day's colour.
+// one row expanded at a time for editing. Accented with the day's colour. Saved exercises open their history.
 import { useRef, useState } from 'react';
-import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, Dumbbell, Minus, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, Dumbbell, History, Minus, Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { MUSCLE_GROUPS } from '../types';
@@ -11,8 +11,9 @@ import { clampRest, formatRest, REST_MAX, REST_MIN, REST_STEP } from '../utils/r
 import type { DayColor } from '../utils/dayColors';
 import CraneKulka, { type EditorCue } from './mascot/CraneKulka';
 import { kulkaDelay, WIPE_MS } from './mascot/trash';
+import ExerciseHistorySheet from './ExerciseHistorySheet';
 
-export interface ExerciseDraft { name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; rest_seconds: number; }
+export interface ExerciseDraft { id?: number; name: string; muscle_group: string; sets: number; rep_min: string; rep_max: string; rest_seconds: number; }
 type Field = 'name' | 'muscle_group' | 'sets' | 'rep_min' | 'rep_max' | 'rest_seconds';
 
 type T = ReturnType<typeof useLanguage>['t'];
@@ -64,6 +65,7 @@ export default function ExerciseEditor({ dayName, color, exercises, onChange, on
   const [cue, setCue] = useState<EditorCue | null>(null);
   const nudge = (kind: EditorCue['kind'], index: number) => setCue(c => ({ kind, index, seq: (c?.seq ?? 0) + 1 }));
   const leaving = useRef(false);
+  const [history, setHistory] = useState<{ id: number; name: string } | null>(null);
   const move = (ei: number, dir: -1 | 1) => { onMove(ei, dir); setOpen(o => o === ei ? ei + dir : o === ei + dir ? ei : o); nudge(dir < 0 ? 'up' : 'down', ei + dir); };
   const remove = (ei: number) => { onRemove(ei); setOpen(o => o == null || o === ei ? null : o > ei ? o - 1 : o); nudge('remove', ei); };
   const add = () => { onAdd(); setOpen(n); focusNew.current = true; nudge('add', n); };
@@ -134,6 +136,9 @@ export default function ExerciseEditor({ dayName, color, exercises, onChange, on
                     <div className="exed-actions">
                       <button type="button" className="btn btn-outline btn-sm" disabled={ei === 0} onClick={() => move(ei, -1)}><ChevronUp size={15} /> {t('move_up')}</button>
                       <button type="button" className="btn btn-outline btn-sm" disabled={ei === n - 1} onClick={() => move(ei, 1)}><ChevronDown size={15} /> {t('move_down')}</button>
+                      {ex.id != null && (
+                        <button type="button" className="btn btn-outline btn-sm" onClick={() => setHistory({ id: ex.id!, name: ex.name.trim() })}><History size={14} /> {t('history_btn')}</button>
+                      )}
                       <button type="button" className="btn btn-outline btn-sm btn-danger-outline" onClick={() => remove(ei)}><Trash2 size={14} /> {t('delete_btn')}</button>
                     </div>
                   </div>
@@ -146,6 +151,7 @@ export default function ExerciseEditor({ dayName, color, exercises, onChange, on
 
       <button type="button" className="exed-add" onClick={add}><Plus size={16} /> {t('add_exercise_btn')}</button>
       <button className="btn btn-primary exed-done" onClick={done}><CheckCircle2 size={15} /> {t('done_label')}</button>
+      {history && <ExerciseHistorySheet exerciseId={history.id} name={history.name} onClose={() => setHistory(null)} />}
     </div>
   );
 }

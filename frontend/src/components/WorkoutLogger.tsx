@@ -1,8 +1,9 @@
 // Workout logger of a training day: one focus card per exercise, accented with the day's colour.
 // Mobile first: big numeric inputs, per-exercise saved/unsaved status and a sticky finish bar.
 // Per set: optional RIR and a ✓ that saves and starts the exercise's rest timer (shown in the finish bar).
+// The exercise name opens its history; a deload week shows no progress and Kulka stretches.
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, CalendarDays, Check, CheckCircle2, Circle, Dumbbell, SkipForward, StickyNote, TrendingUp } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Check, CheckCircle2, Circle, Dumbbell, History, SkipForward, StickyNote, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { MUSCLE_GROUP_TO_KEY } from '../i18n/translations';
 import { exerciseScore, firstWeight, formatKg, formatPct, progressPct, shouldAddWeight } from '../utils/progress';
@@ -14,6 +15,7 @@ import type { DayColor } from '../utils/dayColors';
 import AnimatedValue from './AnimatedValue';
 import Mascot from './mascot/Mascot';
 import TowelThrow from './mascot/TowelThrow';
+import ExerciseHistorySheet from './ExerciseHistorySheet';
 import { prefersReducedMotion } from '../hooks/useFirstInView';
 import type { DayLog, ExerciseLog } from '../types';
 
@@ -68,7 +70,10 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
   const [savedPrint, setSavedPrint] = useState<Record<number, string>>(() =>
     Object.fromEntries(dayLog.exercise_logs.map(el => [el.id, fingerprint(el, weights[el.id] ?? '')])));
 
-  const weekNum = dayLog.week_number ?? 1;
+  // References are the last / first earlier non-deload weeks; a deload week itself shows no progress
+  const deload = !!dayLog.is_deload;
+  const prevNum = dayLog.prev_week_number ?? null;
+  const w1Num = dayLog.week1_number ?? null;
   const items = dayLog.exercise_logs.map(el => {
     const w = weights[el.id] ?? '';
     const prevSets = dayLog.prev_week_data?.[el.exercise_id];
@@ -79,9 +84,9 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
     return {
       el, w, status, range: formatRepRange(el.rep_min, el.rep_max),
       prevSet: (n: number) => prevSets?.find(s => s.set_number === n),
-      addHint: weekNum > 1 && !dayLog.prev_week_skipped?.includes(el.exercise_id) && shouldAddWeight(prevSets, el.rep_max),
-      prev: weekNum > 1 ? { weight: firstWeight(prevSets), pct: el.skipped ? null : progressPct(cur, exerciseScore(prevSets)) } : null,
-      w1: weekNum > 2 ? { weight: firstWeight(w1Sets), pct: el.skipped ? null : progressPct(cur, exerciseScore(w1Sets)) } : null,
+      addHint: !deload && prevNum != null && !dayLog.prev_week_skipped?.includes(el.exercise_id) && shouldAddWeight(prevSets, el.rep_max),
+      prev: prevNum != null ? { weight: firstWeight(prevSets), pct: el.skipped || deload ? null : progressPct(cur, exerciseScore(prevSets)) } : null,
+      w1: w1Num != null && prevNum != null && w1Num < prevNum ? { weight: firstWeight(w1Sets), pct: el.skipped || deload ? null : progressPct(cur, exerciseScore(w1Sets)) } : null,
     };
   });
   const savedCount = items.filter(i => i.status === 'saved' || i.status === 'skipped').length;
@@ -144,6 +149,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
     try { await p.onSaveNote(note.id, text.trim()); setNote(null); }
     catch { setNote(n => n && { ...n, saving: false, error: true }); }
   };
+  const [history, setHistory] = useState<{ id: number; name: string } | null>(null);
   const restEx = timer.rest && dayLog.exercise_logs.find(el => el.id === timer.rest!.exLogId);
 
   return (
@@ -155,6 +161,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
           <h1 className="page-title">{p.dayName}</h1>
           <p className="page-subtitle">
             {dayLog.plan_name} · {t('week_tile_label')} {dayLog.week_number}
+            {deload && <> <span className="deload-badge">{t('deload_badge')}</span></>}
             {dayLog.status === 'completed' && <> <span className="badge badge-completed"><CheckCircle2 size={10} /> {t('badge_completed')}</span></>}
           </p>
         </div>
@@ -182,7 +189,8 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
               <div className="wl-card-head">
                 <span className="wl-num">{i + 1}</span>
                 <div className="wl-card-title">
-                  <h2>{el.exercise_name}</h2>
+                  <h2><button type="button" className="wl-name-btn" aria-label={`${t('history_open')}: ${el.exercise_name}`}
+                    onClick={() => setHistory({ id: el.exercise_id, name: el.exercise_name })}>{el.exercise_name}<History size={14} /></button></h2>
                   <span className="wl-chip">{muscleKey ? t(muscleKey) : el.muscle_group}</span> <span className="wl-plan">{el.sets} × {it.range ?? '—'}</span>
                 </div>
                 <StatusBadge s={it.status} />
@@ -274,7 +282,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
         {/* Kulka jumps in from the bottom of the screen; the clip box hides it below the bar */}
         <span ref={slotRef} className="wl-mascot-slot">
           <span className="wl-mascot-clip"><Mascot entrance="trampoline" size={40}
-            state={annoyed ? 'annoyed' : p.skipped ? 'skipped' : reaction ?? (timer.rest ? 'drink' : timer.ready ? 'ready' : 'idle')} /></span>
+            state={annoyed ? 'annoyed' : p.skipped ? 'skipped' : reaction ?? (timer.rest ? 'drink' : timer.ready ? 'ready' : deload ? 'stretch' : 'idle')} /></span>
           {timer.ready && !timer.rest && (
             <button type="button" className="wl-rest-bubble" onClick={timer.dismiss}>{t('wl_rest_done')}</button>
           )}
@@ -294,6 +302,7 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
           <CheckCircle2 size={18} /> <span className="wl-finish-label">{t('finish_day_btn')}</span>
         </button>
       </div>
+      {history && <ExerciseHistorySheet exerciseId={history.id} name={history.name} onClose={() => setHistory(null)} />}
     </div>
   );
 }

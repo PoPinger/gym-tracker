@@ -59,6 +59,7 @@ export default function MyPlans() {
   const [doneWeekId, setDoneWeekId]   = useState<number | null>(null);
   const [daySnapshot, setDaySnapshot] = useState<FillSnapshot | null>(null);
   const [exSnapshots, setExSnapshots] = useState<FillSnapshot>({});
+  const [deloadError, setDeloadError] = useState(false);
 
   const [editPlan, setEditPlan]               = useState<Plan | null>(null);
   const [editName, setEditName]               = useState('');
@@ -87,7 +88,20 @@ export default function MyPlans() {
 
   const openWeek = async (w: WeekSummary) => {
     const r = await logsApi.getWeekDays(w.id);
-    setRestWeekId(null); setDoneWeekId(null); setWeekInfo(r.data); setView('days');
+    setRestWeekId(null); setDoneWeekId(null); setDeloadError(false); setWeekInfo(r.data); setView('days');
+  };
+
+  // Deload marks the whole week; shown at once, reverted if the request fails
+  const toggleDeload = async (isDeload: boolean) => {
+    if (!weekInfo) return;
+    const weekId = weekInfo.week_id;
+    const apply = (v: boolean) => {
+      setWeekInfo(w => w && w.week_id === weekId ? { ...w, is_deload: v } : w);
+      setWeeks(ws => ws.map(w => w.id === weekId ? { ...w, is_deload: v } : w));
+    };
+    apply(isDeload); setDeloadError(false);
+    try { await logsApi.setDeload(weekId, isDeload); }
+    catch { apply(!isDeload); setDeloadError(true); }
   };
 
   const openDay = async (weekId: number, planDayId: number, logId: number | null) => {
@@ -565,8 +579,9 @@ export default function MyPlans() {
         {weeks.map(w => {
           const state = w.status === 'completed' ? 'done' : w.id === currentWeekId ? 'current' : '';
           return (
-            <button key={w.id} className={`week-card ${state}`} onClick={() => openWeek(w)}>
+            <button key={w.id} className={`week-card ${state}${w.is_deload ? ' deload' : ''}`} onClick={() => openWeek(w)}>
               <span className="day-list-label">{t('week_tile_label')}</span>
+              {w.is_deload && <span className="deload-badge">{t('deload_badge')}</span>}
               <span className="week-card-num">{w.week_number}</span>
               <span className="week-card-state">
                 {state === 'done' ? <><Check size={12} /> {t('done_label')}</> : state === 'current' ? t('week_current') : t('week_planned')}
@@ -596,7 +611,7 @@ export default function MyPlans() {
       </button>
       <div className="page-header">
         <div>
-          <h1 className="page-title">{t('week_tile_label')} {weekInfo.week_number}</h1>
+          <h1 className="page-title">{t('week_tile_label')} {weekInfo.week_number}{weekInfo.is_deload && <> <span className="deload-badge">{t('deload_badge')}</span></>}</h1>
           <p className="page-subtitle">{weekInfo.plan_name}</p>
         </div>
         {allDaysComplete && weekInfo.status !== 'completed' && (
@@ -605,6 +620,16 @@ export default function MyPlans() {
           </button>
         )}
       </div>
+
+      <div className={`deload-bar${weekInfo.is_deload ? ' on' : ''}`}>
+        <button type="button" role="switch" aria-checked={weekInfo.is_deload} className={`wl-switch deload${weekInfo.is_deload ? ' on' : ''}`}
+          onClick={() => void toggleDeload(!weekInfo.is_deload)}>
+          <span className="wl-switch-track"><span /></span>
+          <span className="deload-bar-text">{t('deload_toggle')}<small>{t('deload_hint')}</small></span>
+        </button>
+        {weekInfo.is_deload && <Mascot state="stretch" size={40} />}
+      </div>
+      {deloadError && <div className="alert alert-error" style={{ marginBottom: 14 }}>{t('deload_error')}</div>}
 
       <div className="day-cards">
         {doneWeekId === weekInfo.week_id && <Confetti big />}

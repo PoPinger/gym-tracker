@@ -104,7 +104,10 @@ export interface DayLog {
   prev_week_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null; rir?: number | null }>>;
   prev_week_skipped?: number[];
   week1_data?: Record<number, Array<{ set_number: number; reps: number | null; weight_kg: number | null; rir?: number | null }>>;
+  prev_week_number?: number | null; // last earlier non-deload week
+  week1_number?: number | null; // first non-deload week
   week_number?: number;
+  is_deload?: boolean;
   plan_name?: string;
 }
 
@@ -124,6 +127,7 @@ export interface WeekInfo {
   plan_id: number;
   plan_name: string;
   status: string;
+  is_deload: boolean;
   days: WeekDay[];
 }
 
@@ -131,6 +135,28 @@ export interface WeekSummary {
   id: number;
   week_number: number;
   status: string;
+  is_deload: boolean;
+}
+
+export interface HistorySet { set_number: number; reps: number | null; weight_kg: number | null; rir: number | null }
+
+export interface ExerciseHistoryEntry {
+  exercise_log_id: number;
+  plan_id: number;
+  plan_name: string;
+  week_number: number;
+  is_deload: boolean;
+  skipped: boolean;
+  workout_date: string | null;
+  sets: HistorySet[];
+}
+
+export interface ExerciseHistory {
+  exercise_id: number;
+  exercise_name: string;
+  has_other_plans: boolean;
+  notes: Array<{ plan_id: number; plan_name: string; note: string }>;
+  entries: ExerciseHistoryEntry[]; // oldest first
 }
 
 export interface WeightDayLog {

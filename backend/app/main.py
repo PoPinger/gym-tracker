@@ -18,6 +18,7 @@ with engine.begin() as conn:
     conn.execute(text("ALTER TABLE training_day_logs ADD COLUMN IF NOT EXISTS workout_date DATE"))
     conn.execute(text("ALTER TABLE training_day_logs ADD COLUMN IF NOT EXISTS skipped BOOLEAN NOT NULL DEFAULT FALSE"))
     conn.execute(text("ALTER TABLE exercise_logs ADD COLUMN IF NOT EXISTS skipped BOOLEAN NOT NULL DEFAULT FALSE"))
+    conn.execute(text("ALTER TABLE training_weeks ADD COLUMN IF NOT EXISTS is_deload BOOLEAN NOT NULL DEFAULT FALSE"))
     conn.execute(text("ALTER TABLE plan_days ADD COLUMN IF NOT EXISTS color VARCHAR(20)"))
     conn.execute(text("ALTER TABLE weight_cycles ADD COLUMN IF NOT EXISTS goal VARCHAR(10)"))
     conn.execute(text("ALTER TABLE weight_cycles ALTER COLUMN start_weight DROP NOT NULL"))

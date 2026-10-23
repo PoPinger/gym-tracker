@@ -395,3 +395,87 @@ def complete_week(db: Session, week_id: int, user_id: int) -> Optional[TrainingW
     db.commit()
     db.refresh(week)
     return week
+
+
+def set_week_deload(db: Session, week_id: int, user_id: int, is_deload: bool) -> Optional[TrainingWeek]:
+    week = db.query(TrainingWeek).filter(TrainingWeek.id == week_id).first()
+    if not week or not get_plan(db, week.plan_id, user_id):
+        return None
+    week.is_deload = is_deload
+    db.commit()
+    db.refresh(week)
+    return week
+
+
+def reference_weeks(db: Session, week: TrainingWeek):
+    """(previous, first) earlier non-deload weeks of the plan, the progress references for `week`."""
+    earlier = (
+        db.query(TrainingWeek)
+        .filter(
+            TrainingWeek.plan_id == week.plan_id,
+            TrainingWeek.week_number < week.week_number,
+            TrainingWeek.is_deload.is_(False),
+        )
+        .order_by(TrainingWeek.week_number)
+        .all()
+    )
+    return (earlier[-1], earlier[0]) if earlier else (None, None)
+
+
+def _same_name(name: str) -> str:
+    return " ".join(name.split()).lower()
+
+
+def get_exercise_history(db: Session, exercise: Exercise, user_id: int, all_plans: bool) -> dict:
+    """Every logged week of a plan exercise, oldest first; with all_plans also same-name exercises of the user's other plans."""
+    own_plan_id = exercise.plan_day.plan_id
+    rows = (
+        db.query(Exercise, TrainingPlan)
+        .join(PlanDay, PlanDay.id == Exercise.plan_day_id)
+        .join(TrainingPlan, TrainingPlan.id == PlanDay.plan_id)
+        .filter(TrainingPlan.user_id == user_id)
+        .all()
+    )
+    matches = [(ex, p) for ex, p in rows if _same_name(ex.name) == _same_name(exercise.name)]
+    has_other_plans = any(p.id != own_plan_id for _, p in matches)
+    if not all_plans:
+        matches = [(ex, p) for ex, p in matches if ex.id == exercise.id]
+    plans_by_ex = {ex.id: p for ex, p in matches}
+
+    logs = (
+        db.query(ExerciseLog, TrainingDayLog, TrainingWeek)
+        .join(TrainingDayLog, TrainingDayLog.id == ExerciseLog.training_day_log_id)
+        .join(TrainingWeek, TrainingWeek.id == TrainingDayLog.training_week_id)
+        .filter(ExerciseLog.exercise_id.in_(list(plans_by_ex)), ExerciseLog.user_id == user_id)
+        .all()
+    )
+    entries = []
+    for ex_log, day_log, week in logs:
+        skipped = bool(day_log.skipped or ex_log.skipped)
+        has_data = any(s.reps is not None or s.weight_kg is not None for s in ex_log.set_logs)
+        if not has_data and not skipped:
+            continue
+        plan = plans_by_ex[ex_log.exercise_id]
+        entries.append({
+            "exercise_log_id": ex_log.id,
+            "plan_id": plan.id,
+            "plan_name": plan.name,
+            "week_number": week.week_number,
+            "is_deload": bool(week.is_deload),
+            "skipped": skipped,
+            "workout_date": day_log.workout_date.isoformat() if day_log.workout_date else None,
+            "sets": [{"set_number": s.set_number, "reps": s.reps, "weight_kg": s.weight_kg, "rir": s.rir}
+                     for s in ex_log.set_logs],
+            "_order": (day_log.workout_date or date.max, plan.created_at or datetime.min, week.week_number),
+        })
+    entries.sort(key=lambda e: e["_order"])
+    for e in entries:
+        del e["_order"]
+
+    return {
+        "exercise_id": exercise.id,
+        "exercise_name": exercise.name,
+        "has_other_plans": has_other_plans,
+        "notes": [{"plan_id": p.id, "plan_name": p.name, "note": ex.note} for ex, p in matches if ex.note],
+        "entries": entries,
+    }

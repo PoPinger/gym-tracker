@@ -107,6 +107,7 @@ class TrainingWeek(Base):
     plan_id = Column(Integer, ForeignKey("training_plans.id", ondelete="CASCADE"), nullable=False, index=True)
     week_number = Column(Integer, nullable=False)
     status = Column(String(20), default="active")  # active, completed
+    is_deload = Column(Boolean, nullable=False, default=False, server_default=false())
 
     plan = relationship("TrainingPlan", back_populates="weeks")
     day_logs = relationship("TrainingDayLog", back_populates="training_week", cascade="all, delete-orphan")

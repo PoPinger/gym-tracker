@@ -306,6 +306,9 @@ const POSES = {
   drinkSip: { sit: true, bottle: 'sip', arms: { L: [[3, 25]], R: [[21, 20], [18, 22]] }, eyes: 'happy' },
   ready1: { arms: { L: [[1, 19], [2, 16]], R: [[22, 19], [21, 16]] }, eyes: 'open', mouth: 'open' },
   ready2: { feet: 'tuck', arms: { L: [[1, 18], [2, 15]], R: [[22, 18], [21, 15]] }, eyes: 'happy', mouth: 'open' },
+  // Deload week: relaxed stretching, arms high and wide, then a lean to one side
+  stretchUp: { arms: { L: [[1, 15], [0, 9]], R: [[22, 15], [23, 9]] }, eyes: 'blink' },
+  stretchSide: { arms: { L: [[1, 17], [0, 14]], R: [[21, 14], [18, 9]] }, eyes: 'happy' },
 } satisfies Record<string, Pose>;
 
 export type FrameName = keyof typeof POSES;

@@ -72,6 +72,8 @@ const CLIPS = {
   // Rest timer: sits sipping water now and then; rest over: stands up, fists up, ready
   drink: { frames: [['drinkHold', 1800], ['drinkBlink', 140], ['drinkHold', 700], ['drinkSip', 1200], ['drinkHold', 1400]], loop: true },
   ready: { frames: [['ready1', 420], ['ready2', 300]], loop: true, bob: true },
+  // Deload week: slow, relaxed stretching
+  stretch: { frames: [['stretchUp', 1600], ['bare', 900], ['stretchSide', 1400], ['bareBlink', 140], ['bare', 1000]], loop: true },
 } satisfies Record<string, Clip>;
 
 type ClipName = keyof typeof CLIPS;
@@ -79,7 +81,7 @@ export type MascotState = 'idle' | 'press' | 'done' | 'progressUp' | 'progressDo
   | 'happy' | 'worry' | 'hide' | 'toss' | 'walkBar' | 'cheer' | 'jump'
   | 'build' | 'buildFast' | 'stamp' | 'shrug' | 'ride' | 'jumpH'
   | 'harness' | 'tick' | 'runH' | 'carry' | 'pushUp' | 'pushDown' | 'kick' | 'wipe' | 'puff' | 'shrink'
-  | 'annoyed' | 'wag' | 'notebook' | 'dayStamp' | 'drink' | 'ready';
+  | 'annoyed' | 'wag' | 'notebook' | 'dayStamp' | 'drink' | 'ready' | 'stretch';
 export type MascotEntrance = 'none' | 'rope' | 'run' | 'peek' | 'trampoline' | 'parachute';
 
 // Static pose per state for reduced motion
@@ -90,7 +92,7 @@ const STATIC: Record<MascotState, FrameName> = {
   build: 'writeA', buildFast: 'writeA', stamp: 'thumbsUp', shrug: 'tuck', ride: 'ride', jumpH: 'jumpH',
   harness: 'harness', tick: 'tick1', runH: 'runH1', carry: 'carry1', pushUp: 'pushUp', pushDown: 'pushDown', kick: 'kickFwd',
   wipe: 'thumbsUpH', puff: 'puff', shrink: 'shrink',
-  annoyed: 'bored', wag: 'wagL', notebook: 'note1', dayStamp: 'dayStampDown', drink: 'drinkHold', ready: 'ready1',
+  annoyed: 'bored', wag: 'wagL', notebook: 'note1', dayStamp: 'dayStampDown', drink: 'drinkHold', ready: 'ready1', stretch: 'stretchUp',
 };
 
 // Entrance = timed steps of (pose clip, CSS class that moves the mascot); durations match index.css
