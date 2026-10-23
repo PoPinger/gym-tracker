@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useRefresh } from '../hooks/useRefresh';
 import { useNavigate } from 'react-router-dom';
 import { plansApi, apiErrorDetail } from '../services/api';
 import { MUSCLE_GROUPS } from '../types';
@@ -54,6 +55,8 @@ export default function CreatePlan() {
   const [activeDayIdx, setActiveDayIdx] = useState<number>(0);
   const [saving, setSaving]           = useState(false);
   const [error, setError]             = useState('');
+  // Nothing to re-fetch here; a started plan keeps the app from reloading for a new version
+  useRefresh({ dirty: () => step > 1 || planName.trim() !== '' });
 
   const defaultDayNames = [
     t('default_day_push'), t('default_day_pull'), t('default_day_legs'),

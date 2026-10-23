@@ -1,9 +1,12 @@
 // Rest timer of the workout logger: one timer at a time, stored as an end timestamp (not a ticking counter),
 // so it stays right after switching apps, locking the screen or reloading. Kept per day log in localStorage.
 // When the rest is over: vibration, a short beep (if the browser allows audio) and the "ready" state.
+// With rest notifications on, the backend also sends a push at the end time (rescheduled on +30 s, cancelled on skip).
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { cancelRestPush, scheduleRestPush } from '../utils/push';
 
-export interface Rest { exLogId: number; endAt: number; total: number }
+export interface PushText { title: string; body: string }
+export interface Rest { exLogId: number; endAt: number; total: number; push?: PushText }
 interface Stored { rest: Rest | null; ready: boolean; endedAt?: number }
 
 const TICK_MS = 250;
@@ -45,8 +48,11 @@ export function useRestTimer(dayLogId: number) {
   const [state, setState] = useState<Stored>(() => load(dayLogId));
   const [now, setNow] = useState(() => Date.now());
   const audio = useRef<AudioContext | null>(null);
+  // The running rest, for the push calls made next to the state updates
+  const restRef = useRef<Rest | null>(state.rest);
 
   useEffect(() => {
+    restRef.current = state.rest;
     try { localStorage.setItem(key(dayLogId), JSON.stringify(state)); } catch { /* storage unavailable */ }
   }, [dayLogId, state]);
 
@@ -70,19 +76,33 @@ export function useRestTimer(dayLogId: number) {
     return () => { window.clearInterval(id); document.removeEventListener('visibilitychange', check); };
   }, [rest]);
 
-  const start = useCallback((exLogId: number, seconds: number) => {
+  const start = useCallback((exLogId: number, seconds: number, push?: PushText) => {
     try {
       const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!audio.current && Ctx) audio.current = new Ctx();
       void audio.current?.resume();
     } catch { /* audio not allowed */ }
     const t = Date.now();
+    const rest = { exLogId, endAt: t + seconds * 1000, total: seconds * 1000, push };
+    restRef.current = rest;
     setNow(t);
-    setState({ rest: { exLogId, endAt: t + seconds * 1000, total: seconds * 1000 }, ready: false });
+    setState({ rest, ready: false });
+    if (push) scheduleRestPush(rest.endAt, push.title, push.body);
+    else cancelRestPush();
   }, []);
-  const add = useCallback((seconds: number) => setState(s => s.rest
-    ? { ...s, rest: { ...s.rest, endAt: s.rest.endAt + seconds * 1000, total: s.rest.total + seconds * 1000 } } : s), []);
-  const skip = useCallback(() => setState({ rest: null, ready: false }), []);
+  const add = useCallback((seconds: number) => {
+    const cur = restRef.current;
+    if (!cur) return;
+    const rest = { ...cur, endAt: cur.endAt + seconds * 1000, total: cur.total + seconds * 1000 };
+    restRef.current = rest;
+    setState(s => ({ ...s, rest }));
+    if (rest.push) scheduleRestPush(rest.endAt, rest.push.title, rest.push.body);
+  }, []);
+  const skip = useCallback(() => {
+    if (restRef.current && restRef.current.endAt > Date.now()) cancelRestPush();
+    restRef.current = null;
+    setState({ rest: null, ready: false });
+  }, []);
   const dismiss = useCallback(() => setState(s => s.ready ? { rest: s.rest, ready: false } : s), []);
 
   useEffect(() => () => { void audio.current?.close().catch(() => {}); }, []);

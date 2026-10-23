@@ -11,6 +11,7 @@ import { formatRepRange } from '../utils/repRange';
 import { todayIso } from '../utils/date';
 import { DEFAULT_REST, formatRest } from '../utils/rest';
 import { useRestTimer } from '../hooks/useRestTimer';
+import { useRefresh } from '../hooks/useRefresh';
 import type { DayColor } from '../utils/dayColors';
 import AnimatedValue from './AnimatedValue';
 import Mascot from './mascot/Mascot';
@@ -136,13 +137,17 @@ export default function WorkoutLogger(p: WorkoutLoggerProps) {
   // ✓ on a set: saves the exercise as it is now and starts its rest (none after the last set)
   const saveSet = (el: ExerciseLog, setNum: number, print: string, pct: number | null) => {
     const lastSet = Math.max(...el.set_logs.map(s => s.set_number));
-    if (setNum < lastSet) timer.start(el.id, el.rest_seconds ?? DEFAULT_REST);
+    const body = t('push_rest_body').replace('{exercise}', el.exercise_name)
+      .replace('{n}', String(setNum + 1)).replace('{total}', String(lastSet));
+    if (setNum < lastSet) timer.start(el.id, el.rest_seconds ?? DEFAULT_REST, { title: t('wl_rest_done'), body });
     else timer.skip();
     void save(el.id, print, pct);
   };
 
   // Persistent note of the plan exercise: one open at a time
   const [note, setNote] = useState<{ id: number; text: string; saving: boolean; error: boolean } | null>(null);
+  // Unsaved sets or an open note keep the refresh button from replacing the day's data
+  useRefresh({ dirty: () => note != null || items.some(i => i.status === 'unsaved') });
   const saveNote = async (text: string) => {
     if (!note) return;
     setNote({ ...note, text, saving: true, error: false });

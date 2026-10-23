@@ -5,6 +5,8 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { LogOut, Menu, X, ShieldCheck, KeyRound } from 'lucide-react';
 import ChangePasswordModal from './ChangePasswordModal';
 import SyncStatus from './SyncStatus';
+import RefreshButton from './RefreshButton';
+import PushToggle from './PushToggle';
 import { MascotContext, mascotOf } from './mascot/MascotContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -35,6 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <>
       <div className="sidebar-logo">
         <img className="logo-img" src="/icons/logo.png" alt="GymTracker" />
+        <RefreshButton />
       </div>
       <div className="sidebar-sync"><SyncStatus /></div>
 
@@ -61,6 +64,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </nav>
 
       <div className="sidebar-footer">
+        <PushToggle />
+
         {/* Language selector */}
         <div style={{
           display: 'flex', gap: 6, padding: '10px 14px',
@@ -124,6 +129,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </button>
         <span className="topbar-logo">Gym<span>Tracker</span></span>
         <span className="topbar-sync"><SyncStatus /></span>
+        <RefreshButton />
       </header>
 
       {/* Overlay */}

@@ -148,16 +148,23 @@ const unresolved = () => Object.assign(new Error('unresolved id'), { unresolved:
 
 let running = false;
 let again = false;
+let runDone: Promise<void> = Promise.resolve();
 let retryTimer: number | undefined;
 let syncedTimer: number | undefined;
 
 export function flush(): void {
   if (running) { again = true; return; }
   running = true;
-  void run().finally(() => {
+  runDone = run().finally(() => {
     running = false;
     if (again) { again = false; flush(); }
   });
+}
+
+// Send what is queued and resolve once sending has stopped (all sent, offline or paused)
+export async function flushAndWait(): Promise<void> {
+  flush();
+  while (running) await runDone.catch(() => {});
 }
 
 async function run() {

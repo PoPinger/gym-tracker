@@ -22,6 +22,7 @@ import { isValidRepRange, repRangePayload } from '../utils/repRange';
 import { firstWeight } from '../utils/progress';
 import { todayIso } from '../utils/date';
 import { DEFAULT_REST } from '../utils/rest';
+import { hasUnsaved, useRefresh } from '../hooks/useRefresh';
 import type { PlanSummary, Plan, WeekSummary, WeekInfo, DayLog, SetLog } from '../types';
 import {
   ChevronRight, CheckCircle2, XCircle, ArrowLeft,
@@ -34,6 +35,12 @@ interface EditExDraft { id?: number; name: string; muscle_group: string; sets: n
 interface EditDayDraft { id: number; day_name: string; color: DayColor; exercises: EditExDraft[]; }
 // Field values captured before a "skipped" auto-fill, keyed by exercise log id
 type FillSnapshot = Record<number, { set_logs: SetLog[]; weight: string }>;
+
+// The weight field of each exercise, filled from its saved sets
+const weightsOf = (log: DayLog) => Object.fromEntries(log.exercise_logs.map(el => {
+  const w = el.set_logs.find(s => s.weight_kg != null)?.weight_kg ?? null;
+  return [el.id, w != null ? String(w) : ''];
+}));
 
 export default function MyPlans() {
   const navigate = useNavigate();
@@ -130,12 +137,7 @@ export default function MyPlans() {
     } catch { showOfflineMiss(); return; }
     setRestWeekId(null); setDoneWeekId(null); setOfflineMiss(false);
 
-    const weights: Record<number, string> = {};
-    for (const el of log.exercise_logs) {
-      const w = el.set_logs.find(s => s.weight_kg != null)?.weight_kg ?? null;
-      weights[el.id] = w != null ? String(w) : '';
-    }
-    setExerciseWeights(weights);
+    setExerciseWeights(weightsOf(log));
     setWorkoutDate(log.workout_date ?? todayIso());
     setSkipped(log.skipped);
     setDaySnapshot(null);
@@ -143,6 +145,31 @@ export default function MyPlans() {
     setDayLog(log);
     setView('workout');
   };
+
+  // Refresh button: re-fetch what the open view shows, in place. The open training day is re-fetched
+  // only while nothing in it is unsaved (its date and "skipped" switch stay as they are); the plan editor
+  // is never touched and keeps the app from reloading for a new version.
+  const [dayRev, setDayRev] = useState(0);
+  useRefresh({
+    reload: async () => {
+      if (view === 'list') { setPlans((await plansApi.list()).data); return; }
+      if (!plan || (view !== 'weeks' && view !== 'days' && view !== 'workout')) return;
+      const [pr, wr, dr] = await Promise.all([
+        plansApi.get(plan.id), plansApi.getWeeks(plan.id), view !== 'weeks' && weekInfo ? logsApi.getWeekDays(weekInfo.week_id) : null,
+      ]);
+      setPlan(pr.data); setWeeks(wr.data);
+      if (dr) setWeekInfo(dr.data);
+      if (view !== 'workout' || !dayLog || hasUnsaved()) return;
+      const log = (await logsApi.getDayLog(dayLog.id)).data;
+      if (hasUnsaved()) return;
+      setExerciseWeights(weightsOf(log));
+      setDaySnapshot(null);
+      setExSnapshots({});
+      setDayLog(log);
+      setDayRev(r => r + 1); // the logger takes a new saved snapshot
+    },
+    dirty: () => view === 'edit-plan' || view === 'edit-exercises',
+  });
 
   // Opened from the dashboard calendar: jump straight to the training day
   useEffect(() => {
@@ -708,7 +735,7 @@ export default function MyPlans() {
     const day     = weekInfo.days[dayIdx];
     return (
       <>
-        <WorkoutLogger key={dayLog.id} dayLog={dayLog} dayName={day?.day_name ?? t('training_fallback')} color={resolveDayColor(day?.color, Math.max(dayIdx, 0))}
+        <WorkoutLogger key={`${dayLog.id}-${dayRev}`} dayLog={dayLog} dayName={day?.day_name ?? t('training_fallback')} color={resolveDayColor(day?.color, Math.max(dayIdx, 0))}
           backLabel={`${t('week_tile_label')} ${weekInfo.week_number}`} onBack={() => setView('days')}
           workoutDate={workoutDate} onDateChange={setWorkoutDate} dateInvalid={dateInvalid}
           skipped={skipped} onToggleSkipped={toggleSkipped} onToggleExerciseSkipped={toggleExerciseSkipped}

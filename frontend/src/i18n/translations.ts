@@ -360,6 +360,17 @@ export interface TranslationMap {
   history_no_date: string;
   history_close: string;
   sync_offline: string;
+
+  // Rest notifications (Web Push) and the refresh button
+  push_rest_body: string;
+  push_toggle: string;
+  push_hint_ios: string;
+  push_hint_unsupported: string;
+  push_hint_denied: string;
+  push_hint_error: string;
+  refresh_label: string;
+  refresh_offline: string;
+  refresh_save_first: string;
   sync_offline_saved: string;
   sync_syncing: string;
   sync_synced: string;
@@ -782,6 +793,15 @@ const pl: TranslationMap = {
   history_no_date: 'bez daty',
   history_close: 'Zamknij',
   sync_offline: 'Offline',
+  push_rest_body: '{exercise} – seria {n} z {total}',
+  push_toggle: 'Powiadomienia o przerwie',
+  push_hint_ios: 'Na iPhonie działa po dodaniu aplikacji do ekranu początkowego (iOS 16.4+).',
+  push_hint_unsupported: 'Ta przeglądarka nie obsługuje powiadomień.',
+  push_hint_denied: 'Powiadomienia są zablokowane – zezwól na nie w ustawieniach przeglądarki.',
+  push_hint_error: 'Nie udało się włączyć powiadomień. Spróbuj ponownie.',
+  refresh_label: 'Odśwież',
+  refresh_offline: 'Brak internetu',
+  refresh_save_first: 'Zapisz zmiany, aby zaktualizować',
   sync_offline_saved: 'Offline – zapisano na telefonie',
   sync_syncing: 'Synchronizacja…',
   sync_synced: 'Zsynchronizowano',
@@ -1199,6 +1219,15 @@ const en: TranslationMap = {
   history_no_date: 'no date',
   history_close: 'Close',
   sync_offline: 'Offline',
+  push_rest_body: '{exercise} – set {n} of {total}',
+  push_toggle: 'Rest notifications',
+  push_hint_ios: 'On iPhone it works after adding the app to the Home Screen (iOS 16.4+).',
+  push_hint_unsupported: "This browser doesn't support notifications.",
+  push_hint_denied: 'Notifications are blocked – allow them in your browser settings.',
+  push_hint_error: "Couldn't turn on notifications. Please try again.",
+  refresh_label: 'Refresh',
+  refresh_offline: 'No internet',
+  refresh_save_first: 'Save your changes to update',
   sync_offline_saved: 'Offline – saved on this phone',
   sync_syncing: 'Syncing…',
   sync_synced: 'Synced',

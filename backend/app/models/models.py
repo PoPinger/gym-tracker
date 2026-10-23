@@ -48,6 +48,18 @@ class PasswordResetAttempt(Base):
     attempted_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
 
 
+class PushSubscription(Base):
+    """A browser / device subscribed to Web Push (rest timer notifications)."""
+    __tablename__ = "push_subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    endpoint = Column(Text, nullable=False, unique=True)
+    p256dh = Column(String(255), nullable=False)
+    auth = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class TrainingPlan(Base):
     __tablename__ = "training_plans"
 

@@ -1,6 +1,6 @@
 from typing import Literal, Optional, List
 from datetime import date, datetime
-from pydantic import BaseModel, EmailStr, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -485,3 +485,26 @@ class DashboardOut(BaseModel):
     workout_calendar: List[dict] = []
     best_progress: Optional[dict] = None
     streak: int = 0
+
+
+# ── Push (rest timer) ─────────────────────────────────────────────────────────
+
+class PushKeys(BaseModel):
+    p256dh: str = Field(max_length=255)
+    auth: str = Field(max_length=255)
+
+
+class PushSubscriptionIn(BaseModel):
+    endpoint: str = Field(max_length=2000)
+    keys: PushKeys
+
+
+class PushEndpoint(BaseModel):
+    endpoint: str = Field(max_length=2000)
+
+
+class RestPushIn(BaseModel):
+    endpoint: str = Field(max_length=2000)
+    seconds: float = Field(gt=0, le=3600)   # time left until the rest ends
+    title: str = Field(max_length=100)
+    body: str = Field(max_length=300)

@@ -153,6 +153,16 @@ export const weightApi = {
   completeWeek: (weekId: number) => api.post(`/weight/weeks/${weekId}/complete`),
 };
 
+// Web Push for the rest timer (per device, identified by its push endpoint)
+export const pushApi = {
+  key: () => api.get<{ enabled: boolean; key: string | null }>('/push/key'),
+  subscribe: (sub: PushSubscriptionJSON) => api.post('/push/subscriptions', sub),
+  unsubscribe: (endpoint: string) => api.delete('/push/subscriptions', { data: { endpoint } }),
+  scheduleRest: (endpoint: string, seconds: number, title: string, body: string) =>
+    api.put('/push/rest', { endpoint, seconds, title, body }),
+  cancelRest: (endpoint: string) => api.delete('/push/rest', { data: { endpoint } }),
+};
+
 // Dashboard
 export const dashboardApi = {
   get: () => cachedGet('/dashboard'),

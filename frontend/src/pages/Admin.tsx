@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useRefresh } from '../hooks/useRefresh';
 import axios from 'axios';
 import { adminApi } from '../services/api';
 import AppLoader from '../components/AppLoader';
@@ -29,6 +30,7 @@ export default function Admin() {
       .catch(err => setError(t(axios.isAxiosError(err) && err.response?.status === 403 ? 'admin_no_access' : 'admin_load_error')))
       .finally(() => setLoading(false));
   }, [t]);
+  useRefresh({ reload: () => adminApi.listUsers().then(res => setUsers(res.data)) });
 
   const generate = async (user: AdminUser) => {
     setBusyId(user.id);

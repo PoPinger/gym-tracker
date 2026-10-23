@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.config import settings
 from app.database import Base, engine
-from app.routers import auth, plans, weight, dashboard, admin
+from app.routers import auth, plans, weight, dashboard, admin, push
 
 # Create all tables on startup
 Base.metadata.create_all(bind=engine)
@@ -48,6 +48,7 @@ app.include_router(plans.router)
 app.include_router(weight.router)
 app.include_router(dashboard.router)
 app.include_router(admin.router)
+app.include_router(push.router)
 
 
 @app.get("/health")

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardApi } from '../services/api';
 import { trendTone } from '../utils/weightTrend';
+import { useRefresh } from '../hooks/useRefresh';
 import { plural } from '../utils/plural';
 import { useLanguage } from '../i18n/LanguageContext';
 import WorkoutCalendar from '../components/WorkoutCalendar';
@@ -59,6 +60,7 @@ export default function Dashboard() {
   useEffect(() => {
     dashboardApi.get().then(r => setData(r.data)).finally(() => setLoading(false));
   }, []);
+  useRefresh({ reload: () => dashboardApi.get().then(r => setData(r.data)) });
 
   if (loading) return <AppLoader />;
 

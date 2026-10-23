@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useRefresh } from '../hooks/useRefresh';
 import { weightApi, apiErrorDetail } from '../services/api';
 import AppLoader from '../components/AppLoader';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -59,6 +60,18 @@ export default function MyWeight() {
     }
     setDayInputs(inputs);
   }, [cycle]);
+
+  // A weight typed but not saved yet (the inputs are rebuilt from the cycle when it is re-fetched)
+  const weightsDirty = () => !!cycle && cycle.weeks.some(w => w.day_logs.some(d =>
+    (dayInputs[w.id]?.[d.day_of_week] ?? '') !== (d.weight_kg != null ? String(d.weight_kg) : '')));
+  useRefresh({
+    reload: async () => {
+      if (!cycle || weightsDirty()) return;
+      const res = await weightApi.getCurrentCycle();
+      if (res.data) setCycle(res.data);
+    },
+    dirty: () => weightsDirty() || editMonths != null,
+  });
 
   const handleSetup = async (e: React.FormEvent) => {
     e.preventDefault();
