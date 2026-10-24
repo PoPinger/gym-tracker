@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useLanguage } from '../i18n/LanguageContext';
 import { authApi } from '../services/api';
 import PasswordInput from '../components/PasswordInput';
-import { Dumbbell, Mail, KeyRound, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Mail, KeyRound, ArrowRight, ArrowLeft } from 'lucide-react';
 import AuthKulka from '../components/mascot/AuthKulka';
 
 const MIN_PASSWORD = 8;
@@ -63,28 +63,24 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="auth-wrap has-mascot">
-      <div className="auth-card has-mascot">
+    <div className="auth-wrap">
+      <div className="auth-hero">
+        <div className="auth-logo"><img src="/icons/logo.png" alt="GymTracker" /></div>
+      </div>
+      <div className="auth-sheet">
         <AuthKulka mode="confused" />
-        <div className="auth-logo">
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:8 }}>
-            <div style={{ width:44, height:44, background:'linear-gradient(135deg,#4f46e5,#818cf8)', borderRadius:14, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <Dumbbell size={22} color="white" strokeWidth={2.5} />
-            </div>
-          </div>
-          <div className="auth-brand">Gym<span>Tracker</span></div>
-        </div>
+        <span className="auth-grab" aria-hidden="true" />
 
         {resetToken === null ? (
           <>
             <h1 className="auth-heading">{t('reset_title')}</h1>
-            <div className="alert alert-info" style={{ marginTop:12 }}>
+            <div className="alert alert-info">
               <span>{t('reset_info')}</span>
             </div>
 
             {error && <div className="alert alert-error"><span>{error}</span></div>}
 
-            <form onSubmit={verify} style={{ display:'flex', flexDirection:'column', gap:16 }}>
+            <form onSubmit={verify} className="auth-form">
               <div className="form-group">
                 <label className="form-label">{t('login_email_label')}</label>
                 <div style={{ position:'relative' }}>
@@ -126,7 +122,7 @@ export default function ForgotPassword() {
 
             {error && <div className="alert alert-error"><span>{error}</span></div>}
 
-            <form onSubmit={save} style={{ display:'flex', flexDirection:'column', gap:16 }}>
+            <form onSubmit={save} className="auth-form">
               <PasswordInput label={t('pwd_new_label')} value={password} onChange={setPassword}
                 placeholder={t('pwd_min_hint')} autoComplete="new-password" minLength={MIN_PASSWORD} />
               <PasswordInput label={t('pwd_repeat_label')} value={repeat} onChange={setRepeat}

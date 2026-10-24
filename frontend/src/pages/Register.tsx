@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../i18n/LanguageContext';
-import { Dumbbell, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight } from 'lucide-react';
+import AuthKulka from '../components/mascot/AuthKulka';
+import CelebrationLayer from '../components/CelebrationLayer';
+import { HOLE_MS, useCelebration } from '../hooks/useCelebration';
 
 export default function Register() {
   const [displayName, setDisplayName] = useState('');
@@ -12,34 +15,31 @@ export default function Register() {
   const { register, loading }         = useAuth();
   const { t }                         = useLanguage();
   const navigate                      = useNavigate();
+  const celebration                   = useCelebration();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     const r = await register(email, password, displayName || undefined);
-    if (r.success) navigate('/');
+    // Account created: Kulka jumps into a hole on the sheet, then the app opens (at once with reduced motion)
+    if (r.success) celebration.run(HOLE_MS, () => navigate('/'));
     else setError(r.error || t('register_error_default'));
   };
 
   return (
     <div className="auth-wrap">
-      <div className="auth-card">
-        <div className="auth-logo">
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:8 }}>
-            <div style={{ width:44, height:44, background:'linear-gradient(135deg,#4f46e5,#818cf8)', borderRadius:14, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <Dumbbell size={22} color="white" strokeWidth={2.5} />
-            </div>
-          </div>
-          <div className="auth-brand">Gym<span>Tracker</span></div>
-          <div className="auth-tagline">{t('register_tagline')}</div>
-        </div>
-
+      <div className="auth-hero">
+        <div className="auth-logo"><img src="/icons/logo.png" alt="GymTracker" /></div>
+        <p className="auth-tagline">{t('register_tagline')}</p>
+      </div>
+      <div className="auth-sheet">
+        <AuthKulka mode="wave" exiting={celebration.active} />
+        <span className="auth-grab" aria-hidden="true" />
         <h1 className="auth-heading">{t('register_heading')}</h1>
-        <p className="auth-sub">{t('register_sub')}</p>
 
         {error && <div className="alert alert-error"><span>{error}</span></div>}
 
-        <form onSubmit={submit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
+        <form onSubmit={submit} className="auth-form">
           <div className="form-group">
             <label className="form-label">
               {t('register_name_label')}{' '}
@@ -95,6 +95,7 @@ export default function Register() {
           <Link to="/login" className="auth-link">{t('register_login')}</Link>
         </div>
       </div>
+      {celebration.active && <CelebrationLayer onSkip={celebration.skip} />}
     </div>
   );
 }

@@ -30,7 +30,6 @@ export interface TranslationMap {
   // Register
   register_tagline: string;
   register_heading: string;
-  register_sub: string;
   register_error_default: string;
   register_name_label: string;
   register_optional: string;
@@ -486,7 +485,6 @@ const pl: TranslationMap = {
 
   register_tagline: 'Twoja przygoda z fitnesem zaczyna się tutaj',
   register_heading: 'Utwórz konto',
-  register_sub: 'Zawsze za darmo. Bez karty kredytowej.',
   register_error_default: 'Rejestracja nieudana',
   register_name_label: 'Nazwa wyświetlana',
   register_optional: '(opcjonalnie)',
@@ -913,7 +911,6 @@ const en: TranslationMap = {
 
   register_tagline: 'Your fitness journey starts here',
   register_heading: 'Create account',
-  register_sub: 'Always free. No credit card required.',
   register_error_default: 'Registration failed',
   register_name_label: 'Display name',
   register_optional: '(optional)',

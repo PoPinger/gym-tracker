@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../i18n/LanguageContext';
-import { Dumbbell, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 import AuthKulka from '../components/mascot/AuthKulka';
+import CelebrationLayer from '../components/CelebrationLayer';
+import { HOLE_MS, useCelebration } from '../hooks/useCelebration';
 
 export default function Login() {
   const [email, setEmail]       = useState('');
@@ -12,6 +14,7 @@ export default function Login() {
   const { login, loading }      = useAuth();
   const { t }                   = useLanguage();
   const navigate                = useNavigate();
+  const celebration             = useCelebration();
   // Set by ForgotPassword after a successful reset
   const passwordChanged         = (useLocation().state as { passwordChanged?: boolean } | null)?.passwordChanged;
 
@@ -19,24 +22,20 @@ export default function Login() {
     e.preventDefault();
     setError('');
     const r = await login(email, password);
-    if (r.success) navigate('/');
+    // Signed in: Kulka jumps into a hole on the sheet, then the app opens (at once with reduced motion)
+    if (r.success) celebration.run(HOLE_MS, () => navigate('/'));
     else setError(r.error || t('login_error_default'));
   };
 
   return (
-    <div className="auth-wrap has-mascot">
-      <div className="auth-card has-mascot">
-        <AuthKulka mode="wave" />
-        <div className="auth-logo">
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:8 }}>
-            <div style={{ width:44, height:44, background:'linear-gradient(135deg,#4f46e5,#818cf8)', borderRadius:14, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <Dumbbell size={22} color="white" strokeWidth={2.5} />
-            </div>
-          </div>
-          <div className="auth-brand">Gym<span>Tracker</span></div>
-          <div className="auth-tagline">{t('login_tagline')}</div>
-        </div>
-
+    <div className="auth-wrap">
+      <div className="auth-hero">
+        <div className="auth-logo"><img src="/icons/logo.png" alt="GymTracker" /></div>
+        <p className="auth-tagline">{t('login_tagline')}</p>
+      </div>
+      <div className="auth-sheet">
+        <AuthKulka mode="wave" exiting={celebration.active} />
+        <span className="auth-grab" aria-hidden="true" />
         <h1 className="auth-heading">{t('login_heading')}</h1>
         <p className="auth-sub">{t('login_sub')}</p>
 
@@ -52,7 +51,7 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={submit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
+        <form onSubmit={submit} className="auth-form">
           <div className="form-group">
             <label className="form-label">{t('login_email_label')}</label>
             <div style={{ position:'relative' }}>
@@ -92,6 +91,7 @@ export default function Login() {
           <Link to="/register" className="auth-link">{t('login_create_account')}</Link>
         </div>
       </div>
+      {celebration.active && <CelebrationLayer onSkip={celebration.skip} />}
     </div>
   );
 }

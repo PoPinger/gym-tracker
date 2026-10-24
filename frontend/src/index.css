@@ -297,14 +297,24 @@ a { text-decoration: none; color: inherit; }
 @keyframes m-trash-lid { 0% { transform: rotate(38deg) translate(-2px, -2px); } 55% { transform: rotate(0) translateY(-4px); } 80% { transform: rotate(-4deg) translateY(1px); } 100% { transform: none; } }
 .m-trash-paper { position: absolute; left: 33px; top: 9px; animation: m-trash-paper 0.4s 0.1s cubic-bezier(.3,.2,.6,1) both; }
 @keyframes m-trash-paper { 0% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(14px, -18px) rotate(160deg); } 100% { transform: translate(22px, 12px) rotate(300deg) scale(0.6); opacity: 0; } }
-/* Login / password reset: Kulka stands on the auth card's top edge, centred above the logo */
-.auth-wrap.has-mascot { padding-top: 84px; }
-.auth-card.has-mascot { position: relative; }
-.m-spot-auth { position: absolute; left: 50%; bottom: calc(100% - 3px); transform: translateX(-50%); z-index: 1; }
+/* Signed-out screens: Kulka stands on the auth sheet's top edge, on the right */
+.m-spot-auth { position: absolute; right: 28px; bottom: calc(100% - 3px); width: 48px; height: 56px; z-index: 1; } /* Kulka's size */
 .m-qmark { position: absolute; bottom: 44px; pointer-events: none; opacity: 0; animation: m-qmark 2.4s ease-out infinite both; }
 @keyframes m-qmark {
   0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: 1; } 50% { transform: translate(-3px, -10px); }
   75% { opacity: 1; } 100% { transform: translate(2px, -20px); opacity: 0; } }
+/* Auth hole (HOLE_MS = 1300 ms): the hole opens on the sheet left of Kulka (0–200 ms), he hops over and drops in
+   (150–950 ms), clipped at the hole's middle line, then the hole closes (950–1200 ms) */
+.m-hole { position: absolute; left: -48px; top: 62px; transform: scale(0); animation: m-hole-open 200ms var(--ease-spring) forwards, m-hole-close 250ms 950ms var(--ease-out) forwards; }
+.m-hole-clip { position: absolute; left: -84px; top: -100px; width: 148px; height: 169px; overflow: hidden; pointer-events: none; }
+.m-hole-dive { position: absolute; left: 84px; top: 100px; width: 48px; animation: m-hole-dive 800ms 150ms both; }
+@keyframes m-hole-open { to { transform: scale(1); } }
+@keyframes m-hole-close { from { transform: scale(1); } to { transform: scale(0); } }
+@keyframes m-hole-dive {
+  0% { transform: none; animation-timing-function: cubic-bezier(.2,.8,.4,1); }
+  35% { transform: translate(-30px, -30px); animation-timing-function: cubic-bezier(.5,0,.8,.4); }
+  62% { transform: translate(-52px, -2px); animation-timing-function: cubic-bezier(.4,0,.9,.6); }
+  100% { transform: translate(-52px, 74px); } }
 @media (prefers-reduced-motion: reduce) { .m-qmark { animation: none; opacity: 1; } }
 /* Plan weeks view: on top of the current week's tile (positioned by WeeksMascot.tsx), or on the progress card */
 .week-cards.has-mascot { position: relative; margin-top: 44px; }
@@ -416,20 +426,31 @@ a { text-decoration: none; color: inherit; }
   .step-current { display: block; font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 24px; }
 }
 
-/* ── AUTH ── */
-.auth-wrap { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom)); background: linear-gradient(135deg, #f0f0ff 0%, var(--bg) 50%, #f0fff8 100%); }
-.auth-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 40px; width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); }
-.auth-logo { text-align: center; margin-bottom: 32px; }
-.auth-brand { font-size: 26px; font-weight: 800; color: var(--text-heading); letter-spacing: -0.5px; }
-.auth-brand span { color: var(--primary); }
-.auth-tagline { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-.auth-heading { font-size: 20px; font-weight: 800; color: var(--text-heading); margin-bottom: 4px; }
-.auth-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+/* ── AUTH: indigo hero with the logo, the form on a white bottom sheet (a centred card on wider screens) ── */
+.auth-wrap { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: radial-gradient(120% 70% at 85% 0%, #818cf8 0%, transparent 60%), linear-gradient(160deg, #4f46e5, #3730a3); }
+.auth-hero { position: relative; padding: calc(36px + env(safe-area-inset-top)) 16px 92px; text-align: center; }
+.auth-hero::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(rgba(255,255,255,0.14) 1.5px, transparent 1.5px); background-size: 16px 16px; -webkit-mask-image: linear-gradient(transparent, #000 40%, transparent); mask-image: linear-gradient(transparent, #000 40%, transparent); }
+.auth-logo { position: relative; display: inline-flex; background: var(--bg-white); border-radius: var(--radius-lg); padding: 10px 16px; box-shadow: 0 8px 24px rgba(30,27,75,0.3); }
+.auth-logo img { display: block; height: 32px; width: auto; }
+.auth-tagline { position: relative; margin-top: 14px; font-size: 15px; font-weight: 600; color: #e0e7ff; }
+.auth-sheet { position: relative; flex: 1; margin-top: -28px; background: var(--bg-white); border-radius: 28px 28px 0 0; padding: 22px 16px calc(24px + env(safe-area-inset-bottom)); box-shadow: 0 -10px 30px rgba(30,27,75,0.18); animation: sheet-in 260ms var(--ease-spring) both; }
+.auth-grab { display: block; width: 40px; height: 4px; border-radius: 99px; background: var(--border); margin: 0 auto 18px; }
+.auth-heading { font-size: 24px; font-weight: 800; color: var(--text-heading); letter-spacing: -0.4px; line-height: 1.2; }
+.auth-sub { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+.auth-form { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
+.auth-sheet .alert { margin: 16px 0 0; }
 .auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-muted); }
 .auth-link { color: var(--primary); font-weight: 600; }
 .auth-link:hover { text-decoration: underline; }
 .auth-forgot { align-self: flex-end; font-size: 13px; margin-top: 2px; }
 .auth-back { display: inline-flex; align-items: center; gap: 6px; }
+@media (min-width: 600px) {
+  .auth-wrap { align-items: center; justify-content: center; padding: 24px; }
+  .auth-hero { align-self: stretch; padding: 0 16px 76px; }
+  .auth-sheet { flex: none; width: 100%; max-width: 440px; margin-top: 0; border-radius: 28px; padding: 32px; box-shadow: 0 20px 40px rgba(30,27,75,0.3); animation-name: modal-in; }
+  .auth-grab { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .auth-sheet { animation: none; } }
 
 /* ── SECTION ── */
 .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-subtle); margin-bottom: 12px; }
@@ -572,7 +593,6 @@ a { text-decoration: none; color: inherit; }
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
   .weight-grid { grid-template-columns: repeat(4, 1fr); }
   .tiles-grid { grid-template-columns: repeat(2, 1fr); }
-  .auth-card { padding: 28px; }
   .modal-actions { flex-direction: column-reverse; }
   .modal { padding: 24px; }
   .ex-builder-row { grid-template-columns: 1fr; }
@@ -585,7 +605,6 @@ a { text-decoration: none; color: inherit; }
   .weight-grid { grid-template-columns: repeat(4, 1fr); }
   .tiles-grid { grid-template-columns: repeat(2, 1fr); }
   .page-title { font-size: 20px; }
-  .auth-card { padding: 20px; }
   .card { padding: 16px; }
   .modal-actions { flex-direction: column-reverse; }
 }

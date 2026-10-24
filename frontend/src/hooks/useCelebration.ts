@@ -7,6 +7,8 @@ export const CELEBRATION_MAX_MS = 3000;
 // (longer jump + big confetti shower, all landed by ~2.8 s)
 export const DAY_CELEBRATION_MS = 1900;
 export const WEEK_CELEBRATION_MS = 2800;
+// Signed in / registered: Kulka jumps into a pixel hole on the auth sheet (AuthKulka)
+export const HOLE_MS = 1300;
 
 // A celebration (Kulka + confetti) that plays in full on the current screen before navigating. The caller
 // saves first and starts it only once the save succeeded; then() runs when it has finished, after

@@ -146,6 +146,8 @@ const BOTTLE = ['.g.', 'bbb', 'bwb', 'bwb', 'bbb'];
 const BOTTLE_TIP = ['.bbbbb', 'gbwwbb', '.bbbbb'];
 export const QMARK = ['.yyy.', 'yy.yy', '...yy', '..yy.', '..y..', '.....', '..y..'];
 export const STAMP_MARK = ['......e', '.....ee', 'e...ee.', 'ee.ee..', '.eee...', '..e....'];
+// Pixel hole Kulka jumps into after signing in (AuthKulka): indigo rim, dark inside
+export const HOLE = ['....PPPPPPPPPP....', '..PPkkkkkkkkkkPP..', '.PkkkkkkkkkkkkkkP.', '..PPkkkkkkkkkkPP..', '....PPPPPPPPPP....'];
 
 type Eyes = 'open' | 'blink' | 'happy' | 'effort' | 'half' | 'lookL' | 'lookR' | 'lookUp' | 'sad' | 'angry';
 type Mouth = 'smile' | 'open' | 'grit' | 'frown' | 'flat' | 'pant';
